@@ -2,289 +2,627 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>OneDayReco - 你的活动搭子</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { font-size: 16px; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-color, #1e1e2e);
-            min-height: 100vh; color: var(--text-color, #cdd6f4);
-            transition: background 0.5s ease, color 0.5s ease;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-color, #1a1a2e);
+            min-height: 100vh; color: var(--text-color, #eee);
+            transition: background 0.6s cubic-bezier(0.4, 0, 0.2, 1), color 0.6s ease;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-        .container { max-width: 480px; margin: 0 auto; padding: 0; min-height: 100vh; display: flex; flex-direction: column; }
 
-        /* ===== 通用变量（被 JS 动态覆盖） ===== */
+        .container {
+            max-width: 480px; margin: 0 auto; min-height: 100vh;
+            display: flex; flex-direction: column; position: relative;
+        }
+
+        /* ===== Ambient background glow ===== */
+        .ambient-glow {
+            position: fixed; top: -20%; left: 50%; transform: translateX(-50%);
+            width: 500px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
+            opacity: 0.06; pointer-events: none; z-index: 0;
+            transition: background 0.6s ease;
+        }
+        .ambient-glow-2 {
+            position: fixed; bottom: -10%; right: -10%;
+            width: 300px; height: 300px; border-radius: 50%;
+            background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
+            opacity: 0.04; pointer-events: none; z-index: 0;
+            transition: background 0.6s ease;
+        }
+
+        /* ===== Theme variables ===== */
         :root {
-            --bg-color: #1e1e2e;
-            --card-color: #2a2a3e;
+            --bg-color: #1a1a2e;
+            --bg-grad-1: #1a1a2e;
+            --bg-grad-2: #16132a;
+            --card-color: rgba(255, 255, 255, 0.05);
+            --card-solid: #23233a;
+            --card-hover: rgba(255, 255, 255, 0.08);
             --accent-color: #89b4fa;
-            --text-color: #cdd6f4;
+            --accent-soft: rgba(137, 180, 250, 0.12);
+            --accent-grad: linear-gradient(135deg, #89b4fa, #b4befa);
+            --text-color: #eee;
             --subtext-color: #888;
-            --radius: 6px;
+            --radius: 12px;
+            --radius-lg: 20px;
+            --radius-pill: 30px;
+            --blur-bg: rgba(20, 20, 35, 0.72);
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --shadow-float: 0 4px 20px rgba(0, 0, 0, 0.15);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* ===== Onboarding ===== */
+        /* ===== Onboarding — Headspace-style 3-step flow ===== */
         .onboarding {
-            background: var(--card-color); padding: 30px 24px;
-            min-height: 100vh; transition: background 0.5s ease;
+            position: relative; z-index: 1;
+            background: linear-gradient(165deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+            padding: 0 24px; min-height: 100vh;
+            display: flex; flex-direction: column;
+            transition: background 0.6s ease;
         }
-        .logo { text-align: center; margin-bottom: 30px; padding-top: 20px; }
+
+        /* Progress dots */
+        .progress-dots {
+            display: flex; justify-content: center; gap: 8px;
+            padding: calc(20px + env(safe-area-inset-top, 0px)) 0 16px;
+        }
+        .progress-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            transition: all 0.3s var(--ease-spring);
+        }
+        .progress-dot.active {
+            width: 24px; border-radius: 4px;
+            background: var(--accent-color);
+        }
+        .progress-dot.done {
+            background: var(--accent-color); opacity: 0.5;
+        }
+
+        /* Step container */
+        .step-container {
+            flex: 1; display: flex; flex-direction: column;
+            justify-content: center; position: relative;
+        }
+        .step {
+            display: none;
+            animation: stepIn 0.45s var(--ease-spring);
+        }
+        .step.active { display: flex; flex-direction: column; }
+        @keyframes stepIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes stepOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(-30px); }
+        }
+
+        .step-title {
+            font-size: 24px; font-weight: 800; letter-spacing: -0.5px;
+            margin-bottom: 6px; color: var(--text-color);
+        }
+        .step-subtitle {
+            font-size: 14px; color: var(--subtext-color);
+            margin-bottom: 28px; font-weight: 400; line-height: 1.5;
+        }
+
+        /* Logo (step 1) */
+        .logo { text-align: center; margin-bottom: 32px; }
+        .logo-icon {
+            width: 72px; height: 72px; margin: 0 auto 16px;
+            border-radius: 22px; display: flex; align-items: center; justify-content: center;
+            font-size: 36px; background: var(--accent-soft);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s var(--ease-spring);
+        }
         .logo h1 {
-            font-size: 28px; color: var(--accent-color);
-            transition: color 0.5s ease;
+            font-size: 28px; font-weight: 800; letter-spacing: -0.8px;
+            background: linear-gradient(135deg, var(--accent-color), var(--text-color));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .logo p { color: var(--subtext-color); font-size: 14px; margin-top: 6px; }
-        .form-group { margin-bottom: 22px; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 10px; font-size: 15px; color: var(--text-color); }
-        .mbti-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .logo p { color: var(--subtext-color); font-size: 14px; margin-top: 8px; font-weight: 400; }
+
+        /* MBTI grid — larger, more visual */
+        .mbti-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         .mbti-btn {
-            padding: 12px 4px; border: 2px solid rgba(255,255,255,0.1);
-            border-radius: var(--radius); background: transparent;
-            cursor: pointer; font-weight: 600; font-size: 13px;
-            color: var(--text-color); transition: all 0.2s;
+            padding: 16px 4px; border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius); background: rgba(255, 255, 255, 0.03);
+            cursor: pointer; font-weight: 700; font-size: 13px;
+            color: var(--subtext-color); transition: all 0.3s var(--ease-spring);
+            position: relative; overflow: hidden;
         }
-        .mbti-btn:hover { border-color: var(--accent-color); }
+        .mbti-btn:active { transform: scale(0.93); }
+        .mbti-btn:hover { border-color: rgba(255, 255, 255, 0.2); color: var(--text-color); background: rgba(255, 255, 255, 0.05); }
         .mbti-btn.selected {
             background: var(--accent-color); color: #fff;
             border-color: var(--accent-color);
+            box-shadow: 0 6px 24px var(--accent-soft);
+            transform: translateY(-3px);
         }
-        .form-input, .form-select {
-            width: 100%; padding: 12px; border: 2px solid rgba(255,255,255,0.1);
-            border-radius: var(--radius); font-size: 14px;
-            background: rgba(0,0,0,0.2); color: var(--text-color);
-            transition: border 0.2s;
+
+        /* MBTI reveal card */
+        .mbti-reveal {
+            text-align: center; margin-top: 20px;
+            padding: 20px 16px; border-radius: var(--radius-lg);
+            background: var(--accent-soft);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            animation: revealIn 0.5s var(--ease-spring);
+        }
+        @keyframes revealIn {
+            from { opacity: 0; transform: scale(0.85) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .mbti-reveal .reveal-avatar {
+            font-size: 40px; margin-bottom: 8px;
+            display: block; line-height: 1;
+        }
+        .mbti-reveal .reveal-name {
+            font-size: 18px; font-weight: 700; color: var(--text-color);
+            margin-bottom: 4px;
+        }
+        .mbti-reveal .reveal-hint {
+            font-size: 13px; color: var(--accent-color); font-weight: 500;
+            line-height: 1.5;
+        }
+
+        /* Large selectable cards (step 2) */
+        .option-cards { display: flex; flex-direction: column; gap: 10px; }
+        .option-card {
+            padding: 16px 18px; border-radius: var(--radius);
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            cursor: pointer; transition: all 0.25s var(--ease-smooth);
+            display: flex; align-items: center; gap: 14px;
+            position: relative; overflow: hidden;
+        }
+        .option-card:active { transform: scale(0.97); }
+        .option-card:hover { border-color: rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.05); }
+        .option-card.selected {
+            border-color: var(--accent-color);
+            background: var(--accent-soft);
+        }
+        .option-card.selected::after {
+            content: '✓'; position: absolute; right: 18px;
+            color: var(--accent-color); font-size: 18px; font-weight: 700;
+        }
+        .option-card .card-icon { font-size: 22px; flex-shrink: 0; }
+        .option-card .card-text {
+            font-size: 15px; font-weight: 500; color: var(--text-color);
+        }
+
+        /* Form input (step 3) */
+        .form-input {
+            width: 100%; padding: 16px 18px;
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius); font-size: 15px;
+            background: rgba(255, 255, 255, 0.04); color: var(--text-color);
+            transition: all 0.25s ease; font-family: inherit;
+            resize: none; min-height: 80px;
         }
         .form-input::placeholder { color: var(--subtext-color); }
-        .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent-color); }
-        .form-select option { background: #333; color: #eee; }
-        .btn-primary {
-            width: 100%; padding: 14px; background: var(--accent-color);
-            color: #fff; border: none; border-radius: var(--radius);
-            font-size: 16px; font-weight: 600; cursor: pointer;
-            transition: transform 0.2s, opacity 0.2s;
+        .form-input:focus {
+            outline: none; border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.06);
         }
-        .btn-primary:hover { transform: translateY(-1px); opacity: 0.9; }
-        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-        /* ===== 主界面 ===== */
-        .main-app { display: none; flex: 1; flex-direction: column; min-height: 100vh; }
+        /* Pill buttons */
+        .btn-pill {
+            width: 100%; padding: 16px; margin-top: 12px;
+            border: none; border-radius: var(--radius-pill);
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            transition: all 0.25s var(--ease-smooth);
+            letter-spacing: 0.3px; font-family: inherit;
+        }
+        .btn-pill:active { transform: scale(0.97); }
+        .btn-pill:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn-primary {
+            background: var(--accent-color); color: #fff;
+            box-shadow: 0 4px 20px var(--accent-soft);
+        }
+        .btn-primary:hover { opacity: 0.92; }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06); color: var(--text-color);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); }
 
-        /* 互动仔头部 */
+        .btn-row { display: flex; gap: 10px; margin-top: 12px; }
+        .btn-row .btn-pill { flex: 1; margin-top: 0; }
+
+        /* ===== Main App ===== */
+        .main-app {
+            display: none; flex: 1; flex-direction: column;
+            min-height: 100vh; position: relative; z-index: 1;
+            background: linear-gradient(165deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+        }
+
+        /* Companion header — refined glassmorphism */
         .companion-header {
+            position: sticky; top: 0; z-index: 100;
             display: flex; align-items: center; gap: 12px;
-            padding: 16px 20px; background: var(--card-color);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            transition: background 0.5s ease;
+            padding: 12px 20px; padding-top: calc(12px + env(safe-area-inset-top, 0px));
+            background: var(--blur-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
         }
         .companion-avatar {
-            width: 44px; height: 44px; border-radius: 50%;
+            width: 42px; height: 42px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; background: rgba(255,255,255,0.08);
-            flex-shrink: 0;
+            font-size: 22px; flex-shrink: 0;
+            background: var(--accent-soft);
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 2px 12px var(--accent-soft);
+            transition: transform 0.3s var(--ease-spring);
         }
+        .companion-avatar:active { transform: scale(0.9); }
         .companion-info { flex: 1; }
-        .companion-name { font-size: 16px; font-weight: 700; color: var(--text-color); }
+        .companion-name {
+            font-size: 15px; font-weight: 700; color: var(--text-color);
+            letter-spacing: -0.2px;
+        }
         .companion-status { font-size: 12px; color: var(--subtext-color); margin-top: 2px; }
         .companion-status .dot {
-            display: inline-block; width: 8px; height: 8px;
-            background: #4ade80; border-radius: 50%; margin-right: 4px;
+            display: inline-block; width: 7px; height: 7px;
+            background: #4ade80; border-radius: 50%; margin-right: 5px;
+            box-shadow: 0 0 6px #4ade80;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         .reset-btn {
             background: none; border: none; color: var(--subtext-color);
-            font-size: 13px; cursor: pointer; padding: 6px 10px;
+            font-size: 13px; cursor: pointer; padding: 8px 12px;
+            border-radius: var(--radius-pill);
+            transition: all 0.2s;
         }
-        .reset-btn:hover { color: var(--accent-color); }
+        .reset-btn:hover { color: var(--accent-color); background: var(--accent-soft); }
 
-        /* 聊天区域 */
+        /* Chat area */
         .chat-area {
-            flex: 1; overflow-y: auto; padding: 16px 16px 8px;
-            display: flex; flex-direction: column; gap: 12px;
+            flex: 1; overflow-y: auto; padding: 20px 16px 12px;
+            display: flex; flex-direction: column; gap: 10px;
             scroll-behavior: smooth;
         }
-        .chat-area::-webkit-scrollbar { width: 4px; }
-        .chat-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .chat-area::-webkit-scrollbar { width: 3px; }
+        .chat-area::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 2px; }
 
+        /* Message bubbles — Replika-inspired gradient companion bubbles */
         .msg-bubble {
-            max-width: 80%; padding: 12px 16px; border-radius: 18px;
-            font-size: 15px; line-height: 1.6; word-break: break-word;
-            animation: fadeInUp 0.3s ease;
+            max-width: 80%; padding: 12px 16px; font-size: 15px;
+            line-height: 1.55; word-break: break-word;
+            animation: msgIn 0.35s var(--ease-spring);
         }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .msg-companion {
-            align-self: flex-start; background: var(--card-color);
-            color: var(--text-color);
-            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            background: var(--accent-grad);
+            color: #fff;
+            border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 6px;
+            box-shadow: 0 2px 16px var(--accent-soft);
         }
         .msg-user {
-            align-self: flex-end; background: var(--accent-color);
-            color: #fff;
-            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            color: var(--text-color);
+            border-radius: var(--radius-lg) var(--radius-lg) 6px var(--radius-lg);
+            border: 0.5px solid rgba(255, 255, 255, 0.06);
         }
 
-        /* 推荐卡片（聊天内嵌） */
+        /* Recommendation card — Spotify-inspired refined design */
         .rec-card {
-            background: var(--card-color); border-radius: var(--radius);
-            overflow: hidden; max-width: 90%; align-self: flex-start;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            animation: fadeInUp 0.4s ease;
-            border: 1px solid rgba(255,255,255,0.05);
+            align-self: flex-start; max-width: 92%;
+            background: var(--card-color);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg); overflow: hidden;
+            border: 0.5px solid rgba(255, 255, 255, 0.06);
+            box-shadow: var(--shadow-card);
+            animation: cardIn 0.5s var(--ease-spring);
+            transition: transform 0.2s var(--ease-smooth);
         }
-        .rec-card-image {
-            width: 100%; height: 160px; object-fit: cover;
-            background: rgba(0,0,0,0.3);
+        .rec-card:active { transform: scale(0.98); }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(16px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .rec-card-body { padding: 16px; }
+
+        /* Visual header — refined gradient + emoji with overlay */
+        .rec-card-visual {
+            width: 100%; height: 160px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 56px; position: relative; overflow: hidden;
+        }
+        .rec-card-visual::after {
+            content: ''; position: absolute; inset: 0;
+            background:
+                radial-gradient(circle at 25% 30%, rgba(255, 255, 255, 0.22) 0%, transparent 45%),
+                radial-gradient(circle at 75% 70%, rgba(255, 255, 255, 0.14) 0%, transparent 45%);
+        }
+        .rec-card-visual::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.3) 100%);
+        }
+        .rec-card-visual .deco-circle {
+            position: absolute; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.07);
+            pointer-events: none;
+        }
+        .rec-card-visual .deco-circle.c1 { width: 90px; height: 90px; top: -25px; right: -15px; }
+        .rec-card-visual .deco-circle.c2 { width: 55px; height: 55px; bottom: -15px; left: -10px; }
+        .rec-card-visual .deco-circle.c3 { width: 30px; height: 30px; top: 35%; right: 18%; background: rgba(255,255,255,0.05); }
+        .rec-card-visual .emoji {
+            position: relative; z-index: 1;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+            animation: floatEmoji 3s ease-in-out infinite;
+        }
+        .rec-card-visual .bg-emoji {
+            position: absolute; font-size: 120px; opacity: 0.08;
+            z-index: 0; pointer-events: none;
+        }
+        @keyframes floatEmoji {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .rec-card-body { padding: 16px 18px 18px; }
         .rec-card-category {
-            display: inline-block; font-size: 11px; padding: 2px 8px;
-            background: rgba(255,255,255,0.08); border-radius: 4px;
-            color: var(--subtext-color); margin-bottom: 8px;
+            display: inline-block; font-size: 11px; padding: 3px 12px;
+            background: var(--accent-soft); border-radius: var(--radius-pill);
+            color: var(--accent-color); margin-bottom: 10px; font-weight: 600;
+            letter-spacing: 0.3px;
         }
-        .rec-card-title { font-size: 17px; font-weight: 700; color: var(--text-color); margin-bottom: 6px; }
-        .rec-card-text { color: var(--text-color); font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+        .rec-card-title {
+            font-size: 18px; font-weight: 700; color: var(--text-color);
+            margin-bottom: 6px; letter-spacing: -0.3px;
+        }
+        .rec-card-text {
+            color: var(--text-color); font-size: 14px; line-height: 1.6;
+            margin-bottom: 10px; opacity: 0.88;
+        }
         .rec-card-tips {
             font-size: 12px; color: var(--subtext-color); line-height: 1.5;
-            padding: 8px 12px; background: rgba(0,0,0,0.15); border-radius: 8px;
-            margin-bottom: 10px;
+            padding: 10px 14px; background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px; margin-bottom: 8px;
+            border-left: 2px solid var(--accent-color);
         }
-        .rec-card-tips strong { color: var(--accent-color); }
-        .rec-card-action {
-            display: block; width: 100%; padding: 12px; text-align: center;
-            background: var(--accent-color); color: #fff; text-decoration: none;
-            border: none; border-radius: var(--radius); font-size: 14px;
-            font-weight: 600; cursor: pointer; transition: opacity 0.2s;
-        }
-        .rec-card-action:hover { opacity: 0.85; }
+        .rec-card-tips strong { color: var(--accent-color); font-weight: 600; }
 
-        /* 输入区域 */
-        .input-area {
-            display: flex; gap: 8px; padding: 12px 16px;
-            background: var(--card-color); border-top: 1px solid rgba(255,255,255,0.05);
-            transition: background 0.5s ease;
+        .rec-card-meta {
+            display: flex; gap: 12px; margin-bottom: 12px;
+            font-size: 12px; color: var(--subtext-color);
         }
-        .input-area input {
-            flex: 1; padding: 12px 16px; border: 2px solid rgba(255,255,255,0.08);
-            border-radius: 22px; font-size: 15px; background: rgba(0,0,0,0.2);
-            color: var(--text-color); transition: border 0.2s;
+        .rec-card-meta span { display: flex; align-items: center; gap: 3px; }
+
+        .rec-card-action {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 14px; text-align: center;
+            background: var(--accent-color); color: #fff; text-decoration: none;
+            border: none; border-radius: var(--radius-pill); font-size: 15px;
+            font-weight: 600; cursor: pointer;
+            transition: all 0.2s var(--ease-smooth);
         }
-        .input-area input::placeholder { color: var(--subtext-color); }
-        .input-area input:focus { outline: none; border-color: var(--accent-color); }
-        .input-area button {
+        .rec-card-action:active { transform: scale(0.97); }
+        .rec-card-action:hover { opacity: 0.92; box-shadow: 0 4px 20px var(--accent-soft); }
+
+        /* Input bar — refined glassmorphism */
+        .input-bar {
+            position: sticky; bottom: 0; z-index: 100;
+            background: var(--blur-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+            padding: 10px 16px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        }
+        .quick-actions {
+            display: flex; gap: 7px; margin-bottom: 10px;
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .quick-actions::-webkit-scrollbar { display: none; }
+        .quick-btn {
+            flex-shrink: 0; padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-pill); background: rgba(255, 255, 255, 0.04);
+            color: var(--subtext-color); font-size: 13px; cursor: pointer;
+            transition: all 0.2s var(--ease-smooth); font-family: inherit;
+        }
+        .quick-btn:active { transform: scale(0.93); }
+        .quick-btn:hover { border-color: var(--accent-color); color: var(--accent-color); background: var(--accent-soft); }
+
+        .input-row { display: flex; gap: 8px; align-items: center; }
+        .input-row input {
+            flex: 1; padding: 12px 18px;
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-pill); font-size: 15px;
+            background: rgba(255, 255, 255, 0.04); color: var(--text-color);
+            transition: all 0.25s ease; font-family: inherit;
+        }
+        .input-row input::placeholder { color: var(--subtext-color); }
+        .input-row input:focus {
+            outline: none; border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .send-btn {
             width: 44px; height: 44px; border: none; border-radius: 50%;
             background: var(--accent-color); color: #fff; font-size: 18px;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: transform 0.2s, opacity 0.2s; flex-shrink: 0;
+            transition: all 0.2s var(--ease-spring); flex-shrink: 0;
+            box-shadow: 0 2px 16px var(--accent-soft);
         }
-        .input-area button:hover { transform: scale(1.05); }
-        .input-area button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .send-btn:active { transform: scale(0.88); }
+        .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        /* 快捷操作 */
-        .quick-actions {
-            display: flex; gap: 8px; padding: 0 16px 10px;
-            background: var(--card-color); flex-wrap: wrap;
-            transition: background 0.5s ease;
+        /* Breathing circle loader — Calm-inspired */
+        .typing-bubble {
+            align-self: flex-start;
+            padding: 16px 20px;
+            animation: msgIn 0.3s ease;
         }
-        .quick-btn {
-            padding: 6px 14px; border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px; background: transparent; color: var(--subtext-color);
-            font-size: 13px; cursor: pointer; transition: all 0.2s;
+        .breathing-circle {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 2px solid var(--accent-color);
+            position: relative;
+            animation: breathe 2s ease-in-out infinite;
         }
-        .quick-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+        .breathing-circle::after {
+            content: ''; position: absolute; inset: -6px;
+            border-radius: 50%; border: 1px solid var(--accent-color);
+            opacity: 0.3;
+            animation: breatheRing 2s ease-in-out infinite;
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(0.75); opacity: 0.6; }
+            50% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes breatheRing {
+            0%, 100% { transform: scale(0.8); opacity: 0.1; }
+            50% { transform: scale(1.15); opacity: 0.3; }
+        }
 
-        /* 加载动画 */
-        .typing-indicator {
-            display: flex; gap: 4px; padding: 12px 16px;
-            background: var(--card-color); border-radius: 18px;
-            border-bottom-left-radius: 4px; align-self: flex-start;
-            animation: fadeInUp 0.3s ease;
+        /* Date separator */
+        .date-sep {
+            text-align: center; font-size: 12px; color: var(--subtext-color);
+            margin: 8px 0; font-weight: 500;
+            position: relative;
         }
-        .typing-indicator span {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: var(--subtext-color);
-            animation: typingDot 1.4s infinite ease-in-out;
-        }
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes typingDot {
-            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-            30% { transform: translateY(-6px); opacity: 1; }
+        .date-sep::before, .date-sep::after {
+            content: ''; display: inline-block; width: 30px; height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+            vertical-align: middle; margin: 0 10px;
         }
 
         .hidden { display: none !important; }
+
+        /* Page transition */
+        .page-enter { animation: pageIn 0.5s var(--ease-smooth); }
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Shake animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* Streaming text cursor */
+        .streaming-cursor {
+            display: inline-block; width: 2px; height: 1em;
+            background: currentColor; margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blink 0.8s steps(2) infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
+    <div class="ambient-glow"></div>
+    <div class="ambient-glow-2"></div>
     <div class="container">
-        <!-- ===== Onboarding 页面 ===== -->
+        <!-- ===== Onboarding (3-step flow) ===== -->
         <div id="onboarding" class="onboarding">
-            <div class="logo">
-                <h1>OneDayReco</h1>
-                <p>你的私人活动搭子</p>
+            <!-- Progress dots -->
+            <div class="progress-dots">
+                <div class="progress-dot active" id="dot1"></div>
+                <div class="progress-dot" id="dot2"></div>
+                <div class="progress-dot" id="dot3"></div>
             </div>
 
-            <div class="form-group">
-                <label>选一下你的 MBTI</label>
-                <div class="mbti-grid" id="mbtiGrid"></div>
-            </div>
+            <div class="step-container">
+                <!-- Step 1: MBTI Selection -->
+                <div class="step active" id="step1">
+                    <div class="logo">
+                        <div class="logo-icon" id="logoIcon">✨</div>
+                        <h1>OneDayReco</h1>
+                        <p id="logoSubtitle">你的私人活动搭子</p>
+                    </div>
+                    <div class="step-title">先认识一下</div>
+                    <div class="step-subtitle">选一下你的 MBTI，我来匹配你的搭子</div>
+                    <div class="mbti-grid" id="mbtiGrid"></div>
+                    <div id="mbtiRevealContainer"></div>
+                    <button class="btn-pill btn-primary" id="step1Next" onclick="goToStep(2)" disabled>下一步</button>
+                </div>
 
-            <div class="form-group">
-                <label>社交频率偏好</label>
-                <select class="form-select" id="socialFreq">
-                    <option value="喜欢独处，偶尔社交">喜欢独处，偶尔社交</option>
-                    <option value="每周社交1-2次">每周社交1-2次</option>
-                    <option value="经常和朋友出去玩">经常和朋友出去玩</option>
-                </select>
-            </div>
+                <!-- Step 2: Preferences (large cards) -->
+                <div class="step" id="step2">
+                    <div class="step-title" id="step2Title">你的偏好</div>
+                    <div class="step-subtitle" id="step2Subtitle">让搭子更懂你</div>
 
-            <div class="form-group">
-                <label>预算范围</label>
-                <select class="form-select" id="budget">
-                    <option value="0-50元">0-50元</option>
-                    <option value="0-100元" selected>0-100元</option>
-                    <option value="0-200元">0-200元</option>
-                    <option value="不限">不限</option>
-                </select>
-            </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display:block; font-weight:600; margin-bottom:12px; font-size:14px; color:var(--text-color); letter-spacing:0.3px;">
+                            <span class="label-icon" id="socialIcon">👋</span> <span id="socialLabel">社交频率偏好</span>
+                        </label>
+                        <div class="option-cards" id="socialCards"></div>
+                    </div>
 
-            <div class="form-group">
-                <label>其他偏好（选填）</label>
-                <input type="text" class="form-input" id="notes" placeholder="如：怕人多、喜欢安静的地方...">
-            </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display:block; font-weight:600; margin-bottom:12px; font-size:14px; color:var(--text-color); letter-spacing:0.3px;">
+                            <span class="label-icon" id="budgetIcon">💰</span> <span id="budgetLabel">预算范围</span>
+                        </label>
+                        <div class="option-cards" id="budgetCards"></div>
+                    </div>
 
-            <button class="btn-primary" id="startBtn" onclick="startApp()">开始</button>
+                    <div class="btn-row">
+                        <button class="btn-pill btn-secondary" id="step2Back" onclick="goToStep(1)">返回</button>
+                        <button class="btn-pill btn-primary" id="step2Next" onclick="goToStep(3)" disabled>下一步</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Notes -->
+                <div class="step" id="step3">
+                    <div class="step-title" id="step3Title">还有什么？</div>
+                    <div class="step-subtitle" id="step3Subtitle">告诉搭子更多关于你的事</div>
+                    <textarea class="form-input" id="notes" placeholder="" id="notesInput"></textarea>
+                    <div class="btn-row">
+                        <button class="btn-pill btn-secondary" onclick="goToStep(2)">返回</button>
+                        <button class="btn-pill btn-primary" onclick="startApp()">开始</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- ===== 主界面 ===== -->
+        <!-- ===== Main App ===== -->
         <div id="mainApp" class="main-app">
-            <!-- 互动仔头部 -->
             <div class="companion-header">
                 <div class="companion-avatar" id="companionAvatar">🐰</div>
                 <div class="companion-info">
                     <div class="companion-name" id="companionName">小暖</div>
-                    <div class="companion-status"><span class="dot"></span>在线</div>
+                    <div class="companion-status"><span class="dot"></span><span id="companionStatus">在线</span></div>
                 </div>
                 <button class="reset-btn" onclick="resetApp()">重置</button>
             </div>
 
-            <!-- 聊天区域 -->
             <div class="chat-area" id="chatArea"></div>
 
-            <!-- 快捷操作 -->
-            <div class="quick-actions" id="quickActions">
-                <button class="quick-btn" onclick="sendQuickMessage('推荐个活动')">推荐个活动</button>
-                <button class="quick-btn" onclick="sendQuickMessage('不想出门')">不想出门</button>
-                <button class="quick-btn" onclick="sendQuickMessage('换个推荐')">换个推荐</button>
-                <button class="quick-btn" onclick="sendQuickMessage('今天天气怎么样')">今天天气怎么样</button>
-            </div>
-
-            <!-- 输入区域 -->
-            <div class="input-area">
-                <input type="text" id="chatInput" placeholder="跟互动仔聊聊..."
-                    onkeydown="if(event.key==='Enter')sendMessage()">
-                <button onclick="sendMessage()" id="sendBtn">➤</button>
+            <div class="input-bar">
+                <div class="quick-actions" id="quickActions"></div>
+                <div class="input-row">
+                    <input type="text" id="chatInput" placeholder="跟搭子聊聊..."
+                        onkeydown="if(event.key==='Enter')sendMessage()">
+                    <button class="send-btn" onclick="sendMessage()" id="sendBtn">➤</button>
+                </div>
             </div>
         </div>
     </div>
@@ -295,8 +633,11 @@
         let currentUser = null;
         let chatHistory = [];
         let isWaiting = false;
+        let currentStep = 1;
+        let selectedSocial = null;
+        let selectedBudget = null;
 
-        // MBTI 16 型
+        // ===== MBTI 16 types =====
         const mbtiTypes = [
             'INTJ','INTP','ENTJ','ENTP',
             'INFJ','INFP','ENFJ','ENFP',
@@ -304,92 +645,479 @@
             'ISTP','ISFP','ESTP','ESFP'
         ];
 
-        // 渲染 MBTI 选择器
+        // ===== Theme map =====
+        const themeMap = {
+            "INTJ": {"colors": {"bg": "#1a1a2e", "bg2": "#11101e", "card": "rgba(233,69,96,0.06)", "cardSolid": "#1e1e35", "accent": "#e94560", "accentSoft": "rgba(233,69,96,0.12)", "accentGrad": "linear-gradient(135deg, #e94560, #ff6b8a)", "text": "#eee", "subtext": "#888"}, "radius": "8px", "avatar": "🦉", "name": "小策略"},
+            "INTP": {"colors": {"bg": "#1e1e2e", "bg2": "#181828", "card": "rgba(137,180,250,0.06)", "cardSolid": "#26263a", "accent": "#89b4fa", "accentSoft": "rgba(137,180,250,0.12)", "accentGrad": "linear-gradient(135deg, #89b4fa, #b4befa)", "text": "#cdd6f4", "subtext": "#888"}, "radius": "12px", "avatar": "🤖", "name": "小逻辑"},
+            "ENTJ": {"colors": {"bg": "#0f0f1a", "bg2": "#0a0a14", "card": "rgba(0,217,255,0.06)", "cardSolid": "#1a1a2e", "accent": "#00d9ff", "accentSoft": "rgba(0,217,255,0.12)", "accentGrad": "linear-gradient(135deg, #00d9ff, #00a8cc)", "text": "#eee", "subtext": "#999"}, "radius": "4px", "avatar": "🐯", "name": "小队长"},
+            "ENTP": {"colors": {"bg": "#1a1520", "bg2": "#14101a", "card": "rgba(255,121,198,0.06)", "cardSolid": "#241e30", "accent": "#ff79c6", "accentSoft": "rgba(255,121,198,0.12)", "accentGrad": "linear-gradient(135deg, #ff79c6, #d4a5d4)", "text": "#eee", "subtext": "#999"}, "radius": "12px", "avatar": "🦊", "name": "小点子"},
+            "INFJ": {"colors": {"bg": "#1c1726", "bg2": "#16121f", "card": "rgba(196,167,231,0.06)", "cardSolid": "#2a2339", "accent": "#c4a7e7", "accentSoft": "rgba(196,167,231,0.12)", "accentGrad": "linear-gradient(135deg, #c4a7e7, #d4b8f0)", "text": "#e0def4", "subtext": "#999"}, "radius": "20px", "avatar": "🦌", "name": "小洞察"},
+            "INFP": {"colors": {"bg": "#2a1f2e", "bg2": "#221a26", "card": "rgba(246,193,119,0.06)", "cardSolid": "#352840", "accent": "#f6c177", "accentSoft": "rgba(246,193,119,0.12)", "accentGrad": "linear-gradient(135deg, #f6c177, #f0d0a0)", "text": "#f0e6e6", "subtext": "#b0a0a0"}, "radius": "24px", "avatar": "🐰", "name": "小暖"},
+            "ENFJ": {"colors": {"bg": "#2a1f1a", "bg2": "#221a16", "card": "rgba(255,158,100,0.06)", "cardSolid": "#3a2a22", "accent": "#ff9e64", "accentSoft": "rgba(255,158,100,0.12)", "accentGrad": "linear-gradient(135deg, #ff9e64, #ffb88a)", "text": "#fff5ee", "subtext": "#c0a090"}, "radius": "20px", "avatar": "🐶", "name": "小暖阳"},
+            "ENFP": {"colors": {"bg": "#2a2418", "bg2": "#221e12", "card": "rgba(255,224,102,0.06)", "cardSolid": "#353020", "accent": "#ffe066", "accentSoft": "rgba(255,224,102,0.12)", "accentGrad": "linear-gradient(135deg, #ffe066, #fff0a0)", "text": "#fffbe6", "subtext": "#c0b860"}, "radius": "24px", "avatar": "🌻", "name": "小太阳"},
+            "ISTJ": {"colors": {"bg": "#1a1e2a", "bg2": "#141822", "card": "rgba(108,172,228,0.06)", "cardSolid": "#242a3a", "accent": "#6cace4", "accentSoft": "rgba(108,172,228,0.12)", "accentGrad": "linear-gradient(135deg, #6cace4, #8ac4f0)", "text": "#dde", "subtext": "#889"}, "radius": "6px", "avatar": "🦅", "name": "小稳"},
+            "ISFJ": {"colors": {"bg": "#241f2a", "bg2": "#1e1a24", "card": "rgba(212,165,212,0.06)", "cardSolid": "#2e2839", "accent": "#d4a5d4", "accentSoft": "rgba(212,165,212,0.12)", "accentGrad": "linear-gradient(135deg, #d4a5d4, #e4c0e4)", "text": "#f0e6f0", "subtext": "#a090a0"}, "radius": "20px", "avatar": "🕊️", "name": "小护"},
+            "ESTJ": {"colors": {"bg": "#1a2a1f", "bg2": "#14221a", "card": "rgba(92,214,133,0.06)", "cardSolid": "#243a2e", "accent": "#5cd685", "accentSoft": "rgba(92,214,133,0.12)", "accentGrad": "linear-gradient(135deg, #5cd685, #7ae8a0)", "text": "#e0f0e0", "subtext": "#90b090"}, "radius": "4px", "avatar": "🦬", "name": "小执行"},
+            "ESFJ": {"colors": {"bg": "#2a1f20", "bg2": "#221a1c", "card": "rgba(255,138,128,0.06)", "cardSolid": "#3a282a", "accent": "#ff8a80", "accentSoft": "rgba(255,138,128,0.12)", "accentGrad": "linear-gradient(135deg, #ff8a80, #ffa8a0)", "text": "#fff0ee", "subtext": "#c0a0a0"}, "radius": "20px", "avatar": "🐝", "name": "小贴心"},
+            "ISTP": {"colors": {"bg": "#1e282e", "bg2": "#18222a", "card": "rgba(115,201,145,0.06)", "cardSolid": "#283440", "accent": "#73c991", "accentSoft": "rgba(115,201,145,0.12)", "accentGrad": "linear-gradient(135deg, #73c991, #93d9a8)", "text": "#dde8e0", "subtext": "#889"}, "radius": "8px", "avatar": "🐱", "name": "小酷"},
+            "ISFP": {"colors": {"bg": "#26201e", "bg2": "#201a18", "card": "rgba(234,143,143,0.06)", "cardSolid": "#332a28", "accent": "#ea8f8f", "accentSoft": "rgba(234,143,143,0.12)", "accentGrad": "linear-gradient(135deg, #ea8f8f, #f0a8a8)", "text": "#f0e8e6", "subtext": "#a09898"}, "radius": "24px", "avatar": "🦋", "name": "小雅"},
+            "ESTP": {"colors": {"bg": "#2a2018", "bg2": "#221a12", "card": "rgba(255,183,77,0.06)", "cardSolid": "#3a2e22", "accent": "#ffb74d", "accentSoft": "rgba(255,183,77,0.12)", "accentGrad": "linear-gradient(135deg, #ffb74d, #ffcc77)", "text": "#fff5e6", "subtext": "#c0a878"}, "radius": "12px", "avatar": "🐆", "name": "小冲"},
+            "ESFP": {"colors": {"bg": "#2a2518", "bg2": "#221e12", "card": "rgba(255,213,79,0.06)", "cardSolid": "#353022", "accent": "#ffd54f", "accentSoft": "rgba(255,213,79,0.12)", "accentGrad": "linear-gradient(135deg, #ffd54f, #ffe077)", "text": "#fffce6", "subtext": "#c0b870"}, "radius": "24px", "avatar": "🦜", "name": "小闪耀"},
+        };
+
+        // ===== MBTI-personalized onboarding form content =====
+        const mbtiFormMap = {
+            "INTJ": {
+                hint: "冷静理性，话少但到位。帮你规划好一切。",
+                social: { label: "社交频率偏好", icon: "🤝", options: ["不需要社交，专注做事", "必要时社交", "每周社交1-2次", "频繁社交"] },
+                budget: { label: "预算范围", icon: "💰", options: ["0-50元", "0-100元", "0-200元", "不限"] },
+                notes: { label: "约束条件（选填）", icon: "📋", placeholder: "如：通勤时间上限、必须提前预约的排除..." }
+            },
+            "INTP": {
+                hint: "理性但随性，不施压。给你信息让你自己选。",
+                social: { label: "你多久想见一次人？", icon: "🤝", options: ["一个人挺好", "偶尔见见朋友", "每周聚一次", "想见就见"] },
+                budget: { label: "花多少钱合适？", icon: "💰", options: ["越省越好", "差不多就行", "看价值", "不限"] },
+                notes: { label: "有什么偏好的？", icon: "📝", placeholder: "比如喜欢安静、对什么感兴趣..." }
+            },
+            "ENTJ": {
+                hint: "强势热情有计划。直接说安排。",
+                social: { label: "社交频率偏好", icon: "🤝", options: ["每周1-2次高效社交", "每周3-4次", "每天都要社交", "不限"] },
+                budget: { label: "预算范围", icon: "💰", options: ["0-100元", "0-200元", "0-500元", "不限"] },
+                notes: { label: "特殊要求", icon: "📋", placeholder: "如：时间安排、效率优先..." }
+            },
+            "ENTP": {
+                hint: "好奇活泼，点子多。用好奇心勾引你。",
+                social: { label: "你想多久出去嗨一次？", icon: "🎉", options: ["看心情", "每周几次", "经常", "每天都要"] },
+                budget: { label: "花钱风格？", icon: "💰", options: ["省着点", "看值不值", "随意", "不限"] },
+                notes: { label: "想尝试什么新的？", icon: "💡", placeholder: "比如没玩过的、刺激的、有意思的..." }
+            },
+            "INFJ": {
+                hint: "温柔但有洞察力。先共情再建议。",
+                social: { label: "你多久想见一次朋友？", icon: "💜", options: ["一个人待着也挺好", "偶尔深度交流", "每周见1-2次", "经常但要有质量"] },
+                budget: { label: "预算范围", icon: "💰", options: ["0-50元", "0-100元", "0-200元", "不限"] },
+                notes: { label: "有什么让你在意或舒服的？", icon: "🌸", placeholder: "比如喜欢安静的地方、需要意义感..." }
+            },
+            "INFP": {
+                hint: "温柔、灵活、关心你的感受。不想动也没事。",
+                social: { label: "你想多久见一次朋友？", icon: "💜", options: ["一个人也挺好", "偶尔见见就好", "每周聚一次", "看心情"] },
+                budget: { label: "花多少比较舒服？", icon: "💰", options: ["尽量省", "差不多就好", "看心情", "不限"] },
+                notes: { label: "有什么让你特别在意或舒服的？", icon: "🌸", placeholder: "比如喜欢安静的地方、人多会焦虑、喜欢有意义的体验..." }
+            },
+            "ENFJ": {
+                hint: "热情温柔有感染力。暖心地拉你出去。",
+                social: { label: "你想多久和朋友聚一次？", icon: "🤗", options: ["每周1-2次", "每周几次", "经常和朋友一起", "越多越好"] },
+                budget: { label: "预算范围", icon: "💰", options: ["0-100元", "0-200元", "0-300元", "不限"] },
+                notes: { label: "有什么让你开心或舒服的？", icon: "☀️", placeholder: "比如喜欢热闹、喜欢照顾朋友、喜欢有意义的活动..." }
+            },
+            "ENFP": {
+                hint: "热情活泼有感染力。用兴奋感感染你。",
+                social: { label: "你想多久出去嗨一次？", icon: "🎉", options: ["看心情", "每周几次", "经常", "每天都要出门"] },
+                budget: { label: "花钱风格？", icon: "💰", options: ["省着点", "看心情", "开心就好", "不限"] },
+                notes: { label: "有什么让你兴奋的？", icon: "✨", placeholder: "比如想尝试新东西、喜欢有趣的活动、人多也开心..." }
+            },
+            "ISTJ": {
+                hint: "稳重务实，有计划。靠谱的老友。",
+                social: { label: "社交频率偏好", icon: "🤝", options: ["不需要太多社交", "每周1-2次", "定期社交", "按计划来"] },
+                budget: { label: "预算范围", icon: "💰", options: ["0-50元", "0-100元", "0-200元", "不限"] },
+                notes: { label: "实际需求或限制", icon: "📋", placeholder: "如：时间安排、交通方便、需要预约..." }
+            },
+            "ISFJ": {
+                hint: "温柔细心，先关心再建议。注意到你的疲惫。",
+                social: { label: "你多久想见一次朋友？", icon: "💜", options: ["一个人休息也挺好", "偶尔见见", "每周聚一次", "经常但不要太多"] },
+                budget: { label: "花多少比较合适？", icon: "💰", options: ["尽量省", "0-100元", "0-200元", "不限"] },
+                notes: { label: "有什么让你舒服或安心的？", icon: "🌸", placeholder: "比如喜欢安静、怕人多、需要熟悉的环境..." }
+            },
+            "ESTJ": {
+                hint: "直接高效有计划。不废话直接安排。",
+                social: { label: "社交频率偏好", icon: "🤝", options: ["按需社交", "每周1-2次", "每周3-4次", "频繁社交"] },
+                budget: { label: "预算范围", icon: "💰", options: ["0-100元", "0-200元", "0-500元", "不限"] },
+                notes: { label: "特殊要求", icon: "📋", placeholder: "如：时间效率、交通便利..." }
+            },
+            "ESFJ": {
+                hint: "热情温柔关心人。热心地照顾你。",
+                social: { label: "你想多久和朋友聚一次？", icon: "🤗", options: ["每周1-2次", "每周几次", "经常和朋友一起", "越多越好"] },
+                budget: { label: "预算范围", icon: "💰", options: ["0-100元", "0-200元", "0-300元", "不限"] },
+                notes: { label: "有什么让你开心或舒服的？", icon: "☀️", placeholder: "比如喜欢和朋友一起、喜欢照顾人、喜欢温馨的活动..." }
+            },
+            "ISTP": {
+                hint: "冷静随性，不废话。给信息让你自己决定。",
+                social: { label: "你多久想见一次人？", icon: "🤝", options: ["一个人挺好", "偶尔", "每周一次", "看心情"] },
+                budget: { label: "花多少？", icon: "💰", options: ["越省越好", "差不多就行", "看情况", "不限"] },
+                notes: { label: "有什么偏好？", icon: "📝", placeholder: "比如喜欢动手、喜欢独处、不喜欢被安排..." }
+            },
+            "ISFP": {
+                hint: "温柔随性，不施压。轻声细语地建议。",
+                social: { label: "你想多久见一次朋友？", icon: "💜", options: ["一个人也挺好", "偶尔见见", "每周一次", "看心情"] },
+                budget: { label: "花多少比较舒服？", icon: "💰", options: ["尽量省", "差不多就好", "看心情", "不限"] },
+                notes: { label: "有什么让你舒服或安心的？", icon: "🌸", placeholder: "比如喜欢安静、喜欢美的东西、不喜欢被催..." }
+            },
+            "ESTP": {
+                hint: "热情直接行动派。直接喊你出去。",
+                social: { label: "你想多久出去嗨一次？", icon: "🎉", options: ["看心情", "每周几次", "经常", "每天都要"] },
+                budget: { label: "花钱风格？", icon: "💰", options: ["省着点", "差不多就行", "开心就好", "不限"] },
+                notes: { label: "想玩什么刺激的？", icon: "🔥", placeholder: "比如想尝试新的、刺激的、有趣的..." }
+            },
+            "ESFP": {
+                hint: "热情活泼有感染力。用兴奋感拉你出门。",
+                social: { label: "你想多久出去嗨一次？", icon: "🎉", options: ["看心情", "每周几次", "经常", "每天都要出门"] },
+                budget: { label: "花钱风格？", icon: "💰", options: ["省着点", "看心情", "开心就好", "不限"] },
+                notes: { label: "有什么让你兴奋的？", icon: "✨", placeholder: "比如喜欢热闹、喜欢有趣的活动、人多也开心..." }
+            },
+        };
+
+        // ===== MBTI-personalized persona content (quick actions, status, placeholder, step titles) =====
+        const mbtiPersonaMap = {
+            "INTJ": {
+                quickActions: ["推荐活动", "时间安排", "换个方案", "查路线"],
+                status: "已就绪", placeholder: "说点什么…",
+                step1Title: "先认识一下", step1Sub: "选一下你的 MBTI，我来匹配你的搭子",
+                step2Title: "你的偏好", step2Sub: "让搭子更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉搭子更多关于你的事"
+            },
+            "INTP": {
+                quickActions: ["推荐个活动", "不想动", "换一个", "随便看看"],
+                status: "在线", placeholder: "随便聊聊…",
+                step1Title: "先认识一下", step1Sub: "选一下你的 MBTI，我来匹配你的搭子",
+                step2Title: "你的偏好", step2Sub: "让搭子更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉搭子更多关于你的事"
+            },
+            "ENTJ": {
+                quickActions: ["推荐活动", "安排今晚", "换方案", "查路线"],
+                status: "待命中", placeholder: "直接说…",
+                step1Title: "快速开始", step1Sub: "选 MBTI，我来安排",
+                step2Title: "你的偏好", step2Sub: "快速填一下",
+                step3Title: "补充信息", step3Sub: "还有什么要告诉我的"
+            },
+            "ENTP": {
+                quickActions: ["推荐个活动", "来点有意思的", "换个推荐", "有什么新的"],
+                status: "在线", placeholder: "聊点什么…",
+                step1Title: "嘿来认识一下", step1Sub: "选一下你的 MBTI，看看我们合不合拍",
+                step2Title: "你的偏好", step2Sub: "让我更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉我更多有趣的事"
+            },
+            "INFJ": {
+                quickActions: ["推荐个活动", "今天有点累", "换个推荐", "安静一点的"],
+                status: "在线", placeholder: "跟我说说…",
+                step1Title: "先认识一下", step1Sub: "选一下你的 MBTI，我来匹配你的搭子",
+                step2Title: "你的偏好", step2Sub: "让搭子更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉搭子更多关于你的事"
+            },
+            "INFP": {
+                quickActions: ["推荐个活动", "不想出门", "换个推荐", "安静一点的"],
+                status: "在线", placeholder: "跟搭子聊聊…",
+                step1Title: "先认识一下", step1Sub: "选一下你的 MBTI，我来匹配你的搭子",
+                step2Title: "你的偏好", step2Sub: "让搭子更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉搭子更多关于你的事"
+            },
+            "ENFJ": {
+                quickActions: ["推荐个活动", "出去走走吧", "换个推荐", "和朋友一起的"],
+                status: "在线", placeholder: "跟我说说…",
+                step1Title: "先认识一下", step1Sub: "选一下你的 MBTI，我来匹配你的搭子",
+                step2Title: "你的偏好", step2Sub: "让搭子更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉搭子更多关于你的事"
+            },
+            "ENFP": {
+                quickActions: ["推荐个活动", "出去嗨", "换个推荐", "来点新鲜的"],
+                status: "在线", placeholder: "聊点什么…",
+                step1Title: "嘿来认识一下", step1Sub: "选一下你的 MBTI，看看我们合不合拍",
+                step2Title: "你的偏好", step2Sub: "让我更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉我更多有趣的事"
+            },
+            "ISTJ": {
+                quickActions: ["推荐活动", "时间安排", "换个方案", "查路线"],
+                status: "已就绪", placeholder: "说点什么…",
+                step1Title: "先认识一下", step1Sub: "选一下你的 MBTI，我来匹配你的搭子",
+                step2Title: "你的偏好", step2Sub: "让搭子更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉搭子更多关于你的事"
+            },
+            "ISFJ": {
+                quickActions: ["推荐个活动", "今天有点累", "换个推荐", "安静一点的"],
+                status: "在线", placeholder: "跟我说说…",
+                step1Title: "先认识一下", step1Sub: "选一下你的 MBTI，我来匹配你的搭子",
+                step2Title: "你的偏好", step2Sub: "让搭子更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉搭子更多关于你的事"
+            },
+            "ESTJ": {
+                quickActions: ["推荐活动", "安排今晚", "换方案", "查路线"],
+                status: "待命中", placeholder: "直接说…",
+                step1Title: "快速开始", step1Sub: "选 MBTI，我来安排",
+                step2Title: "你的偏好", step2Sub: "快速填一下",
+                step3Title: "补充信息", step3Sub: "还有什么要告诉我的"
+            },
+            "ESFJ": {
+                quickActions: ["推荐个活动", "出去走走吧", "换个推荐", "和朋友一起的"],
+                status: "在线", placeholder: "跟我说说…",
+                step1Title: "先认识一下", step1Sub: "选一下你的 MBTI，我来匹配你的搭子",
+                step2Title: "你的偏好", step2Sub: "让搭子更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉搭子更多关于你的事"
+            },
+            "ISTP": {
+                quickActions: ["推荐个活动", "不想动", "换一个", "随便看看"],
+                status: "在线", placeholder: "说点什么…",
+                step1Title: "先认识一下", step1Sub: "选一下你的 MBTI，我来匹配你的搭子",
+                step2Title: "你的偏好", step2Sub: "让搭子更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉搭子更多关于你的事"
+            },
+            "ISFP": {
+                quickActions: ["推荐个活动", "不想出门", "换个推荐", "安静一点的"],
+                status: "在线", placeholder: "跟搭子聊聊…",
+                step1Title: "先认识一下", step1Sub: "选一下你的 MBTI，我来匹配你的搭子",
+                step2Title: "你的偏好", step2Sub: "让搭子更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉搭子更多关于你的事"
+            },
+            "ESTP": {
+                quickActions: ["推荐个活动", "出去嗨", "换个推荐", "来点刺激的"],
+                status: "在线", placeholder: "聊点什么…",
+                step1Title: "嘿来认识一下", step1Sub: "选一下你的 MBTI，看看我们合不合拍",
+                step2Title: "你的偏好", step2Sub: "让我更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉我更多有趣的事"
+            },
+            "ESFP": {
+                quickActions: ["推荐个活动", "出去嗨", "换个推荐", "来点好玩的"],
+                status: "在线", placeholder: "聊点什么…",
+                step1Title: "嘿来认识一下", step1Sub: "选一下你的 MBTI，看看我们合不合拍",
+                step2Title: "你的偏好", step2Sub: "让我更懂你",
+                step3Title: "还有什么？", step3Sub: "告诉我更多有趣的事"
+            },
+        };
+
+        // ===== Category visual mapping =====
+        const categoryVisuals = {
+            "文化娱乐": { gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", emoji: "🎬" },
+            "户外自然": { gradient: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)", emoji: "🌿" },
+            "居家休闲": { gradient: "linear-gradient(135deg, #f6d365 0%, #fda085 100%)", emoji: "🛋️" },
+            "社交聚会": { gradient: "linear-gradient(135deg, #ff6a00 0%, #ee0979 100%)", emoji: "🎉" },
+            "运动健身": { gradient: "linear-gradient(135deg, #f12711 0%, #f5af19 100%)", emoji: "💪" },
+            "学习提升": { gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", emoji: "📚" },
+            "创意手工": { gradient: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", emoji: "🎨" },
+            "城市探索": { gradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", emoji: "🧭" },
+        };
+
+        // ===== Render MBTI grid =====
         const mbtiGrid = document.getElementById('mbtiGrid');
-        mbtiTypes.forEach(type => {
+        mbtiTypes.forEach((type, idx) => {
             const btn = document.createElement('button');
             btn.className = 'mbti-btn';
             btn.textContent = type;
+            btn.style.animation = `msgIn 0.35s var(--ease-spring) ${idx * 20}ms both`;
             btn.onclick = () => {
                 document.querySelectorAll('.mbti-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedMbti = type;
-                // 预览主题
-                applyThemePreview(selectedMbti);
+                applyTheme(selectedMbti);
+                applyPersona(selectedMbti);
+                showMbtiReveal(selectedMbti);
+                document.getElementById('step1Next').disabled = false;
             };
             mbtiGrid.appendChild(btn);
         });
 
-        // MBTI 主题预览映射（与后端一致）
-        const themeMap = {
-            "INTJ": {"colors": {"bg": "#1a1a2e", "card": "#16213e", "accent": "#e94560", "text": "#eee", "subtext": "#999"}, "radius": "4px", "avatar": "🦉", "name": "小策略"},
-            "INTP": {"colors": {"bg": "#1e1e2e", "card": "#2a2a3e", "accent": "#89b4fa", "text": "#cdd6f4", "subtext": "#888"}, "radius": "6px", "avatar": "🤖", "name": "小逻辑"},
-            "ENTJ": {"colors": {"bg": "#0f0f1a", "card": "#1a1a2e", "accent": "#00d9ff", "text": "#eee", "subtext": "#999"}, "radius": "0px", "avatar": "🐯", "name": "小队长"},
-            "ENTP": {"colors": {"bg": "#1a1520", "card": "#241e30", "accent": "#ff79c6", "text": "#eee", "subtext": "#999"}, "radius": "8px", "avatar": "🦊", "name": "小点子"},
-            "INFJ": {"colors": {"bg": "#1c1726", "card": "#2a2339", "accent": "#c4a7e7", "text": "#e0def4", "subtext": "#999"}, "radius": "16px", "avatar": "🦌", "name": "小洞察"},
-            "INFP": {"colors": {"bg": "#2a1f2e", "card": "#352840", "accent": "#f6c177", "text": "#f0e6e6", "subtext": "#b0a0a0"}, "radius": "20px", "avatar": "🐰", "name": "小暖"},
-            "ENFJ": {"colors": {"bg": "#2a1f1a", "card": "#3a2a22", "accent": "#ff9e64", "text": "#fff5ee", "subtext": "#c0a090"}, "radius": "16px", "avatar": "🐶", "name": "小暖阳"},
-            "ENFP": {"colors": {"bg": "#2a2418", "card": "#353020", "accent": "#ffe066", "text": "#fffbe6", "subtext": "#c0b860"}, "radius": "20px", "avatar": "🌻", "name": "小太阳"},
-            "ISTJ": {"colors": {"bg": "#1a1e2a", "card": "#242a3a", "accent": "#6cace4", "text": "#dde", "subtext": "#889"}, "radius": "4px", "avatar": "🦅", "name": "小稳"},
-            "ISFJ": {"colors": {"bg": "#241f2a", "card": "#2e2839", "accent": "#d4a5d4", "text": "#f0e6f0", "subtext": "#a090a0"}, "radius": "16px", "avatar": "🕊️", "name": "小护"},
-            "ESTJ": {"colors": {"bg": "#1a2a1f", "card": "#243a2e", "accent": "#5cd685", "text": "#e0f0e0", "subtext": "#90b090"}, "radius": "0px", "avatar": "🦬", "name": "小执行"},
-            "ESFJ": {"colors": {"bg": "#2a1f20", "card": "#3a282a", "accent": "#ff8a80", "text": "#fff0ee", "subtext": "#c0a0a0"}, "radius": "16px", "avatar": "🐝", "name": "小贴心"},
-            "ISTP": {"colors": {"bg": "#1e282e", "card": "#283440", "accent": "#73c991", "text": "#dde8e0", "subtext": "#889"}, "radius": "6px", "avatar": "🐱", "name": "小酷"},
-            "ISFP": {"colors": {"bg": "#26201e", "card": "#332a28", "accent": "#ea8f8f", "text": "#f0e8e6", "subtext": "#a09898"}, "radius": "20px", "avatar": "🦋", "name": "小雅"},
-            "ESTP": {"colors": {"bg": "#2a2018", "card": "#3a2e22", "accent": "#ffb74d", "text": "#fff5e6", "subtext": "#c0a878"}, "radius": "8px", "avatar": "🐆", "name": "小冲"},
-            "ESFP": {"colors": {"bg": "#2a2518", "card": "#353022", "accent": "#ffd54f", "text": "#fffce6", "subtext": "#c0b870"}, "radius": "20px", "avatar": "🦜", "name": "小闪耀"},
-        };
+        // ===== Show MBTI reveal card =====
+        function showMbtiReveal(mbti) {
+            const theme = themeMap[mbti];
+            const form = mbtiFormMap[mbti];
+            const container = document.getElementById('mbtiRevealContainer');
+            container.innerHTML = `
+                <div class="mbti-reveal">
+                    <span class="reveal-avatar">${theme.avatar}</span>
+                    <div class="reveal-name">${theme.name}</div>
+                    <div class="reveal-hint">${form.hint}</div>
+                </div>
+            `;
+        }
 
+        // ===== Step navigation =====
+        function goToStep(step) {
+            if (step === 2 && !selectedMbti) return;
+
+            // Update progress dots
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById('dot' + i);
+                dot.classList.remove('active', 'done');
+                if (i < step) dot.classList.add('done');
+                else if (i === step) dot.classList.add('active');
+            }
+
+            // Transition steps
+            const currentStepEl = document.getElementById('step' + currentStep);
+            const nextStepEl = document.getElementById('step' + step);
+
+            currentStepEl.style.animation = 'stepOut 0.3s var(--ease-smooth) forwards';
+            setTimeout(() => {
+                currentStepEl.classList.remove('active');
+                nextStepEl.classList.add('active');
+                nextStepEl.style.animation = 'stepIn 0.45s var(--ease-spring)';
+                currentStep = step;
+
+                if (step === 2) {
+                    updateFormForMbti(selectedMbti);
+                    const persona = mbtiPersonaMap[selectedMbti];
+                    if (persona) {
+                        document.getElementById('step2Title').textContent = persona.step2Title;
+                        document.getElementById('step2Subtitle').textContent = persona.step2Sub;
+                    }
+                }
+                if (step === 3) {
+                    const form = mbtiFormMap[selectedMbti];
+                    const persona = mbtiPersonaMap[selectedMbti];
+                    if (persona) {
+                        document.getElementById('step3Title').textContent = persona.step3Title;
+                        document.getElementById('step3Subtitle').textContent = persona.step3Sub;
+                    }
+                    document.getElementById('step3Subtitle').textContent = form.notes.label.replace('（选填）', '').replace('（选填）', '');
+                    document.getElementById('notes').placeholder = form.notes.placeholder;
+                }
+            }, 250);
+        }
+
+        // ===== Apply theme =====
         function applyTheme(mbti) {
             const theme = themeMap[mbti];
             if (!theme) return;
             const root = document.documentElement;
             root.style.setProperty('--bg-color', theme.colors.bg);
+            root.style.setProperty('--bg-grad-1', theme.colors.bg);
+            root.style.setProperty('--bg-grad-2', theme.colors.bg2);
             root.style.setProperty('--card-color', theme.colors.card);
+            root.style.setProperty('--card-solid', theme.colors.cardSolid);
             root.style.setProperty('--accent-color', theme.colors.accent);
+            root.style.setProperty('--accent-soft', theme.colors.accentSoft);
+            root.style.setProperty('--accent-grad', theme.colors.accentGrad || `linear-gradient(135deg, ${theme.colors.accent}, ${theme.colors.accent})`);
             root.style.setProperty('--text-color', theme.colors.text);
             root.style.setProperty('--subtext-color', theme.colors.subtext);
             root.style.setProperty('--radius', theme.radius);
         }
 
-        function applyThemePreview(mbti) {
-            applyTheme(mbti);
+        // ===== Personalize form for MBTI (step 2) =====
+        function updateFormForMbti(mbti) {
+            const form = mbtiFormMap[mbti];
+            if (!form) return;
+
+            // Social frequency
+            document.getElementById('socialLabel').textContent = form.social.label;
+            document.getElementById('socialIcon').textContent = form.social.icon;
+            const socialCards = document.getElementById('socialCards');
+            socialCards.innerHTML = '';
+            selectedSocial = null;
+            form.social.options.forEach((opt, idx) => {
+                const card = document.createElement('div');
+                card.className = 'option-card';
+                card.style.animation = `msgIn 0.35s var(--ease-spring) ${idx * 60}ms both`;
+                card.innerHTML = `<span class="card-icon">${form.social.icon}</span><span class="card-text">${opt}</span>`;
+                card.onclick = () => {
+                    socialCards.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedSocial = opt;
+                    checkStep2Ready();
+                };
+                socialCards.appendChild(card);
+            });
+
+            // Budget
+            document.getElementById('budgetLabel').textContent = form.budget.label;
+            document.getElementById('budgetIcon').textContent = form.budget.icon;
+            const budgetCards = document.getElementById('budgetCards');
+            budgetCards.innerHTML = '';
+            selectedBudget = null;
+            form.budget.options.forEach((opt, idx) => {
+                const card = document.createElement('div');
+                card.className = 'option-card';
+                card.style.animation = `msgIn 0.35s var(--ease-spring) ${(idx + 4) * 60}ms both`;
+                card.innerHTML = `<span class="card-icon">${form.budget.icon}</span><span class="card-text">${opt}</span>`;
+                card.onclick = () => {
+                    budgetCards.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedBudget = opt;
+                    checkStep2Ready();
+                };
+                budgetCards.appendChild(card);
+            });
         }
 
-        function startApp() {
-            if (!selectedMbti) { alert('先选一下你的 MBTI 吧'); return; }
+        function checkStep2Ready() {
+            document.getElementById('step2Next').disabled = !(selectedSocial && selectedBudget);
+        }
 
-            const socialFreq = document.getElementById('socialFreq').value;
-            const budget = document.getElementById('budget').value;
+        // ===== Apply persona content (quick actions, status, placeholder) =====
+        function applyPersona(mbti) {
+            const persona = mbtiPersonaMap[mbti];
+            if (!persona) return;
+
+            // Quick actions
+            const qaContainer = document.getElementById('quickActions');
+            qaContainer.innerHTML = '';
+            persona.quickActions.forEach(text => {
+                const btn = document.createElement('button');
+                btn.className = 'quick-btn';
+                btn.textContent = text;
+                btn.onclick = () => sendQuickMessage(text);
+                qaContainer.appendChild(btn);
+            });
+
+            // Companion status
+            document.getElementById('companionStatus').textContent = persona.status;
+
+            // Chat input placeholder
+            document.getElementById('chatInput').placeholder = persona.placeholder;
+
+            // Step titles
+            document.querySelector('#step1 .step-title').textContent = persona.step1Title;
+            document.querySelector('#step1 .step-subtitle').textContent = persona.step1Sub;
+            document.getElementById('step2Title').textContent = persona.step2Title;
+            document.getElementById('step2Subtitle').textContent = persona.step2Sub;
+            document.getElementById('step3Title').textContent = persona.step3Title;
+            document.getElementById('step3Subtitle').textContent = persona.step3Sub;
+        }
+
+        // ===== Start app =====
+        function startApp() {
             const notes = document.getElementById('notes').value;
 
             currentUser = {
                 user_id: 'user_' + Date.now(),
                 mbti: selectedMbti,
                 preferences: {
-                    social_frequency: socialFreq,
-                    budget: budget,
+                    social_frequency: selectedSocial,
+                    budget: selectedBudget,
                     notes: notes,
                 },
                 feedback_summary: ''
             };
 
-            // 应用主题
+            // Persist to localStorage
+            try {
+                localStorage.setItem('onedayreco_user', JSON.stringify({
+                    mbti: selectedMbti,
+                    social: selectedSocial,
+                    budget: selectedBudget,
+                    notes: notes
+                }));
+            } catch(e) {}
+
             applyTheme(selectedMbti);
+            applyPersona(selectedMbti);
             const theme = themeMap[selectedMbti];
 
-            // 更新互动仔信息
+            // Update companion info
             document.getElementById('companionAvatar').textContent = theme.avatar;
             document.getElementById('companionName').textContent = theme.name;
 
-            // 切换页面
-            document.getElementById('onboarding').classList.add('hidden');
-            document.getElementById('mainApp').style.display = 'flex';
+            // Page transition
+            const onb = document.getElementById('onboarding');
+            onb.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            onb.style.opacity = '0';
+            onb.style.transform = 'translateY(-20px)';
 
-            // 请求初始推荐
-            fetchRecommendations();
+            setTimeout(() => {
+                onb.classList.add('hidden');
+                const mainApp = document.getElementById('mainApp');
+                mainApp.style.display = 'flex';
+                mainApp.classList.add('page-enter');
+                fetchRecommendations();
+            }, 300);
         }
 
+        // ===== Fetch recommendations =====
         async function fetchRecommendations() {
             showTyping();
             try {
@@ -404,21 +1132,17 @@
                 const data = await response.json();
                 hideTyping();
 
-                // 显示互动仔开场白
-                if (data.agent_message) {
-                    addCompanionMessage(data.agent_message);
-                }
+                addDateSeparator();
 
-                // 显示推荐卡片
-                if (data.recommendations && data.recommendations.length > 0) {
-                    data.recommendations.forEach(rec => {
-                        addRecommendationCard(rec);
-                    });
-                }
-
-                // 记录到对话历史
                 if (data.agent_message) {
+                    streamMessage(data.agent_message);
                     chatHistory.push({ role: 'assistant', content: data.agent_message });
+                }
+
+                if (data.recommendations && data.recommendations.length > 0) {
+                    data.recommendations.forEach((rec, i) => {
+                        setTimeout(() => addRecommendationCard(rec), (data.agent_message ? data.agent_message.length * 30 + 200 : 0) + i * 200);
+                    });
                 }
             } catch (error) {
                 hideTyping();
@@ -426,16 +1150,15 @@
             }
         }
 
+        // ===== Send message =====
         function sendMessage() {
             if (isWaiting) return;
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
             if (!text) return;
-
             input.value = '';
             addUserMessage(text);
             chatHistory.push({ role: 'user', content: text });
-
             callChat(text);
         }
 
@@ -465,16 +1188,14 @@
                 const data = await response.json();
                 hideTyping();
 
-                // 显示回复
                 if (data.reply) {
-                    addCompanionMessage(data.reply);
+                    streamMessage(data.reply);
                     chatHistory.push({ role: 'assistant', content: data.reply });
                 }
 
-                // 显示推荐卡片
                 if (data.recommendations && data.recommendations.length > 0) {
-                    data.recommendations.forEach(rec => {
-                        addRecommendationCard(rec);
+                    data.recommendations.forEach((rec, i) => {
+                        setTimeout(() => addRecommendationCard(rec), (data.reply ? data.reply.length * 30 + 200 : 0) + i * 200);
                     });
                 }
             } catch (error) {
@@ -486,7 +1207,31 @@
             }
         }
 
-        // ===== UI 渲染辅助 =====
+        // ===== Streaming text effect =====
+        function streamMessage(text) {
+            const area = document.getElementById('chatArea');
+            const div = document.createElement('div');
+            div.className = 'msg-bubble msg-companion';
+            area.appendChild(div);
+            scrollToBottom();
+
+            let idx = 0;
+            const cursor = '<span class="streaming-cursor"></span>';
+
+            function typeNext() {
+                if (idx <= text.length) {
+                    div.innerHTML = text.substring(0, idx) + cursor;
+                    idx++;
+                    scrollToBottom();
+                    setTimeout(typeNext, 25);
+                } else {
+                    div.innerHTML = text;
+                }
+            }
+            typeNext();
+        }
+
+        // ===== UI render helpers =====
 
         function addUserMessage(text) {
             const area = document.getElementById('chatArea');
@@ -506,20 +1251,34 @@
             scrollToBottom();
         }
 
+        function addDateSeparator() {
+            const area = document.getElementById('chatArea');
+            const now = new Date();
+            const dateStr = `${now.getMonth() + 1}月${now.getDate()}日`;
+            const div = document.createElement('div');
+            div.className = 'date-sep';
+            div.textContent = dateStr;
+            area.appendChild(div);
+        }
+
         function addRecommendationCard(rec) {
             const area = document.getElementById('chatArea');
             const card = document.createElement('div');
             card.className = 'rec-card';
 
+            const cat = rec.category || '城市探索';
+            const visual = categoryVisuals[cat] || categoryVisuals['城市探索'];
+
             let html = '';
 
-            // 图片（使用 image_query 作为搜索关键词的占位图）
-            const imageUrl = rec.image_query
-                ? `https://source.unsplash.com/400x200/?${encodeURIComponent(rec.image_query)}`
-                : '';
-            if (imageUrl) {
-                html += `<img class="rec-card-image" src="${imageUrl}" alt="${rec.activity_name}" onerror="this.style.display='none'">`;
-            }
+            // Visual header
+            html += `<div class="rec-card-visual" style="background: ${visual.gradient}">`;
+            html += `<div class="deco-circle c1"></div>`;
+            html += `<div class="deco-circle c2"></div>`;
+            html += `<div class="deco-circle c3"></div>`;
+            html += `<span class="bg-emoji">${visual.emoji}</span>`;
+            html += `<span class="emoji">${visual.emoji}</span>`;
+            html += `</div>`;
 
             html += `<div class="rec-card-body">`;
             if (rec.category) {
@@ -529,14 +1288,21 @@
             if (rec.recommend_text) {
                 html += `<div class="rec-card-text">${rec.recommend_text}</div>`;
             }
+
+            // Meta tags
+            let metaHtml = '<div class="rec-card-meta">';
+            if (rec.budget) metaHtml += `<span>💰 ${rec.budget}</span>`;
+            metaHtml += '</div>';
+            html += metaHtml;
+
             if (rec.tips) {
-                html += `<div class="rec-card-tips"><strong>建议</strong>：${rec.tips}</div>`;
+                html += `<div class="rec-card-tips"><strong>建议</strong> · ${rec.tips}</div>`;
             }
             if (rec.safety_note) {
-                html += `<div class="rec-card-tips"><strong>注意</strong>：${rec.safety_note}</div>`;
+                html += `<div class="rec-card-tips"><strong>注意</strong> · ${rec.safety_note}</div>`;
             }
             if (rec.action_url) {
-                html += `<a class="rec-card-action" href="${rec.action_url}" target="_blank" rel="noopener">${rec.action_label || '去看看'}</a>`;
+                html += `<a class="rec-card-action" href="${rec.action_url}" target="_blank" rel="noopener">${rec.action_label || '去看看'} →</a>`;
             }
             html += `</div>`;
 
@@ -548,33 +1314,186 @@
         function showTyping() {
             const area = document.getElementById('chatArea');
             const div = document.createElement('div');
-            div.className = 'typing-indicator';
-            div.id = 'typingIndicator';
-            div.innerHTML = '<span></span><span></span><span></span>';
+            div.className = 'typing-bubble';
+            div.id = 'typingBubble';
+            div.innerHTML = '<div class="breathing-circle"></div>';
             area.appendChild(div);
             scrollToBottom();
         }
 
         function hideTyping() {
-            const el = document.getElementById('typingIndicator');
+            const el = document.getElementById('typingBubble');
             if (el) el.remove();
         }
 
         function scrollToBottom() {
             const area = document.getElementById('chatArea');
-            area.scrollTop = area.scrollHeight;
+            setTimeout(() => { area.scrollTop = area.scrollHeight; }, 50);
         }
 
         function resetApp() {
+            // Clear persisted data
+            try { localStorage.removeItem('onedayreco_user'); } catch(e) {}
+
             document.getElementById('mainApp').style.display = 'none';
-            document.getElementById('onboarding').classList.remove('hidden');
+            document.getElementById('mainApp').classList.remove('page-enter');
+            const onb = document.getElementById('onboarding');
+            onb.classList.remove('hidden');
+            onb.style.opacity = '1';
+            onb.style.transform = 'translateY(0)';
             document.getElementById('chatArea').innerHTML = '';
+
+            // Reset state
             selectedMbti = null;
+            selectedSocial = null;
+            selectedBudget = null;
             chatHistory = [];
+            currentStep = 1;
+
+            // Reset UI
             document.querySelectorAll('.mbti-btn').forEach(b => b.classList.remove('selected'));
-            // 重置主题
+            document.getElementById('mbtiRevealContainer').innerHTML = '';
+            document.getElementById('step1Next').disabled = true;
+            document.getElementById('notes').value = '';
+
+            // Show step 1 (full onboarding)
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById('dot' + i);
+                dot.classList.remove('active', 'done');
+                if (i === 1) dot.classList.add('active');
+            }
+
+            // Show step1 back button as "返回" → step1 (MBTI selection)
+            document.getElementById('step2Back').onclick = () => goToStep(1);
+            document.getElementById('step2Back').textContent = '返回';
+
             applyTheme('INTP');
         }
+
+        // ===== Check for returning user on page load =====
+        function checkReturningUser() {
+            try {
+                const saved = localStorage.getItem('onedayreco_user');
+                if (!saved) return false;
+                const data = JSON.parse(saved);
+                if (!data.mbti || !themeMap[data.mbti]) return false;
+
+                // Restore state
+                selectedMbti = data.mbti;
+                selectedSocial = data.social || null;
+                selectedBudget = data.budget || null;
+
+                // Apply theme & persona immediately
+                applyTheme(selectedMbti);
+                applyPersona(selectedMbti);
+
+                // Show step 2 directly (skip MBTI selection)
+                currentStep = 1; // start from 1 so goToStep(2) animates correctly
+
+                // Update progress dots — skip dot1 (done), activate dot2
+                for (let i = 1; i <= 3; i++) {
+                    const dot = document.getElementById('dot' + i);
+                    dot.classList.remove('active', 'done');
+                    if (i < 2) dot.classList.add('done');
+                    else if (i === 2) dot.classList.add('active');
+                }
+
+                // Show step 2, hide step 1
+                document.getElementById('step1').classList.remove('active');
+                document.getElementById('step2').classList.add('active');
+                currentStep = 2;
+
+                // Render form with saved MBTI
+                updateFormForMbti(selectedMbti);
+
+                // Restore notes if saved
+                if (data.notes) document.getElementById('notes').value = data.notes;
+
+                // Change step2 back button to go to main app (cancel re-config)
+                const backBtn = document.getElementById('step2Back');
+                backBtn.textContent = '返回';
+                backBtn.onclick = () => {
+                    // Go directly to main app with saved data
+                    startAppFromSaved();
+                };
+
+                // If social & budget already selected, enable next
+                if (selectedSocial && selectedBudget) {
+                    // Re-render to show selected state
+                    updateFormForMbti(selectedMbti);
+                    // Re-select saved options
+                    setTimeout(() => {
+                        document.querySelectorAll('#socialCards .option-card').forEach(card => {
+                            if (card.querySelector('.card-text').textContent === selectedSocial) {
+                                card.classList.add('selected');
+                            }
+                        });
+                        document.querySelectorAll('#budgetCards .option-card').forEach(card => {
+                            if (card.querySelector('.card-text').textContent === selectedBudget) {
+                                card.classList.add('selected');
+                            }
+                        });
+                        checkStep2Ready();
+                    }, 100);
+                }
+
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // ===== Start app from saved data (skip onboarding) =====
+        function startAppFromSaved() {
+            const notes = document.getElementById('notes').value;
+
+            currentUser = {
+                user_id: 'user_' + Date.now(),
+                mbti: selectedMbti,
+                preferences: {
+                    social_frequency: selectedSocial,
+                    budget: selectedBudget,
+                    notes: notes,
+                },
+                feedback_summary: ''
+            };
+
+            // Update localStorage with latest preferences
+            try {
+                localStorage.setItem('onedayreco_user', JSON.stringify({
+                    mbti: selectedMbti,
+                    social: selectedSocial,
+                    budget: selectedBudget,
+                    notes: notes
+                }));
+            } catch(e) {}
+
+            applyTheme(selectedMbti);
+            applyPersona(selectedMbti);
+            const theme = themeMap[selectedMbti];
+
+            document.getElementById('companionAvatar').textContent = theme.avatar;
+            document.getElementById('companionName').textContent = theme.name;
+
+            const onb = document.getElementById('onboarding');
+            onb.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            onb.style.opacity = '0';
+            onb.style.transform = 'translateY(-20px)';
+
+            setTimeout(() => {
+                onb.classList.add('hidden');
+                const mainApp = document.getElementById('mainApp');
+                mainApp.style.display = 'flex';
+                mainApp.classList.add('page-enter');
+                fetchRecommendations();
+            }, 300);
+        }
+
+        // Initialize with default theme, check for returning user
+        applyTheme('INTP');
+        checkReturningUser();
     </script>
 </body>
 </html>
