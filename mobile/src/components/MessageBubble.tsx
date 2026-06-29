@@ -1,13 +1,11 @@
 /**
- * 消息气泡组件
- * 用户消息：右对齐，纯色背景
- * 互动仔消息：左对齐，主题色渐变背景
- * 支持推荐卡片嵌入
+ * 消息气泡组件（简化版）
+ * 用户：右对齐，accent 色
+ * 搭子：左对齐，card 色
  */
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Linking } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ChatMessage, MBTITheme, Recommendation } from '@/types';
+import { View, Text, StyleSheet } from 'react-native';
+import { ChatMessage, MBTITheme } from '@/types';
 import { RecommendationCard } from './RecommendationCard';
 
 interface MessageBubbleProps {
@@ -29,24 +27,18 @@ export function MessageBubble({ message, theme }: MessageBubbleProps) {
     );
   }
 
-  // 互动仔消息
   return (
     <View style={styles.assistantRow}>
-      {/* 头像 */}
-      <View style={[styles.avatar, { borderRadius: parseInt(theme.radius) + 12 }]}>
-        <Text style={styles.avatarEmoji}>{theme.avatar}</Text>
-      </View>
+      {/* 小头像 */}
+      <Text style={styles.avatar}>{theme.avatar}</Text>
 
       <View style={styles.assistantContent}>
-        {/* 消息气泡 */}
-        <LinearGradient
-          colors={[colors.accent, colors.card]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.assistantBubble, { borderRadius: parseInt(theme.radius) + 8 }]}
-        >
-          <Text style={[styles.assistantText, { color: colors.text }]}>{message.content}</Text>
-        </LinearGradient>
+        {/* 气泡 */}
+        <View style={[styles.assistantBubble, { backgroundColor: colors.card }]}>
+          <Text style={[styles.assistantText, { color: colors.text }]}>
+            {message.content}
+          </Text>
+        </View>
 
         {/* 推荐卡片 */}
         {message.recommendations && message.recommendations.length > 0 && (
@@ -65,11 +57,10 @@ const styles = StyleSheet.create({
   userRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    marginVertical: 4,
+    marginVertical: 3,
   },
   userBubble: {
-    maxWidth: '75%',
+    maxWidth: '78%',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 18,
@@ -82,20 +73,12 @@ const styles = StyleSheet.create({
   },
   assistantRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    marginVertical: 4,
+    marginVertical: 3,
     gap: 8,
   },
   avatar: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginTop: 4,
-  },
-  avatarEmoji: {
-    fontSize: 18,
+    fontSize: 20,
+    marginTop: 2,
   },
   assistantContent: {
     flex: 1,
@@ -104,7 +87,9 @@ const styles = StyleSheet.create({
   assistantBubble: {
     paddingHorizontal: 14,
     paddingVertical: 10,
+    borderRadius: 18,
     borderBottomLeftRadius: 4,
+    alignSelf: 'flex-start',
   },
   assistantText: {
     fontSize: 15,

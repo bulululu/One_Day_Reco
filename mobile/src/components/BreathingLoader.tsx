@@ -1,8 +1,7 @@
 /**
- * 呼吸圆加载器
- * 灵感: Calm
+ * 呼吸圆加载器（简化版）
  */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -23,12 +22,12 @@ export function BreathingLoader({ theme }: BreathingLoaderProps) {
 
   useEffect(() => {
     scale.value = withRepeat(
-      withTiming(1.2, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+      withTiming(1.2, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
       -1,
       true
     );
     opacity.value = withRepeat(
-      withTiming(0.8, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+      withTiming(0.8, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
       -1,
       true
     );
@@ -41,9 +40,10 @@ export function BreathingLoader({ theme }: BreathingLoaderProps) {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.emoji}>{theme.avatar}</Text>
       <Animated.View
         style={[
-          styles.circle,
+          styles.dot,
           { backgroundColor: theme.colors.accent },
           animatedStyle,
         ]}
@@ -55,13 +55,17 @@ export function BreathingLoader({ theme }: BreathingLoaderProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
+    gap: 8,
   },
-  circle: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  emoji: {
+    fontSize: 20,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
 });
