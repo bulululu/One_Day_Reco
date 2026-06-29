@@ -1,12 +1,13 @@
 """
 FastAPI 后端主应用
-提供活动推荐 API 接口
+提供活动推荐 API 接口 + 对话接口
+v0.2: 新增 /api/chat 对话端点
 """
 
 import os
 import sys
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +22,7 @@ from backend.agents.recommendation_agent import RecommendationAgent
 app = FastAPI(
     title="OneDayReco API",
     description="基于 MBTI 的每日活动推荐服务",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 # CORS 配置（允许前端跨域）
@@ -51,6 +52,18 @@ class RecommendRequest(BaseModel):
     context: Optional[dict] = None
 
 
+class ChatMessage(BaseModel):
+    role: str  # "user" / "assistant"
+    content: str
+
+
+class ChatRequest(BaseModel):
+    user_profile: UserProfile
+    message: str
+    context: Optional[dict] = None
+    history: Optional[List[ChatMessage]] = None
+
+
 class FeedbackRequest(BaseModel):
     user_id: str
     activity_id: str
@@ -61,7 +74,7 @@ class FeedbackRequest(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "OneDayReco API is running", "version": "0.1.0"}
+    return {"message": "OneDayReco API is running", "version": "0.2.0"}
 
 
 @app.get("/api/health")
@@ -94,6 +107,21 @@ async def get_categories():
 async def recommend(req: RecommendRequest):
     """生成每日活动推荐"""
     result = agent.recommend(req.user_profile.model_dump(), req.context)
+    return result
+
+
+@app.post("/api/chat")
+async def chat(req: ChatRequest):
+    """与互动仔对话"""
+    history_list = None
+    if req.history:
+        history_list = [{"role": m.role, "content": m.content} for m in req.history]
+    result = agent.chat(
+        req.user_profile.model_dump(),
+        req.message,
+        req.context,
+        history_list,
+    )
     return result
 
 

@@ -12,11 +12,32 @@
     "duration_hours": 2.5,
     "budget": "30-80元",
     "planning": "中",
-    "mbti_friendly": {"E": 3, "I": 5, "S": 4, "N": 5, "T": 3, "F": 5, "J": 3, "P": 5},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 5,
+      "S": 4,
+      "N": 5,
+      "T": 3,
+      "F": 5,
+      "J": 3,
+      "P": 5
+    },
     "adjustable_factors": "选择早场或工作日观影可大幅降低人群密度",
     "mood_effect": "沉浸/放松/情感释放",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "09:00-24:00",
+    "convenience": "高",
+    "min_prep_time": "10分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "https://maoyan.com",
+    "action_label": "猫眼订票",
+    "image_query": "电影院银幕氛围"
   },
   {
     "id": "A002",
@@ -31,11 +52,32 @@
     "duration_hours": 2.0,
     "budget": "0-50元",
     "planning": "低",
-    "mbti_friendly": {"E": 3, "I": 5, "S": 5, "N": 5, "T": 4, "F": 4, "J": 4, "P": 4},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 5,
+      "S": 5,
+      "N": 5,
+      "T": 4,
+      "F": 4,
+      "J": 4,
+      "P": 4
+    },
     "adjustable_factors": "工作日前往几乎包场体验",
     "mood_effect": "宁静/启发/审美满足",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "09:00-17:00",
+    "convenience": "高",
+    "min_prep_time": "15分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_美术馆",
+    "action_label": "大众点评",
+    "image_query": "美术馆展厅安静氛围"
   },
   {
     "id": "A003",
@@ -50,11 +92,32 @@
     "duration_hours": 2.5,
     "budget": "80-300元",
     "planning": "高",
-    "mbti_friendly": {"E": 4, "I": 4, "S": 3, "N": 5, "T": 3, "F": 5, "J": 4, "P": 3},
+    "mbti_friendly": {
+      "E": 4,
+      "I": 4,
+      "S": 3,
+      "N": 5,
+      "T": 3,
+      "F": 5,
+      "J": 4,
+      "P": 3
+    },
     "adjustable_factors": "选后排角落座位可减少周围人群",
     "mood_effect": "震撼/情感共鸣/灵感",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大麦"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大麦",
+    "time_window": "19:00-22:00",
+    "convenience": "中",
+    "min_prep_time": "30分钟",
+    "safety_note": "夜间出行注意安全",
+    "action_url": "https://www.damai.cn",
+    "action_label": "大麦购票",
+    "image_query": "话剧舞台灯光氛围"
   },
   {
     "id": "A004",
@@ -69,11 +132,32 @@
     "duration_hours": 3.0,
     "budget": "30-60元",
     "planning": "低",
-    "mbti_friendly": {"E": 2, "I": 5, "S": 4, "N": 5, "T": 4, "F": 4, "J": 3, "P": 5},
+    "mbti_friendly": {
+      "E": 2,
+      "I": 5,
+      "S": 4,
+      "N": 5,
+      "T": 4,
+      "F": 4,
+      "J": 3,
+      "P": 5
+    },
     "adjustable_factors": "工作日下午人最少",
     "mood_effect": "宁静/专注/充实",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "大众点评",
+    "time_window": "10:00-22:00",
+    "convenience": "高",
+    "min_prep_time": "10分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_独立书店",
+    "action_label": "大众点评",
+    "image_query": "独立书店咖啡阅读氛围"
   },
   {
     "id": "A005",
@@ -88,11 +172,32 @@
     "duration_hours": 3.0,
     "budget": "80-200元",
     "planning": "中",
-    "mbti_friendly": {"E": 5, "I": 2, "S": 3, "N": 4, "T": 2, "F": 5, "J": 3, "P": 5},
+    "mbti_friendly": {
+      "E": 5,
+      "I": 2,
+      "S": 3,
+      "N": 4,
+      "T": 2,
+      "F": 5,
+      "J": 3,
+      "P": 5
+    },
     "adjustable_factors": "站在后排可降低拥挤感",
     "mood_effect": "兴奋/释放/社交连接",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大麦"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大麦",
+    "time_window": "20:00-23:00",
+    "convenience": "中",
+    "min_prep_time": "30分钟",
+    "safety_note": "现场人多注意财物安全",
+    "action_url": "https://www.damai.cn",
+    "action_label": "大麦购票",
+    "image_query": "livehouse现场音乐氛围"
   },
   {
     "id": "A006",
@@ -107,11 +212,30 @@
     "duration_hours": 1.5,
     "budget": "0元",
     "planning": "低",
-    "mbti_friendly": {"E": 3, "I": 5, "S": 5, "N": 4, "T": 4, "F": 4, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 5,
+      "S": 5,
+      "N": 4,
+      "T": 4,
+      "F": 4,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "清晨或傍晚人最少",
     "mood_effect": "放松/清醒/自然连接",
-    "weather_suitable": ["晴", "阴"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "06:00-21:00",
+    "convenience": "高",
+    "min_prep_time": "5分钟",
+    "safety_note": "夜间避免去偏僻区域",
+    "action_url": "https://map.baidu.com",
+    "action_label": "百度地图",
+    "image_query": "城市公园绿树小路"
   },
   {
     "id": "A007",
@@ -126,11 +250,30 @@
     "duration_hours": 4.0,
     "budget": "0-50元",
     "planning": "中",
-    "mbti_friendly": {"E": 3, "I": 5, "S": 5, "N": 4, "T": 4, "F": 3, "J": 3, "P": 4},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 5,
+      "S": 5,
+      "N": 4,
+      "T": 4,
+      "F": 3,
+      "J": 3,
+      "P": 4
+    },
     "adjustable_factors": "选择冷门路线可避开人群",
     "mood_effect": "成就感/自由/自然沉浸",
-    "weather_suitable": ["晴", "阴"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "08:00-16:00",
+    "convenience": "低",
+    "min_prep_time": "60分钟",
+    "safety_note": "需要合适装备，结伴同行更安全",
+    "action_url": "https://map.baidu.com",
+    "action_label": "百度地图路线",
+    "image_query": "郊外徒步山间小路"
   },
   {
     "id": "A008",
@@ -145,11 +288,30 @@
     "duration_hours": 2.0,
     "budget": "0-30元",
     "planning": "低",
-    "mbti_friendly": {"E": 4, "I": 4, "S": 5, "N": 3, "T": 4, "F": 3, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 4,
+      "I": 4,
+      "S": 5,
+      "N": 3,
+      "T": 4,
+      "F": 3,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "工作日绿道人少",
     "mood_effect": "自由/清爽/活力",
-    "weather_suitable": ["晴", "阴"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "07:00-19:00",
+    "convenience": "中",
+    "min_prep_time": "20分钟",
+    "safety_note": "戴好头盔，遵守交通规则",
+    "action_url": "https://map.baidu.com",
+    "action_label": "百度地图路线",
+    "image_query": "城市绿道骑行"
   },
   {
     "id": "A009",
@@ -164,11 +326,29 @@
     "duration_hours": 1.0,
     "budget": "0元",
     "planning": "低",
-    "mbti_friendly": {"E": 2, "I": 5, "S": 4, "N": 5, "T": 3, "F": 5, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 2,
+      "I": 5,
+      "S": 4,
+      "N": 5,
+      "T": 3,
+      "F": 5,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "选择冷门观景点",
     "mood_effect": "宁静/感动/哲思",
-    "weather_suitable": ["晴"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "05:00-07:00,17:00-19:00",
+    "convenience": "中",
+    "min_prep_time": "20分钟",
+    "safety_note": "日出时段注意保暖，日落时段注意天黑路滑",
+    "action_url": "https://map.baidu.com",
+    "action_label": "百度地图",
+    "image_query": "日落天空剪影"
   },
   {
     "id": "A010",
@@ -183,11 +363,29 @@
     "duration_hours": 2.0,
     "budget": "30-80元",
     "planning": "中",
-    "mbti_friendly": {"E": 4, "I": 4, "S": 4, "N": 3, "T": 3, "F": 5, "J": 3, "P": 4},
+    "mbti_friendly": {
+      "E": 4,
+      "I": 4,
+      "S": 4,
+      "N": 3,
+      "T": 3,
+      "F": 5,
+      "J": 3,
+      "P": 4
+    },
     "adjustable_factors": "选偏僻角落的草地",
     "mood_effect": "惬意/社交/放松",
-    "weather_suitable": ["晴"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "10:00-17:00",
+    "convenience": "中",
+    "min_prep_time": "30分钟",
+    "safety_note": "注意食物保鲜和防虫",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_公园",
+    "action_label": "大众点评",
+    "image_query": "公园野餐草地阳光"
   },
   {
     "id": "A011",
@@ -202,11 +400,32 @@
     "duration_hours": 1.5,
     "budget": "20-50元",
     "planning": "中",
-    "mbti_friendly": {"E": 2, "I": 5, "S": 5, "N": 3, "T": 3, "F": 4, "J": 4, "P": 4},
+    "mbti_friendly": {
+      "E": 2,
+      "I": 5,
+      "S": 5,
+      "N": 3,
+      "T": 3,
+      "F": 4,
+      "J": 4,
+      "P": 4
+    },
     "adjustable_factors": null,
     "mood_effect": "专注/满足/治愈",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "30分钟",
+    "safety_note": "注意用火用电安全",
+    "action_url": "",
+    "action_label": "",
+    "image_query": "家常菜温馨厨房"
   },
   {
     "id": "A012",
@@ -221,11 +440,32 @@
     "duration_hours": 1.5,
     "budget": "0元",
     "planning": "低",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 4, "N": 5, "T": 5, "F": 3, "J": 3, "P": 5},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 4,
+      "N": 5,
+      "T": 5,
+      "F": 3,
+      "J": 3,
+      "P": 5
+    },
     "adjustable_factors": null,
     "mood_effect": "求知/沉浸/启发",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "5分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "https://search.bilibili.com/all?keyword=纪录片",
+    "action_label": "B站搜索",
+    "image_query": "纪录片画面自然风光"
   },
   {
     "id": "A013",
@@ -240,11 +480,32 @@
     "duration_hours": 3.0,
     "budget": "30-200元",
     "planning": "低",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 5, "N": 3, "T": 5, "F": 2, "J": 5, "P": 3},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 5,
+      "N": 3,
+      "T": 5,
+      "F": 2,
+      "J": 5,
+      "P": 3
+    },
     "adjustable_factors": null,
     "mood_effect": "专注/平静/成就感",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "5分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "",
+    "action_label": "",
+    "image_query": "拼图乐高桌面专注"
   },
   {
     "id": "A014",
@@ -259,11 +520,32 @@
     "duration_hours": 1.0,
     "budget": "5-30元",
     "planning": "低",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 5, "N": 4, "T": 3, "F": 5, "J": 3, "P": 5},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 5,
+      "N": 4,
+      "T": 3,
+      "F": 5,
+      "J": 3,
+      "P": 5
+    },
     "adjustable_factors": null,
     "mood_effect": "仪式感/宁静/品味",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "5分钟",
+    "safety_note": "注意热水安全",
+    "action_url": "",
+    "action_label": "",
+    "image_query": "手冲咖啡茶具温暖"
   },
   {
     "id": "A015",
@@ -278,11 +560,32 @@
     "duration_hours": 3.0,
     "budget": "0-80元",
     "planning": "中",
-    "mbti_friendly": {"E": 5, "I": 3, "S": 4, "N": 4, "T": 5, "F": 4, "J": 3, "P": 5},
+    "mbti_friendly": {
+      "E": 5,
+      "I": 3,
+      "S": 4,
+      "N": 4,
+      "T": 5,
+      "F": 4,
+      "J": 3,
+      "P": 5
+    },
     "adjustable_factors": "人少可以选2人桌游",
     "mood_effect": "欢乐/社交/策略满足",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "14:00-22:00",
+    "convenience": "中",
+    "min_prep_time": "30分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_桌游",
+    "action_label": "大众点评",
+    "image_query": "桌游聚会朋友欢乐"
   },
   {
     "id": "A016",
@@ -297,11 +600,32 @@
     "duration_hours": 2.0,
     "budget": "50-120元",
     "planning": "低",
-    "mbti_friendly": {"E": 5, "I": 3, "S": 4, "N": 3, "T": 2, "F": 5, "J": 3, "P": 5},
+    "mbti_friendly": {
+      "E": 5,
+      "I": 3,
+      "S": 4,
+      "N": 3,
+      "T": 2,
+      "F": 5,
+      "J": 3,
+      "P": 5
+    },
     "adjustable_factors": "选择工作日下午人少",
     "mood_effect": "愉悦/社交/品味",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "14:00-17:00",
+    "convenience": "中",
+    "min_prep_time": "20分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_下午茶",
+    "action_label": "大众点评",
+    "image_query": "下午茶甜点精致"
   },
   {
     "id": "A017",
@@ -316,11 +640,32 @@
     "duration_hours": 2.0,
     "budget": "80-150元",
     "planning": "高",
-    "mbti_friendly": {"E": 4, "I": 3, "S": 4, "N": 5, "T": 5, "F": 3, "J": 4, "P": 4},
+    "mbti_friendly": {
+      "E": 4,
+      "I": 3,
+      "S": 4,
+      "N": 5,
+      "T": 5,
+      "F": 3,
+      "J": 4,
+      "P": 4
+    },
     "adjustable_factors": "可以只和朋友一组",
     "mood_effect": "刺激/协作/成就感",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "10:00-22:00",
+    "convenience": "中",
+    "min_prep_time": "20分钟",
+    "safety_note": "有幽闭恐惧症者不宜参加",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_密室逃脱",
+    "action_label": "大众点评",
+    "image_query": "密室逃脱悬疑氛围"
   },
   {
     "id": "A018",
@@ -335,11 +680,32 @@
     "duration_hours": 1.0,
     "budget": "0-100元",
     "planning": "中",
-    "mbti_friendly": {"E": 2, "I": 5, "S": 5, "N": 4, "T": 3, "F": 5, "J": 4, "P": 3},
+    "mbti_friendly": {
+      "E": 2,
+      "I": 5,
+      "S": 5,
+      "N": 4,
+      "T": 3,
+      "F": 5,
+      "J": 4,
+      "P": 3
+    },
     "adjustable_factors": "小班课人更少",
     "mood_effect": "平静/身心合一/放松",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "09:00-21:00",
+    "convenience": "中",
+    "min_prep_time": "20分钟",
+    "safety_note": "注意身体极限，量力而行",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_瑜伽",
+    "action_label": "大众点评",
+    "image_query": "瑜伽课宁静专注"
   },
   {
     "id": "A019",
@@ -354,11 +720,32 @@
     "duration_hours": 1.0,
     "budget": "30-60元",
     "planning": "低",
-    "mbti_friendly": {"E": 3, "I": 5, "S": 5, "N": 2, "T": 4, "F": 3, "J": 3, "P": 4},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 5,
+      "S": 5,
+      "N": 2,
+      "T": 4,
+      "F": 3,
+      "J": 3,
+      "P": 4
+    },
     "adjustable_factors": "早场人最少",
     "mood_effect": "清爽/活力/独处",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "06:00-21:00",
+    "convenience": "中",
+    "min_prep_time": "20分钟",
+    "safety_note": "饭后不宜立即游泳，注意热身",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_游泳馆",
+    "action_label": "大众点评",
+    "image_query": "游泳池清澈水面"
   },
   {
     "id": "A020",
@@ -373,11 +760,32 @@
     "duration_hours": 2.0,
     "budget": "50-100元",
     "planning": "低",
-    "mbti_friendly": {"E": 3, "I": 4, "S": 5, "N": 3, "T": 5, "F": 2, "J": 4, "P": 4},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 4,
+      "S": 5,
+      "N": 3,
+      "T": 5,
+      "F": 2,
+      "J": 4,
+      "P": 4
+    },
     "adjustable_factors": "工作日人少",
     "mood_effect": "挑战/专注/成就感",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "10:00-22:00",
+    "convenience": "中",
+    "min_prep_time": "20分钟",
+    "safety_note": "初学者需教练指导，注意安全绳索",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_攀岩",
+    "action_label": "大众点评",
+    "image_query": "攀岩馆岩壁向上"
   },
   {
     "id": "A021",
@@ -392,11 +800,30 @@
     "duration_hours": 0.8,
     "budget": "0元",
     "planning": "低",
-    "mbti_friendly": {"E": 3, "I": 5, "S": 5, "N": 3, "T": 4, "F": 3, "J": 4, "P": 4},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 5,
+      "S": 5,
+      "N": 3,
+      "T": 4,
+      "F": 3,
+      "J": 4,
+      "P": 4
+    },
     "adjustable_factors": "清晨5-6点几乎无人",
     "mood_effect": "活力/独处/清醒",
-    "weather_suitable": ["晴", "阴"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "06:00-08:00,19:00-22:00",
+    "convenience": "高",
+    "min_prep_time": "10分钟",
+    "safety_note": "夜跑穿反光衣物，选择照明好的路线",
+    "action_url": "https://map.baidu.com",
+    "action_label": "百度地图路线",
+    "image_query": "夜跑城市街道"
   },
   {
     "id": "A022",
@@ -411,11 +838,32 @@
     "duration_hours": 1.5,
     "budget": "0-200元",
     "planning": "中",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 4, "N": 5, "T": 5, "F": 2, "J": 5, "P": 2},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 4,
+      "N": 5,
+      "T": 5,
+      "F": 2,
+      "J": 5,
+      "P": 2
+    },
     "adjustable_factors": null,
     "mood_effect": "充实/成长/专注",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "5分钟",
+    "safety_note": "注意用眼休息",
+    "action_url": "",
+    "action_label": "",
+    "image_query": "在线学习电脑屏幕"
   },
   {
     "id": "A023",
@@ -430,11 +878,32 @@
     "duration_hours": 1.0,
     "budget": "0元",
     "planning": "低",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 3, "N": 5, "T": 4, "F": 5, "J": 4, "P": 4},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 3,
+      "N": 5,
+      "T": 4,
+      "F": 5,
+      "J": 4,
+      "P": 4
+    },
     "adjustable_factors": null,
     "mood_effect": "自省/表达/治愈",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "5分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "",
+    "action_label": "",
+    "image_query": "写日记笔记本安静"
   },
   {
     "id": "A024",
@@ -449,11 +918,32 @@
     "duration_hours": 2.0,
     "budget": "0-50元",
     "planning": "低",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 4, "N": 5, "T": 5, "F": 4, "J": 4, "P": 4},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 4,
+      "N": 5,
+      "T": 5,
+      "F": 4,
+      "J": 4,
+      "P": 4
+    },
     "adjustable_factors": null,
     "mood_effect": "沉浸/求知/宁静",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "5分钟",
+    "safety_note": "注意用眼休息",
+    "action_url": "",
+    "action_label": "",
+    "image_query": "读书阅读台灯温暖"
   },
   {
     "id": "A025",
@@ -468,11 +958,32 @@
     "duration_hours": 2.0,
     "budget": "80-150元",
     "planning": "中",
-    "mbti_friendly": {"E": 2, "I": 5, "S": 5, "N": 4, "T": 3, "F": 5, "J": 3, "P": 5},
+    "mbti_friendly": {
+      "E": 2,
+      "I": 5,
+      "S": 5,
+      "N": 4,
+      "T": 3,
+      "F": 5,
+      "J": 3,
+      "P": 5
+    },
     "adjustable_factors": "预约个人工位",
     "mood_effect": "创造/专注/治愈",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "10:00-20:00",
+    "convenience": "中",
+    "min_prep_time": "20分钟",
+    "safety_note": "注意工具使用安全",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_陶艺",
+    "action_label": "大众点评",
+    "image_query": "陶艺制作手工温暖"
   },
   {
     "id": "A026",
@@ -487,11 +998,32 @@
     "duration_hours": 2.0,
     "budget": "0-50元",
     "planning": "低",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 5, "N": 5, "T": 3, "F": 5, "J": 3, "P": 5},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 5,
+      "N": 5,
+      "T": 3,
+      "F": 5,
+      "J": 3,
+      "P": 5
+    },
     "adjustable_factors": "在家画完全独处",
     "mood_effect": "创造/表达/宁静",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "10分钟",
+    "safety_note": "注意颜料不要误食",
+    "action_url": "",
+    "action_label": "",
+    "image_query": "水彩素描画具艺术"
   },
   {
     "id": "A027",
@@ -506,11 +1038,32 @@
     "duration_hours": 2.0,
     "budget": "10-50元",
     "planning": "低",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 5, "N": 3, "T": 3, "F": 4, "J": 4, "P": 4},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 5,
+      "N": 3,
+      "T": 3,
+      "F": 4,
+      "J": 4,
+      "P": 4
+    },
     "adjustable_factors": null,
     "mood_effect": "专注/创造/满足",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "10分钟",
+    "safety_note": "注意工具使用安全",
+    "action_url": "",
+    "action_label": "",
+    "image_query": "手工编织温暖桌面"
   },
   {
     "id": "A028",
@@ -525,11 +1078,30 @@
     "duration_hours": 2.5,
     "budget": "0-50元",
     "planning": "中",
-    "mbti_friendly": {"E": 3, "I": 5, "S": 5, "N": 5, "T": 3, "F": 5, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 5,
+      "S": 5,
+      "N": 5,
+      "T": 3,
+      "F": 5,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "选择老城区冷门路线",
     "mood_effect": "探索/自由/发现",
-    "weather_suitable": ["晴", "阴"],
-    "source_platform": "大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴"
+    ],
+    "source_platform": "大众点评",
+    "time_window": "10:00-20:00",
+    "convenience": "高",
+    "min_prep_time": "10分钟",
+    "safety_note": "注意交通安全",
+    "action_url": "https://map.baidu.com",
+    "action_label": "百度地图路线",
+    "image_query": "城市漫步街景"
   },
   {
     "id": "A029",
@@ -544,11 +1116,30 @@
     "duration_hours": 2.0,
     "budget": "0-50元",
     "planning": "低",
-    "mbti_friendly": {"E": 3, "I": 4, "S": 5, "N": 5, "T": 3, "F": 4, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 4,
+      "S": 5,
+      "N": 5,
+      "T": 3,
+      "F": 4,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "工作日早晨人少",
     "mood_effect": "怀旧/探索/文化沉浸",
-    "weather_suitable": ["晴", "阴"],
-    "source_platform": "大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴"
+    ],
+    "source_platform": "大众点评",
+    "time_window": "10:00-20:00",
+    "convenience": "高",
+    "min_prep_time": "15分钟",
+    "safety_note": "注意交通安全，保护个人财物",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_老街",
+    "action_label": "大众点评",
+    "image_query": "老街历史建筑街景"
   },
   {
     "id": "A030",
@@ -563,11 +1154,29 @@
     "duration_hours": 2.0,
     "budget": "0-100元",
     "planning": "中",
-    "mbti_friendly": {"E": 5, "I": 2, "S": 4, "N": 4, "T": 2, "F": 5, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 5,
+      "I": 2,
+      "S": 4,
+      "N": 4,
+      "T": 2,
+      "F": 5,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "刚开市时人相对少",
     "mood_effect": "惊喜/社交/发现",
-    "weather_suitable": ["晴"],
-    "source_platform": "大众点评"
+    "weather_suitable": [
+      "晴"
+    ],
+    "source_platform": "大众点评",
+    "time_window": "10:00-20:00",
+    "convenience": "中",
+    "min_prep_time": "20分钟",
+    "safety_note": "人多拥挤注意财物安全",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_市集",
+    "action_label": "大众点评",
+    "image_query": "创意市集热闹摊位"
   },
   {
     "id": "A031",
@@ -582,11 +1191,29 @@
     "duration_hours": 2.0,
     "budget": "0元",
     "planning": "高",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 3, "N": 5, "T": 4, "F": 5, "J": 3, "P": 4},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 3,
+      "N": 5,
+      "T": 4,
+      "F": 5,
+      "J": 3,
+      "P": 4
+    },
     "adjustable_factors": null,
     "mood_effect": "敬畏/宁静/哲思",
-    "weather_suitable": ["晴"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "19:00-24:00",
+    "convenience": "低",
+    "min_prep_time": "60分钟",
+    "safety_note": "必须结伴前往，选择安全观测点，带好照明设备",
+    "action_url": "https://map.baidu.com",
+    "action_label": "百度地图",
+    "image_query": "星空银河夜空"
   },
   {
     "id": "A032",
@@ -601,11 +1228,32 @@
     "duration_hours": 2.0,
     "budget": "50-80元",
     "planning": "低",
-    "mbti_friendly": {"E": 3, "I": 5, "S": 4, "N": 3, "T": 2, "F": 5, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 5,
+      "S": 4,
+      "N": 3,
+      "T": 2,
+      "F": 5,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "工作日人少体验更好",
     "mood_effect": "治愈/温暖/放松",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "10:00-21:00",
+    "convenience": "高",
+    "min_prep_time": "15分钟",
+    "safety_note": "注意动物过敏",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_宠物咖啡馆",
+    "action_label": "大众点评",
+    "image_query": "宠物咖啡馆猫咪温暖"
   },
   {
     "id": "A033",
@@ -620,11 +1268,32 @@
     "duration_hours": 3.0,
     "budget": "0元",
     "planning": "低",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 4, "N": 5, "T": 5, "F": 3, "J": 5, "P": 3},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 4,
+      "N": 5,
+      "T": 5,
+      "F": 3,
+      "J": 5,
+      "P": 3
+    },
     "adjustable_factors": "角落位置最安静",
     "mood_effect": "专注/宁静/充实",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "09:00-21:00",
+    "convenience": "高",
+    "min_prep_time": "10分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "https://map.baidu.com",
+    "action_label": "百度地图",
+    "image_query": "图书馆书架安静"
   },
   {
     "id": "A034",
@@ -639,11 +1308,30 @@
     "duration_hours": 1.5,
     "budget": "0-50元",
     "planning": "低",
-    "mbti_friendly": {"E": 3, "I": 4, "S": 5, "N": 3, "T": 2, "F": 5, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 4,
+      "S": 5,
+      "N": 3,
+      "T": 2,
+      "F": 5,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "上午人相对少",
     "mood_effect": "放松/生机/发现",
-    "weather_suitable": ["晴", "阴"],
-    "source_platform": "大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴"
+    ],
+    "source_platform": "大众点评",
+    "time_window": "08:00-18:00",
+    "convenience": "高",
+    "min_prep_time": "15分钟",
+    "safety_note": "注意花粉过敏",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_花鸟市场",
+    "action_label": "大众点评",
+    "image_query": "花鸟市场绿植鲜花"
   },
   {
     "id": "A035",
@@ -658,11 +1346,32 @@
     "duration_hours": 0.5,
     "budget": "0元",
     "planning": "低",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 5, "N": 5, "T": 3, "F": 5, "J": 3, "P": 4},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 5,
+      "N": 5,
+      "T": 3,
+      "F": 5,
+      "J": 3,
+      "P": 4
+    },
     "adjustable_factors": null,
     "mood_effect": "平静/清明/内省",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "5分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "",
+    "action_label": "",
+    "image_query": "冥想宁静禅意"
   },
   {
     "id": "A036",
@@ -677,11 +1386,32 @@
     "duration_hours": 2.0,
     "budget": "50-100元",
     "planning": "中",
-    "mbti_friendly": {"E": 5, "I": 2, "S": 5, "N": 2, "T": 3, "F": 4, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 5,
+      "I": 2,
+      "S": 5,
+      "N": 2,
+      "T": 3,
+      "F": 4,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "工作日早场人少",
     "mood_effect": "释放/活力/快乐",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大众点评",
+    "time_window": "10:00-21:00",
+    "convenience": "中",
+    "min_prep_time": "20分钟",
+    "safety_note": "注意身体极限，量力而行",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_蹦床馆",
+    "action_label": "大众点评",
+    "image_query": "蹦床馆活力运动"
   },
   {
     "id": "A037",
@@ -696,11 +1426,32 @@
     "duration_hours": 1.5,
     "budget": "0-200元",
     "planning": "低",
-    "mbti_friendly": {"E": 3, "I": 5, "S": 4, "N": 5, "T": 3, "F": 4, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 3,
+      "I": 5,
+      "S": 4,
+      "N": 5,
+      "T": 3,
+      "F": 4,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "小店人很少",
     "mood_effect": "发现/惊喜/个性表达",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "大众点评"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "大众点评",
+    "time_window": "11:00-20:00",
+    "convenience": "中",
+    "min_prep_time": "15分钟",
+    "safety_note": "注意试穿卫生",
+    "action_url": "https://www.dianping.com/search/keyword/2/0_古着店",
+    "action_label": "大众点评",
+    "image_query": "古着店复古服饰"
   },
   {
     "id": "A038",
@@ -715,11 +1466,32 @@
     "duration_hours": 2.0,
     "budget": "20-50元",
     "planning": "中",
-    "mbti_friendly": {"E": 1, "I": 5, "S": 5, "N": 3, "T": 4, "F": 4, "J": 4, "P": 4},
+    "mbti_friendly": {
+      "E": 1,
+      "I": 5,
+      "S": 5,
+      "N": 3,
+      "T": 4,
+      "F": 4,
+      "J": 4,
+      "P": 4
+    },
     "adjustable_factors": null,
     "mood_effect": "专注/满足/幸福感",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "30分钟",
+    "safety_note": "注意烤箱使用安全",
+    "action_url": "",
+    "action_label": "",
+    "image_query": "烘焙甜点烤箱温暖"
   },
   {
     "id": "A039",
@@ -734,11 +1506,32 @@
     "duration_hours": 2.5,
     "budget": "0-200元",
     "planning": "高",
-    "mbti_friendly": {"E": 5, "I": 1, "S": 4, "N": 2, "T": 5, "F": 3, "J": 4, "P": 3},
+    "mbti_friendly": {
+      "E": 5,
+      "I": 1,
+      "S": 4,
+      "N": 2,
+      "T": 5,
+      "F": 3,
+      "J": 4,
+      "P": 3
+    },
     "adjustable_factors": null,
     "mood_effect": "激动/社交/归属感",
-    "weather_suitable": ["晴", "阴", "雨", "雪"],
-    "source_platform": "美团/大麦"
+    "weather_suitable": [
+      "晴",
+      "阴",
+      "雨",
+      "雪"
+    ],
+    "source_platform": "美团/大麦",
+    "time_window": "全天",
+    "convenience": "高",
+    "min_prep_time": "5分钟",
+    "safety_note": "无特殊安全要求",
+    "action_url": "https://www.damai.cn",
+    "action_label": "大麦购票",
+    "image_query": "体育赛事现场氛围"
   },
   {
     "id": "A040",
@@ -753,10 +1546,29 @@
     "duration_hours": 2.0,
     "budget": "0元",
     "planning": "低",
-    "mbti_friendly": {"E": 2, "I": 5, "S": 5, "N": 5, "T": 3, "F": 5, "J": 2, "P": 5},
+    "mbti_friendly": {
+      "E": 2,
+      "I": 5,
+      "S": 5,
+      "N": 5,
+      "T": 3,
+      "F": 5,
+      "J": 2,
+      "P": 5
+    },
     "adjustable_factors": "选择冷门拍摄点",
     "mood_effect": "创造/观察/美的发现",
-    "weather_suitable": ["晴", "阴"],
-    "source_platform": "自建数据"
+    "weather_suitable": [
+      "晴",
+      "阴"
+    ],
+    "source_platform": "自建数据",
+    "time_window": "07:00-19:00",
+    "convenience": "高",
+    "min_prep_time": "10分钟",
+    "safety_note": "注意交通安全，避开危险区域",
+    "action_url": "https://map.baidu.com",
+    "action_label": "百度地图路线",
+    "image_query": "摄影漫步城市街景"
   }
 ]

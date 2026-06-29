@@ -3,95 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OneDayReco - 每日活动推荐</title>
+    <title>OneDayReco - 你的活动搭子</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh; color: #333;
+            background: var(--bg-color, #1e1e2e);
+            min-height: 100vh; color: var(--text-color, #cdd6f4);
+            transition: background 0.5s ease, color 0.5s ease;
         }
-        .container { max-width: 480px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 480px; margin: 0 auto; padding: 0; min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* ===== 通用变量（被 JS 动态覆盖） ===== */
+        :root {
+            --bg-color: #1e1e2e;
+            --card-color: #2a2a3e;
+            --accent-color: #89b4fa;
+            --text-color: #cdd6f4;
+            --subtext-color: #888;
+            --radius: 6px;
+        }
 
         /* ===== Onboarding ===== */
         .onboarding {
-            background: #fff; border-radius: 20px; padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15); margin-top: 40px;
+            background: var(--card-color); padding: 30px 24px;
+            min-height: 100vh; transition: background 0.5s ease;
         }
-        .logo { text-align: center; margin-bottom: 25px; }
-        .logo h1 { font-size: 28px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .logo p { color: #888; font-size: 14px; margin-top: 5px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 15px; }
+        .logo { text-align: center; margin-bottom: 30px; padding-top: 20px; }
+        .logo h1 {
+            font-size: 28px; color: var(--accent-color);
+            transition: color 0.5s ease;
+        }
+        .logo p { color: var(--subtext-color); font-size: 14px; margin-top: 6px; }
+        .form-group { margin-bottom: 22px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 10px; font-size: 15px; color: var(--text-color); }
         .mbti-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .mbti-btn {
-            padding: 12px 8px; border: 2px solid #e0e0e0; border-radius: 10px;
-            background: #fff; cursor: pointer; font-weight: 600; font-size: 14px;
-            transition: all 0.2s;
+            padding: 12px 4px; border: 2px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius); background: transparent;
+            cursor: pointer; font-weight: 600; font-size: 13px;
+            color: var(--text-color); transition: all 0.2s;
         }
-        .mbti-btn:hover { border-color: #667eea; }
-        .mbti-btn.selected { background: #667eea; color: #fff; border-color: #667eea; }
+        .mbti-btn:hover { border-color: var(--accent-color); }
+        .mbti-btn.selected {
+            background: var(--accent-color); color: #fff;
+            border-color: var(--accent-color);
+        }
         .form-input, .form-select {
-            width: 100%; padding: 12px; border: 2px solid #e0e0e0;
-            border-radius: 10px; font-size: 14px; transition: border 0.2s;
+            width: 100%; padding: 12px; border: 2px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius); font-size: 14px;
+            background: rgba(0,0,0,0.2); color: var(--text-color);
+            transition: border 0.2s;
         }
-        .form-input:focus, .form-select:focus { outline: none; border-color: #667eea; }
+        .form-input::placeholder { color: var(--subtext-color); }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent-color); }
+        .form-select option { background: #333; color: #eee; }
         .btn-primary {
-            width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff; border: none; border-radius: 12px; font-size: 16px;
-            font-weight: 600; cursor: pointer; transition: transform 0.2s;
+            width: 100%; padding: 14px; background: var(--accent-color);
+            color: #fff; border: none; border-radius: var(--radius);
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
         }
-        .btn-primary:hover { transform: translateY(-2px); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary:hover { transform: translateY(-1px); opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-        /* ===== 推荐结果 ===== */
-        .recommendations { display: none; }
-        .agent-message {
-            background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
-            border-radius: 15px; padding: 15px 20px; margin-bottom: 20px;
-            color: #fff; font-size: 15px; line-height: 1.6;
+        /* ===== 主界面 ===== */
+        .main-app { display: none; flex: 1; flex-direction: column; min-height: 100vh; }
+
+        /* 互动仔头部 */
+        .companion-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px 20px; background: var(--card-color);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.5s ease;
         }
+        .companion-avatar {
+            width: 44px; height: 44px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; background: rgba(255,255,255,0.08);
+            flex-shrink: 0;
+        }
+        .companion-info { flex: 1; }
+        .companion-name { font-size: 16px; font-weight: 700; color: var(--text-color); }
+        .companion-status { font-size: 12px; color: var(--subtext-color); margin-top: 2px; }
+        .companion-status .dot {
+            display: inline-block; width: 8px; height: 8px;
+            background: #4ade80; border-radius: 50%; margin-right: 4px;
+        }
+        .reset-btn {
+            background: none; border: none; color: var(--subtext-color);
+            font-size: 13px; cursor: pointer; padding: 6px 10px;
+        }
+        .reset-btn:hover { color: var(--accent-color); }
+
+        /* 聊天区域 */
+        .chat-area {
+            flex: 1; overflow-y: auto; padding: 16px 16px 8px;
+            display: flex; flex-direction: column; gap: 12px;
+            scroll-behavior: smooth;
+        }
+        .chat-area::-webkit-scrollbar { width: 4px; }
+        .chat-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+        .msg-bubble {
+            max-width: 80%; padding: 12px 16px; border-radius: 18px;
+            font-size: 15px; line-height: 1.6; word-break: break-word;
+            animation: fadeInUp 0.3s ease;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .msg-companion {
+            align-self: flex-start; background: var(--card-color);
+            color: var(--text-color);
+            border-bottom-left-radius: 4px;
+        }
+        .msg-user {
+            align-self: flex-end; background: var(--accent-color);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* 推荐卡片（聊天内嵌） */
         .rec-card {
-            background: #fff; border-radius: 16px; padding: 20px;
-            margin-bottom: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: var(--card-color); border-radius: var(--radius);
+            overflow: hidden; max-width: 90%; align-self: flex-start;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.4s ease;
+            border: 1px solid rgba(255,255,255,0.05);
         }
-        .rec-card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
-        .rec-card-title { font-size: 18px; font-weight: 700; }
+        .rec-card-image {
+            width: 100%; height: 160px; object-fit: cover;
+            background: rgba(0,0,0,0.3);
+        }
+        .rec-card-body { padding: 16px; }
         .rec-card-category {
-            background: #f0f0f5; padding: 4px 10px; border-radius: 8px;
-            font-size: 12px; color: #666;
+            display: inline-block; font-size: 11px; padding: 2px 8px;
+            background: rgba(255,255,255,0.08); border-radius: 4px;
+            color: var(--subtext-color); margin-bottom: 8px;
         }
-        .rec-card-reason { color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 10px; }
+        .rec-card-title { font-size: 17px; font-weight: 700; color: var(--text-color); margin-bottom: 6px; }
+        .rec-card-text { color: var(--text-color); font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
         .rec-card-tips {
-            background: #fff8e1; padding: 10px 14px; border-radius: 10px;
-            font-size: 13px; color: #8d6e63; line-height: 1.5;
+            font-size: 12px; color: var(--subtext-color); line-height: 1.5;
+            padding: 8px 12px; background: rgba(0,0,0,0.15); border-radius: 8px;
+            margin-bottom: 10px;
         }
-        .rec-card-tips strong { color: #5d4037; }
-        .rec-actions { display: flex; gap: 8px; margin-top: 12px; }
-        .rec-btn {
-            flex: 1; padding: 10px; border: none; border-radius: 10px;
-            font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        .rec-card-tips strong { color: var(--accent-color); }
+        .rec-card-action {
+            display: block; width: 100%; padding: 12px; text-align: center;
+            background: var(--accent-color); color: #fff; text-decoration: none;
+            border: none; border-radius: var(--radius); font-size: 14px;
+            font-weight: 600; cursor: pointer; transition: opacity 0.2s;
         }
-        .btn-like { background: #e8f5e9; color: #2e7d32; }
-        .btn-like:hover { background: #c8e6c9; }
-        .btn-skip { background: #f5f5f5; color: #666; }
-        .btn-skip:hover { background: #e0e0e0; }
-        .btn-done { background: #e3f2fd; color: #1565c0; }
-        .btn-done:hover { background: #bbdefb; }
+        .rec-card-action:hover { opacity: 0.85; }
 
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h2 { color: #fff; font-size: 22px; }
-        .refresh-btn {
-            background: rgba(255,255,255,0.2); border: none; color: #fff;
-            padding: 8px 16px; border-radius: 10px; cursor: pointer; font-size: 14px;
+        /* 输入区域 */
+        .input-area {
+            display: flex; gap: 8px; padding: 12px 16px;
+            background: var(--card-color); border-top: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.5s ease;
         }
-        .loading { text-align: center; padding: 40px; color: #fff; }
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3);
-            border-top-color: #fff; border-radius: 50%; margin: 0 auto 15px;
-            animation: spin 0.8s linear infinite;
+        .input-area input {
+            flex: 1; padding: 12px 16px; border: 2px solid rgba(255,255,255,0.08);
+            border-radius: 22px; font-size: 15px; background: rgba(0,0,0,0.2);
+            color: var(--text-color); transition: border 0.2s;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .input-area input::placeholder { color: var(--subtext-color); }
+        .input-area input:focus { outline: none; border-color: var(--accent-color); }
+        .input-area button {
+            width: 44px; height: 44px; border: none; border-radius: 50%;
+            background: var(--accent-color); color: #fff; font-size: 18px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s, opacity 0.2s; flex-shrink: 0;
+        }
+        .input-area button:hover { transform: scale(1.05); }
+        .input-area button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* 快捷操作 */
+        .quick-actions {
+            display: flex; gap: 8px; padding: 0 16px 10px;
+            background: var(--card-color); flex-wrap: wrap;
+            transition: background 0.5s ease;
+        }
+        .quick-btn {
+            padding: 6px 14px; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; background: transparent; color: var(--subtext-color);
+            font-size: 13px; cursor: pointer; transition: all 0.2s;
+        }
+        .quick-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+
+        /* 加载动画 */
+        .typing-indicator {
+            display: flex; gap: 4px; padding: 12px 16px;
+            background: var(--card-color); border-radius: 18px;
+            border-bottom-left-radius: 4px; align-self: flex-start;
+            animation: fadeInUp 0.3s ease;
+        }
+        .typing-indicator span {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--subtext-color);
+            animation: typingDot 1.4s infinite ease-in-out;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingDot {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -100,11 +222,11 @@
         <div id="onboarding" class="onboarding">
             <div class="logo">
                 <h1>OneDayReco</h1>
-                <p>基于 MBTI 的每日活动推荐</p>
+                <p>你的私人活动搭子</p>
             </div>
 
             <div class="form-group">
-                <label>选择你的 MBTI</label>
+                <label>选一下你的 MBTI</label>
                 <div class="mbti-grid" id="mbtiGrid"></div>
             </div>
 
@@ -132,16 +254,38 @@
                 <input type="text" class="form-input" id="notes" placeholder="如：怕人多、喜欢安静的地方...">
             </div>
 
-            <button class="btn-primary" id="startBtn" onclick="getRecommendations()">获取今日推荐</button>
+            <button class="btn-primary" id="startBtn" onclick="startApp()">开始</button>
         </div>
 
-        <!-- ===== 推荐结果页面 ===== -->
-        <div id="recommendations" class="recommendations">
-            <div class="header">
-                <h2>今日推荐</h2>
-                <button class="refresh-btn" onclick="resetApp()">重新设置</button>
+        <!-- ===== 主界面 ===== -->
+        <div id="mainApp" class="main-app">
+            <!-- 互动仔头部 -->
+            <div class="companion-header">
+                <div class="companion-avatar" id="companionAvatar">🐰</div>
+                <div class="companion-info">
+                    <div class="companion-name" id="companionName">小暖</div>
+                    <div class="companion-status"><span class="dot"></span>在线</div>
+                </div>
+                <button class="reset-btn" onclick="resetApp()">重置</button>
             </div>
-            <div id="recContent"></div>
+
+            <!-- 聊天区域 -->
+            <div class="chat-area" id="chatArea"></div>
+
+            <!-- 快捷操作 -->
+            <div class="quick-actions" id="quickActions">
+                <button class="quick-btn" onclick="sendQuickMessage('推荐个活动')">推荐个活动</button>
+                <button class="quick-btn" onclick="sendQuickMessage('不想出门')">不想出门</button>
+                <button class="quick-btn" onclick="sendQuickMessage('换个推荐')">换个推荐</button>
+                <button class="quick-btn" onclick="sendQuickMessage('今天天气怎么样')">今天天气怎么样</button>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="input-area">
+                <input type="text" id="chatInput" placeholder="跟互动仔聊聊..."
+                    onkeydown="if(event.key==='Enter')sendMessage()">
+                <button onclick="sendMessage()" id="sendBtn">➤</button>
+            </div>
         </div>
     </div>
 
@@ -149,8 +293,10 @@
         const API_BASE = 'http://localhost:8000';
         let selectedMbti = null;
         let currentUser = null;
+        let chatHistory = [];
+        let isWaiting = false;
 
-        // MBTI 16型
+        // MBTI 16 型
         const mbtiTypes = [
             'INTJ','INTP','ENTJ','ENTP',
             'INFJ','INFP','ENFJ','ENFP',
@@ -168,12 +314,50 @@
                 document.querySelectorAll('.mbti-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedMbti = type;
+                // 预览主题
+                applyThemePreview(selectedMbti);
             };
             mbtiGrid.appendChild(btn);
         });
 
-        async function getRecommendations() {
-            if (!selectedMbti) { alert('请先选择你的 MBTI'); return; }
+        // MBTI 主题预览映射（与后端一致）
+        const themeMap = {
+            "INTJ": {"colors": {"bg": "#1a1a2e", "card": "#16213e", "accent": "#e94560", "text": "#eee", "subtext": "#999"}, "radius": "4px", "avatar": "🦉", "name": "小策略"},
+            "INTP": {"colors": {"bg": "#1e1e2e", "card": "#2a2a3e", "accent": "#89b4fa", "text": "#cdd6f4", "subtext": "#888"}, "radius": "6px", "avatar": "🤖", "name": "小逻辑"},
+            "ENTJ": {"colors": {"bg": "#0f0f1a", "card": "#1a1a2e", "accent": "#00d9ff", "text": "#eee", "subtext": "#999"}, "radius": "0px", "avatar": "🐯", "name": "小队长"},
+            "ENTP": {"colors": {"bg": "#1a1520", "card": "#241e30", "accent": "#ff79c6", "text": "#eee", "subtext": "#999"}, "radius": "8px", "avatar": "🦊", "name": "小点子"},
+            "INFJ": {"colors": {"bg": "#1c1726", "card": "#2a2339", "accent": "#c4a7e7", "text": "#e0def4", "subtext": "#999"}, "radius": "16px", "avatar": "🦌", "name": "小洞察"},
+            "INFP": {"colors": {"bg": "#2a1f2e", "card": "#352840", "accent": "#f6c177", "text": "#f0e6e6", "subtext": "#b0a0a0"}, "radius": "20px", "avatar": "🐰", "name": "小暖"},
+            "ENFJ": {"colors": {"bg": "#2a1f1a", "card": "#3a2a22", "accent": "#ff9e64", "text": "#fff5ee", "subtext": "#c0a090"}, "radius": "16px", "avatar": "🐶", "name": "小暖阳"},
+            "ENFP": {"colors": {"bg": "#2a2418", "card": "#353020", "accent": "#ffe066", "text": "#fffbe6", "subtext": "#c0b860"}, "radius": "20px", "avatar": "🌻", "name": "小太阳"},
+            "ISTJ": {"colors": {"bg": "#1a1e2a", "card": "#242a3a", "accent": "#6cace4", "text": "#dde", "subtext": "#889"}, "radius": "4px", "avatar": "🦅", "name": "小稳"},
+            "ISFJ": {"colors": {"bg": "#241f2a", "card": "#2e2839", "accent": "#d4a5d4", "text": "#f0e6f0", "subtext": "#a090a0"}, "radius": "16px", "avatar": "🕊️", "name": "小护"},
+            "ESTJ": {"colors": {"bg": "#1a2a1f", "card": "#243a2e", "accent": "#5cd685", "text": "#e0f0e0", "subtext": "#90b090"}, "radius": "0px", "avatar": "🦬", "name": "小执行"},
+            "ESFJ": {"colors": {"bg": "#2a1f20", "card": "#3a282a", "accent": "#ff8a80", "text": "#fff0ee", "subtext": "#c0a0a0"}, "radius": "16px", "avatar": "🐝", "name": "小贴心"},
+            "ISTP": {"colors": {"bg": "#1e282e", "card": "#283440", "accent": "#73c991", "text": "#dde8e0", "subtext": "#889"}, "radius": "6px", "avatar": "🐱", "name": "小酷"},
+            "ISFP": {"colors": {"bg": "#26201e", "card": "#332a28", "accent": "#ea8f8f", "text": "#f0e8e6", "subtext": "#a09898"}, "radius": "20px", "avatar": "🦋", "name": "小雅"},
+            "ESTP": {"colors": {"bg": "#2a2018", "card": "#3a2e22", "accent": "#ffb74d", "text": "#fff5e6", "subtext": "#c0a878"}, "radius": "8px", "avatar": "🐆", "name": "小冲"},
+            "ESFP": {"colors": {"bg": "#2a2518", "card": "#353022", "accent": "#ffd54f", "text": "#fffce6", "subtext": "#c0b870"}, "radius": "20px", "avatar": "🦜", "name": "小闪耀"},
+        };
+
+        function applyTheme(mbti) {
+            const theme = themeMap[mbti];
+            if (!theme) return;
+            const root = document.documentElement;
+            root.style.setProperty('--bg-color', theme.colors.bg);
+            root.style.setProperty('--card-color', theme.colors.card);
+            root.style.setProperty('--accent-color', theme.colors.accent);
+            root.style.setProperty('--text-color', theme.colors.text);
+            root.style.setProperty('--subtext-color', theme.colors.subtext);
+            root.style.setProperty('--radius', theme.radius);
+        }
+
+        function applyThemePreview(mbti) {
+            applyTheme(mbti);
+        }
+
+        function startApp() {
+            if (!selectedMbti) { alert('先选一下你的 MBTI 吧'); return; }
 
             const socialFreq = document.getElementById('socialFreq').value;
             const budget = document.getElementById('budget').value;
@@ -190,99 +374,206 @@
                 feedback_summary: ''
             };
 
-            // 切换到加载状态
-            document.getElementById('onboarding').style.display = 'none';
-            document.getElementById('recommendations').style.display = 'block';
-            document.getElementById('recContent').innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>正在为你匹配最合适的活动...</p>
-                </div>
-            `;
+            // 应用主题
+            applyTheme(selectedMbti);
+            const theme = themeMap[selectedMbti];
 
+            // 更新互动仔信息
+            document.getElementById('companionAvatar').textContent = theme.avatar;
+            document.getElementById('companionName').textContent = theme.name;
+
+            // 切换页面
+            document.getElementById('onboarding').classList.add('hidden');
+            document.getElementById('mainApp').style.display = 'flex';
+
+            // 请求初始推荐
+            fetchRecommendations();
+        }
+
+        async function fetchRecommendations() {
+            showTyping();
             try {
                 const response = await fetch(`${API_BASE}/api/recommend`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_profile: currentUser,
-                        context: {
-                            weather: '晴',
-                            location: '当前位置'
-                        }
+                        context: { weather: '晴', location: '当前位置' }
                     })
                 });
-
                 const data = await response.json();
-                renderRecommendations(data);
+                hideTyping();
+
+                // 显示互动仔开场白
+                if (data.agent_message) {
+                    addCompanionMessage(data.agent_message);
+                }
+
+                // 显示推荐卡片
+                if (data.recommendations && data.recommendations.length > 0) {
+                    data.recommendations.forEach(rec => {
+                        addRecommendationCard(rec);
+                    });
+                }
+
+                // 记录到对话历史
+                if (data.agent_message) {
+                    chatHistory.push({ role: 'assistant', content: data.agent_message });
+                }
             } catch (error) {
-                document.getElementById('recContent').innerHTML = `
-                    <div class="loading">
-                        <p>连接失败，请确认后端服务已启动</p>
-                        <p style="font-size:12px;opacity:0.7;margin-top:10px">${error.message}</p>
-                    </div>
-                `;
+                hideTyping();
+                addCompanionMessage('连接出了点问题，你稍等一下再试试～');
             }
         }
 
-        function renderRecommendations(data) {
-            const recs = data.recommendations || [];
-            const agentMsg = data.agent_message || '';
+        function sendMessage() {
+            if (isWaiting) return;
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
 
-            let html = '';
+            input.value = '';
+            addUserMessage(text);
+            chatHistory.push({ role: 'user', content: text });
 
-            if (agentMsg) {
-                html += `<div class="agent-message">${agentMsg}</div>`;
-            }
-
-            recs.forEach(rec => {
-                html += `
-                    <div class="rec-card">
-                        <div class="rec-card-header">
-                            <div class="rec-card-title">${rec.activity_name}</div>
-                            <div class="rec-card-category">${rec.activity_id}</div>
-                        </div>
-                        <div class="rec-card-reason">${rec.reason}</div>
-                        <div class="rec-card-tips"><strong>建议：</strong>${rec.tips}</div>
-                        <div class="rec-actions">
-                            <button class="rec-btn btn-like" onclick="sendFeedback('${rec.activity_id}', 'liked')">喜欢</button>
-                            <button class="rec-btn btn-done" onclick="sendFeedback('${rec.activity_id}', 'completed')">去完成</button>
-                            <button class="rec-btn btn-skip" onclick="sendFeedback('${rec.activity_id}', 'skipped')">跳过</button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            if (recs.length === 0) {
-                html = `<div class="loading"><p>暂无推荐，请稍后重试</p></div>`;
-            }
-
-            document.getElementById('recContent').innerHTML = html;
+            callChat(text);
         }
 
-        async function sendFeedback(activityId, feedback) {
-            if (!currentUser) return;
+        function sendQuickMessage(text) {
+            if (isWaiting) return;
+            addUserMessage(text);
+            chatHistory.push({ role: 'user', content: text });
+            callChat(text);
+        }
+
+        async function callChat(message) {
+            isWaiting = true;
+            document.getElementById('sendBtn').disabled = true;
+            showTyping();
+
             try {
-                await fetch(`${API_BASE}/api/feedback`, {
+                const response = await fetch(`${API_BASE}/api/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        user_id: currentUser.user_id,
-                        activity_id: activityId,
-                        feedback: feedback
+                        user_profile: currentUser,
+                        message: message,
+                        context: { weather: '晴', location: '当前位置' },
+                        history: chatHistory
                     })
                 });
-                // 简单的视觉反馈
-                event.target.style.opacity = '0.5';
-                event.target.textContent = '已记录';
-            } catch (e) { console.error('反馈提交失败', e); }
+                const data = await response.json();
+                hideTyping();
+
+                // 显示回复
+                if (data.reply) {
+                    addCompanionMessage(data.reply);
+                    chatHistory.push({ role: 'assistant', content: data.reply });
+                }
+
+                // 显示推荐卡片
+                if (data.recommendations && data.recommendations.length > 0) {
+                    data.recommendations.forEach(rec => {
+                        addRecommendationCard(rec);
+                    });
+                }
+            } catch (error) {
+                hideTyping();
+                addCompanionMessage('出了点小问题，再跟我说一次？');
+            } finally {
+                isWaiting = false;
+                document.getElementById('sendBtn').disabled = false;
+            }
+        }
+
+        // ===== UI 渲染辅助 =====
+
+        function addUserMessage(text) {
+            const area = document.getElementById('chatArea');
+            const div = document.createElement('div');
+            div.className = 'msg-bubble msg-user';
+            div.textContent = text;
+            area.appendChild(div);
+            scrollToBottom();
+        }
+
+        function addCompanionMessage(text) {
+            const area = document.getElementById('chatArea');
+            const div = document.createElement('div');
+            div.className = 'msg-bubble msg-companion';
+            div.textContent = text;
+            area.appendChild(div);
+            scrollToBottom();
+        }
+
+        function addRecommendationCard(rec) {
+            const area = document.getElementById('chatArea');
+            const card = document.createElement('div');
+            card.className = 'rec-card';
+
+            let html = '';
+
+            // 图片（使用 image_query 作为搜索关键词的占位图）
+            const imageUrl = rec.image_query
+                ? `https://source.unsplash.com/400x200/?${encodeURIComponent(rec.image_query)}`
+                : '';
+            if (imageUrl) {
+                html += `<img class="rec-card-image" src="${imageUrl}" alt="${rec.activity_name}" onerror="this.style.display='none'">`;
+            }
+
+            html += `<div class="rec-card-body">`;
+            if (rec.category) {
+                html += `<span class="rec-card-category">${rec.category}</span>`;
+            }
+            html += `<div class="rec-card-title">${rec.activity_name}</div>`;
+            if (rec.recommend_text) {
+                html += `<div class="rec-card-text">${rec.recommend_text}</div>`;
+            }
+            if (rec.tips) {
+                html += `<div class="rec-card-tips"><strong>建议</strong>：${rec.tips}</div>`;
+            }
+            if (rec.safety_note) {
+                html += `<div class="rec-card-tips"><strong>注意</strong>：${rec.safety_note}</div>`;
+            }
+            if (rec.action_url) {
+                html += `<a class="rec-card-action" href="${rec.action_url}" target="_blank" rel="noopener">${rec.action_label || '去看看'}</a>`;
+            }
+            html += `</div>`;
+
+            card.innerHTML = html;
+            area.appendChild(card);
+            scrollToBottom();
+        }
+
+        function showTyping() {
+            const area = document.getElementById('chatArea');
+            const div = document.createElement('div');
+            div.className = 'typing-indicator';
+            div.id = 'typingIndicator';
+            div.innerHTML = '<span></span><span></span><span></span>';
+            area.appendChild(div);
+            scrollToBottom();
+        }
+
+        function hideTyping() {
+            const el = document.getElementById('typingIndicator');
+            if (el) el.remove();
+        }
+
+        function scrollToBottom() {
+            const area = document.getElementById('chatArea');
+            area.scrollTop = area.scrollHeight;
         }
 
         function resetApp() {
-            document.getElementById('recommendations').style.display = 'none';
-            document.getElementById('onboarding').style.display = 'block';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('onboarding').classList.remove('hidden');
+            document.getElementById('chatArea').innerHTML = '';
             selectedMbti = null;
+            chatHistory = [];
             document.querySelectorAll('.mbti-btn').forEach(b => b.classList.remove('selected'));
+            // 重置主题
+            applyTheme('INTP');
         }
     </script>
 </body>
