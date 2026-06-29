@@ -1,13 +1,10 @@
 /**
- * 全局状态管理（Zustand + MMKV 持久化）
+ * 全局状态管理（Zustand + AsyncStorage 持久化）
  */
 import { create } from 'zustand';
-import { MMKV } from 'react-native-mmkv';
-import { MBTIType, UserProfile, UserPreferences, ChatMessage, Recommendation, MBTITheme } from '@/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MBTIType, UserProfile, UserPreferences, ChatMessage, MBTITheme } from '@/types';
 import { MBTI_THEMES } from '@/data/themes';
-
-// MMKV 存储实例
-const storage = new MMKV();
 
 // 用户数据存储 key
 const USER_KEY = 'onedayreco_user';
@@ -19,10 +16,20 @@ interface SavedUser {
   createdAt: string;
 }
 
-// 从 MMKV 加载已保存的用户
-function loadSavedUser(): SavedUser | null {
+// 从 AsyncStorage 同步加载（启动时阻塞读取）
+// AsyncStorage 是异步的，所以这里用同步标志 + 延迟初始化
+let savedUser: SavedUser | null = null;
+
+// 同步加载函数（在 store 创建前执行）
+// AsyncStorage 只有 async API，所以我们用 IIFE 预加载
+// store 初始用 null，加载完成后更新
+function loadSavedUserSync(): SavedUser | null {
+  return savedUser;
+}
+
+async function loadSavedUser(): Promise<SavedUser | null> {
   try {
-    const json = storage.getString(USER_KEY);
+    const json = await AsyncStorage.getItem(USER_KEY);
     if (json) return JSON.parse(json);
   } catch (e) {
     console.error('[Store] 加载用户数据失败:', e);
@@ -30,18 +37,20 @@ function loadSavedUser(): SavedUser | null {
   return null;
 }
 
-// 保存用户到 MMKV
-function saveSavedUser(data: SavedUser) {
+async function saveSavedUser(data: SavedUser) {
   try {
-    storage.set(USER_KEY, JSON.stringify(data));
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(data));
   } catch (e) {
     console.error('[Store] 保存用户数据失败:', e);
   }
 }
 
-// 清除用户数据
-function clearSavedUser() {
-  storage.delete(USER_KEY);
+async function clearSavedUser() {
+  try {
+    await AsyncStorage.removeItem(USER_KEY);
+  } catch (e) {
+    console.error('[Store] 清除用户数据失败:', e);
+  }
 }
 
 // Store 状态接口
@@ -89,19 +98,19 @@ function generateUserId(): string {
   return `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-// 检查是否有已保存的用户
-const savedUser = loadSavedUser();
+// 检查是否有已保存的用户 — 默认 null，异步加载后更新
+const initialSavedUser = savedUser;
 
 export const useAppStore = create<AppState>((set, get) => ({
   // 初始状态
-  isOnboarding: !savedUser,
-  isReturningUser: !!savedUser,
-  mbti: savedUser?.mbti ?? null,
-  preferences: savedUser?.preferences ?? null,
-  userId: savedUser ? `user_${savedUser.createdAt}` : generateUserId(),
+  isOnboarding: !initialSavedUser,
+  isReturningUser: !!initialSavedUser,
+  mbti: initialSavedUser?.mbti ?? null,
+  preferences: initialSavedUser?.preferences ?? null,
+  userId: initialSavedUser ? `user_${initialSavedUser.createdAt}` : generateUserId(),
   messages: [],
   isLoading: false,
-  currentTheme: MBTI_THEMES[savedUser?.mbti ?? 'INTP'],
+  currentTheme: MBTI_THEMES[initialSavedUser?.mbti ?? 'INTP'],
 
   // 设置 MBTI 类型
   setMBTI: (mbti) => {
@@ -135,6 +144,20 @@ export const useAppStore = create<AppState>((set, get) => ({
         currentTheme: MBTI_THEMES[savedUser.mbti],
         isOnboarding: false,
         isReturningUser: true,
+      });
+    } else {
+      // 异步加载
+      loadSavedUser().then((user) => {
+        if (user) {
+          savedUser = user;
+          set({
+            mbti: user.mbti,
+            preferences: user.preferences,
+            currentTheme: MBTI_THEMES[user.mbti],
+            isOnboarding: false,
+            isReturningUser: true,
+          });
+        }
       });
     }
   },
@@ -173,3 +196,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
   },
 }));
+
+// 启动时异步加载已保存的用户数据
+loadSavedUser().then((user) => {
+  if (user) {
+    savedUser = user;
+    useAppStore.setState({
+      isOnboarding: false,
+      isReturningUser: true,
+      mbti: user.mbti,
+      preferences: user.preferences,
+      userId: `user_${user.createdAt}`,
+      currentTheme: MBTI_THEMES[user.mbti],
+    });
+  }
+});

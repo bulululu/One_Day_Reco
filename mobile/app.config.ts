@@ -1,7 +1,7 @@
-import { ExpoConfig, ConfigContext } from '@expo/config';
-
-export default ({ config }: ConfigContext): ExpoConfig => ({
-  ...config,
+/**
+ * OneDayReco Expo 配置
+ */
+export default {
   name: 'OneDayReco',
   slug: 'onedayreco',
   version: '1.0.0',
@@ -18,7 +18,4 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     package: 'com.onedayreco.app',
   },
-  web: {
-    favicon: './assets/favicon.png',
-  },
-});
+};
