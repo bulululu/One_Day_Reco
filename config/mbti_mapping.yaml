@@ -1,0 +1,76 @@
+# MBTI 维度 → 活动偏好映射表
+# 每个维度的两端，对应活动标签的偏好权重
+
+mbti_dimensions:
+  E_I:  # 外向/内向
+    description: "社交能量方向"
+    E:
+      label: "外向"
+      prefers: ["高社交强度", "高人群密度"]
+      weight: 1.0
+    I:
+      label: "内向"
+      prefers: ["低社交强度", "低人群密度"]
+      weight: 1.0
+
+  S_N:  # 实感/直觉
+    description: "信息获取方式"
+    S:
+      label: "实感"
+      prefers: ["具体体验", "动手操作", "自然户外"]
+      weight: 1.0
+    N:
+      label: "直觉"
+      prefers: ["抽象思考", "文化艺术", "创意探索"]
+      weight: 1.0
+
+  T_F:  # 思考/情感
+    description: "决策方式"
+    T:
+      label: "思考"
+      prefers: ["逻辑挑战", "技能提升", "策略类"]
+      weight: 1.0
+    F:
+      label: "情感"
+      prefers: ["情感连接", "治愈放松", "艺术表达"]
+      weight: 1.0
+
+  J_P:  # 判断/感知
+    description: "生活方式"
+    J:
+      label: "判断"
+      prefers: ["计划性强", "结构化", "有明确目标"]
+      weight: 1.0
+    P:
+      label: "感知"
+      prefers: ["灵活随性", "开放式", "即兴"]
+      weight: 1.0
+
+# 活动标签维度定义
+activity_tag_dimensions:
+  crowd_density:
+    levels: ["无", "极低", "低", "中", "高"]
+    description: "活动场所的人群密度"
+
+  social_intensity:
+    levels: ["极低", "低", "中", "高"]
+    description: "需要与他人互动的程度"
+
+  energy_cost:
+    levels: ["极低", "低", "中", "高"]
+    description: "体力/精力消耗"
+
+  planning:
+    levels: ["低", "中", "高"]
+    description: "需要提前规划的程度"
+
+  indoor_outdoor:
+    levels: ["室内", "室外"]
+    description: "活动场所"
+
+# 上下文因素权重
+context_weights:
+  weather: 0.3        # 天气适配
+  time_of_day: 0.2     # 时间段适配
+  weekday_weekend: 0.2 # 工作日/周末
+  user_feedback: 0.3   # 历史反馈

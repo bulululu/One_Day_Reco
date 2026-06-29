@@ -1,0 +1,32 @@
+# ==================== GPT API 配置 ====================
+# 注意：办公网络须使用 tiktok-row.net 域名
+# 沙箱/非办公网络使用 byteintl.net 域名
+
+GPT_API:
+  azure_endpoint: "https://aidp-i18ntt-sg.tiktok-row.net/api/modelhub/online/v2/crawl"
+  api_key: "Xc94U5dS2509IPiIZ6D60dDPrJybiKIi_GPT_AK"
+  api_version: "2024-03-01-preview"
+  model: "gpt-5.3-chat-2026-03-03"
+  log_id: "one-day-reco-agent"
+
+# ==================== 应用配置 ====================
+
+APP:
+  name: "OneDayReco"
+  version: "0.1.0"
+  host: "0.0.0.0"
+  port: 8000
+
+# ==================== 数据路径 ====================
+
+DATA:
+  activities_path: "backend/data/activities.json"
+  user_profiles_path: "backend/data/user_profiles.json"
+  feedback_path: "backend/data/feedback.json"
+
+# ==================== 推荐配置 ====================
+
+RECOMMENDATION:
+  daily_count: 3            # 每日推荐活动数
+  min_match_score: 0.4      # 最低匹配分数
+  feedback_window_days: 30  # 反馈记忆窗口

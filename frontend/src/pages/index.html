@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OneDayReco - 每日活动推荐</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; color: #333;
+        }
+        .container { max-width: 480px; margin: 0 auto; padding: 20px; }
+
+        /* ===== Onboarding ===== */
+        .onboarding {
+            background: #fff; border-radius: 20px; padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15); margin-top: 40px;
+        }
+        .logo { text-align: center; margin-bottom: 25px; }
+        .logo h1 { font-size: 28px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .logo p { color: #888; font-size: 14px; margin-top: 5px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 15px; }
+        .mbti-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .mbti-btn {
+            padding: 12px 8px; border: 2px solid #e0e0e0; border-radius: 10px;
+            background: #fff; cursor: pointer; font-weight: 600; font-size: 14px;
+            transition: all 0.2s;
+        }
+        .mbti-btn:hover { border-color: #667eea; }
+        .mbti-btn.selected { background: #667eea; color: #fff; border-color: #667eea; }
+        .form-input, .form-select {
+            width: 100%; padding: 12px; border: 2px solid #e0e0e0;
+            border-radius: 10px; font-size: 14px; transition: border 0.2s;
+        }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #667eea; }
+        .btn-primary {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; border: none; border-radius: 12px; font-size: 16px;
+            font-weight: 600; cursor: pointer; transition: transform 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ===== 推荐结果 ===== */
+        .recommendations { display: none; }
+        .agent-message {
+            background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+            border-radius: 15px; padding: 15px 20px; margin-bottom: 20px;
+            color: #fff; font-size: 15px; line-height: 1.6;
+        }
+        .rec-card {
+            background: #fff; border-radius: 16px; padding: 20px;
+            margin-bottom: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .rec-card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+        .rec-card-title { font-size: 18px; font-weight: 700; }
+        .rec-card-category {
+            background: #f0f0f5; padding: 4px 10px; border-radius: 8px;
+            font-size: 12px; color: #666;
+        }
+        .rec-card-reason { color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 10px; }
+        .rec-card-tips {
+            background: #fff8e1; padding: 10px 14px; border-radius: 10px;
+            font-size: 13px; color: #8d6e63; line-height: 1.5;
+        }
+        .rec-card-tips strong { color: #5d4037; }
+        .rec-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .rec-btn {
+            flex: 1; padding: 10px; border: none; border-radius: 10px;
+            font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-like { background: #e8f5e9; color: #2e7d32; }
+        .btn-like:hover { background: #c8e6c9; }
+        .btn-skip { background: #f5f5f5; color: #666; }
+        .btn-skip:hover { background: #e0e0e0; }
+        .btn-done { background: #e3f2fd; color: #1565c0; }
+        .btn-done:hover { background: #bbdefb; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h2 { color: #fff; font-size: 22px; }
+        .refresh-btn {
+            background: rgba(255,255,255,0.2); border: none; color: #fff;
+            padding: 8px 16px; border-radius: 10px; cursor: pointer; font-size: 14px;
+        }
+        .loading { text-align: center; padding: 40px; color: #fff; }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: #fff; border-radius: 50%; margin: 0 auto 15px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ===== Onboarding 页面 ===== -->
+        <div id="onboarding" class="onboarding">
+            <div class="logo">
+                <h1>OneDayReco</h1>
+                <p>基于 MBTI 的每日活动推荐</p>
+            </div>
+
+            <div class="form-group">
+                <label>选择你的 MBTI</label>
+                <div class="mbti-grid" id="mbtiGrid"></div>
+            </div>
+
+            <div class="form-group">
+                <label>社交频率偏好</label>
+                <select class="form-select" id="socialFreq">
+                    <option value="喜欢独处，偶尔社交">喜欢独处，偶尔社交</option>
+                    <option value="每周社交1-2次">每周社交1-2次</option>
+                    <option value="经常和朋友出去玩">经常和朋友出去玩</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>预算范围</label>
+                <select class="form-select" id="budget">
+                    <option value="0-50元">0-50元</option>
+                    <option value="0-100元" selected>0-100元</option>
+                    <option value="0-200元">0-200元</option>
+                    <option value="不限">不限</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>其他偏好（选填）</label>
+                <input type="text" class="form-input" id="notes" placeholder="如：怕人多、喜欢安静的地方...">
+            </div>
+
+            <button class="btn-primary" id="startBtn" onclick="getRecommendations()">获取今日推荐</button>
+        </div>
+
+        <!-- ===== 推荐结果页面 ===== -->
+        <div id="recommendations" class="recommendations">
+            <div class="header">
+                <h2>今日推荐</h2>
+                <button class="refresh-btn" onclick="resetApp()">重新设置</button>
+            </div>
+            <div id="recContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let selectedMbti = null;
+        let currentUser = null;
+
+        // MBTI 16型
+        const mbtiTypes = [
+            'INTJ','INTP','ENTJ','ENTP',
+            'INFJ','INFP','ENFJ','ENFP',
+            'ISTJ','ISFJ','ESTJ','ESFJ',
+            'ISTP','ISFP','ESTP','ESFP'
+        ];
+
+        // 渲染 MBTI 选择器
+        const mbtiGrid = document.getElementById('mbtiGrid');
+        mbtiTypes.forEach(type => {
+            const btn = document.createElement('button');
+            btn.className = 'mbti-btn';
+            btn.textContent = type;
+            btn.onclick = () => {
+                document.querySelectorAll('.mbti-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedMbti = type;
+            };
+            mbtiGrid.appendChild(btn);
+        });
+
+        async function getRecommendations() {
+            if (!selectedMbti) { alert('请先选择你的 MBTI'); return; }
+
+            const socialFreq = document.getElementById('socialFreq').value;
+            const budget = document.getElementById('budget').value;
+            const notes = document.getElementById('notes').value;
+
+            currentUser = {
+                user_id: 'user_' + Date.now(),
+                mbti: selectedMbti,
+                preferences: {
+                    social_frequency: socialFreq,
+                    budget: budget,
+                    notes: notes,
+                },
+                feedback_summary: ''
+            };
+
+            // 切换到加载状态
+            document.getElementById('onboarding').style.display = 'none';
+            document.getElementById('recommendations').style.display = 'block';
+            document.getElementById('recContent').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在为你匹配最合适的活动...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_profile: currentUser,
+                        context: {
+                            weather: '晴',
+                            location: '当前位置'
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                renderRecommendations(data);
+            } catch (error) {
+                document.getElementById('recContent').innerHTML = `
+                    <div class="loading">
+                        <p>连接失败，请确认后端服务已启动</p>
+                        <p style="font-size:12px;opacity:0.7;margin-top:10px">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderRecommendations(data) {
+            const recs = data.recommendations || [];
+            const agentMsg = data.agent_message || '';
+
+            let html = '';
+
+            if (agentMsg) {
+                html += `<div class="agent-message">${agentMsg}</div>`;
+            }
+
+            recs.forEach(rec => {
+                html += `
+                    <div class="rec-card">
+                        <div class="rec-card-header">
+                            <div class="rec-card-title">${rec.activity_name}</div>
+                            <div class="rec-card-category">${rec.activity_id}</div>
+                        </div>
+                        <div class="rec-card-reason">${rec.reason}</div>
+                        <div class="rec-card-tips"><strong>建议：</strong>${rec.tips}</div>
+                        <div class="rec-actions">
+                            <button class="rec-btn btn-like" onclick="sendFeedback('${rec.activity_id}', 'liked')">喜欢</button>
+                            <button class="rec-btn btn-done" onclick="sendFeedback('${rec.activity_id}', 'completed')">去完成</button>
+                            <button class="rec-btn btn-skip" onclick="sendFeedback('${rec.activity_id}', 'skipped')">跳过</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (recs.length === 0) {
+                html = `<div class="loading"><p>暂无推荐，请稍后重试</p></div>`;
+            }
+
+            document.getElementById('recContent').innerHTML = html;
+        }
+
+        async function sendFeedback(activityId, feedback) {
+            if (!currentUser) return;
+            try {
+                await fetch(`${API_BASE}/api/feedback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.user_id,
+                        activity_id: activityId,
+                        feedback: feedback
+                    })
+                });
+                // 简单的视觉反馈
+                event.target.style.opacity = '0.5';
+                event.target.textContent = '已记录';
+            } catch (e) { console.error('反馈提交失败', e); }
+        }
+
+        function resetApp() {
+            document.getElementById('recommendations').style.display = 'none';
+            document.getElementById('onboarding').style.display = 'block';
+            selectedMbti = null;
+            document.querySelectorAll('.mbti-btn').forEach(b => b.classList.remove('selected'));
+        }
+    </script>
+</body>
+</html>
