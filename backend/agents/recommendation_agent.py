@@ -194,13 +194,13 @@ class RecommendationAgent:
         # Step 3: 调用 LLM
         if self.client:
             try:
+                # GPT-5.3 仅支持 temperature=1，不支持自定义值
                 response = self.client.chat.completions.create(
                     model=self.config["GPT_API"]["model"],
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt},
                     ],
-                    temperature=0.7,
                 )
 
                 result_text = response.choices[0].message.content.strip()
