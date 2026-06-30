@@ -1,7 +1,7 @@
 /**
  * 主 App：推荐 / 发现 / 收藏 / 我的 + 中央聊天入口。
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
   Pressable,
@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { chat, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation, updateProfile } from '@/services/api';
@@ -53,6 +54,23 @@ const TABS = [
 
 type TabKey = typeof TABS[number]['key'];
 
+const FAVORITES_KEY_PREFIX = 'onedayreco_favorites';
+
+function favoritesKey(userId: string) {
+  return `${FAVORITES_KEY_PREFIX}:${userId || 'guest'}`;
+}
+
+function parseFavorites(raw: string | null): Recommendation[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item) => item && typeof item.activity_id === 'string' && typeof item.activity_name === 'string');
+  } catch {
+    return [];
+  }
+}
+
 export function MainAppScreen() {
   const {
     mbti,
@@ -91,6 +109,7 @@ export function MainAppScreen() {
   const [preferenceVisible, setPreferenceVisible] = useState(false);
   const [recommendationNotice, setRecommendationNotice] = useState('当前使用本地灵感，实时地点稍后刷新');
   const [feedbackNotice, setFeedbackNotice] = useState('');
+  const favoritesHydrated = useRef(false);
   const theme = currentTheme;
   const colors = theme.colors;
   const activeMbti = (mbti || 'INTP') as MBTIType;
@@ -108,6 +127,29 @@ export function MainAppScreen() {
     if (messages.length) return messages;
     return [];
   }, [messages]);
+
+  useEffect(() => {
+    let cancelled = false;
+    favoritesHydrated.current = false;
+    AsyncStorage.getItem(favoritesKey(userId)).then((raw) => {
+      if (cancelled) return;
+      setFavorites(parseFavorites(raw));
+      favoritesHydrated.current = true;
+    }).catch(() => {
+      if (!cancelled) {
+        setFavorites([]);
+        favoritesHydrated.current = true;
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!favoritesHydrated.current) return;
+    void AsyncStorage.setItem(favoritesKey(userId), JSON.stringify(favorites)).catch(() => undefined);
+  }, [favorites, userId]);
 
   useEffect(() => {
     if (!intentReady) return;
