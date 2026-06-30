@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { updateProfile } from '@/services/api';
 import { MBTIType, UserPreferences } from '@/types';
-import { getLifestyleHero, getLifestyleProfile } from '@/data/lifestyleDesign';
+import { HOME_ASSETS, getLifestyleHero, getLifestyleProfile } from '@/data/lifestyleDesign';
 import { MBTI_THEMES } from '@/data/themes';
 import { hexToRgba, UI } from '@/styles/ui';
 
@@ -348,9 +348,11 @@ export function OnboardingScreen() {
 
         {step === 4 ? (
           <View style={styles.doneStep}>
-            <ImageBackground source={hero} resizeMode="cover" imageStyle={styles.doneImage} style={styles.doneHero}>
-              <View style={[styles.doneOverlay, { backgroundColor: hexToRgba(colors.card, 0.68) }]}>
-                <Text style={[styles.doneIcon, { color: colors.accent }]}>{theme.avatar}</Text>
+            <ImageBackground source={HOME_ASSETS.hero} resizeMode="cover" imageStyle={styles.doneImage} style={styles.doneHero}>
+              <View style={[styles.doneOverlay, { backgroundColor: hexToRgba(colors.card, 0.24) }]}>
+                <View style={[styles.doneBadge, { backgroundColor: colors.card }]}>
+                  <Text style={[styles.doneIcon, { color: colors.accent }]}>{theme.avatar}</Text>
+                </View>
               </View>
             </ImageBackground>
             <Text style={[styles.doneTitle, { color: colors.text }]}>太好了，我们准备好了</Text>
@@ -732,6 +734,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  doneBadge: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   doneIcon: {
     fontSize: 54,

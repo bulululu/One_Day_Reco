@@ -1,44 +1,37 @@
 import React from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ActivitySourceMeta, MBTITheme, MBTIType, Recommendation } from '@/types';
-import { HOME_IDEAS, getLifestyleHero, getLifestyleProfile } from '@/data/lifestyleDesign';
-import { RecommendationCard } from '@/components/RecommendationCard';
+import { MBTITheme, MBTIType, Recommendation } from '@/types';
+import { HOME_ASSETS, HOME_IDEAS, getLifestyleProfile } from '@/data/lifestyleDesign';
 import { hexToRgba, softShadow, UI } from '@/styles/ui';
 
 type RecommendViewProps = {
   mbti: MBTIType;
   theme: MBTITheme;
   featured: Recommendation;
-  recommendations: Recommendation[];
-  source?: ActivitySourceMeta;
-  location: string;
-  weather: string;
   isLoading: boolean;
-  notice?: string;
   onRefresh: () => void;
   onOpenDetail: (recommendation: Recommendation) => void;
   onPrompt: (prompt: string) => void;
+  onOpenProfile: () => void;
+  onCompleteToday: () => void;
 };
 
 export function RecommendView({
   mbti,
   theme,
   featured,
-  recommendations,
-  source,
-  location,
-  weather,
   isLoading,
   onRefresh,
   onOpenDetail,
   onPrompt,
-  notice,
+  onOpenProfile,
+  onCompleteToday,
 }: RecommendViewProps) {
   const colors = theme.colors;
   const lifestyle = getLifestyleProfile(mbti);
-  const hero = getLifestyleHero(mbti);
-  const sourceLabel = source?.is_realtime ? '实时候选' : '精选兜底';
+  const featureTitle = featured.specific_info?.name || featured.activity_name;
+  const featureCopy = featured.recommend_text.split('。')[0] || '慢下来，照顾好自己。';
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -48,113 +41,136 @@ export function RecommendView({
           <Text style={[styles.brandSub, { color: colors.subtext }]}>每一天，都值得被好好安排。</Text>
         </View>
         <Pressable
-          style={[styles.refreshBtn, { backgroundColor: hexToRgba(colors.accent, 0.1) }]}
-          onPress={onRefresh}
-          disabled={isLoading}
+          style={[styles.profileButton, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.14) }]}
+          onPress={onOpenProfile}
         >
-          <Text style={[styles.refreshText, { color: colors.accent }]}>{isLoading ? '安排中' : '换一批'}</Text>
+          <Text style={[styles.profileIcon, { color: colors.accent }]}>⚙</Text>
+          <Text style={[styles.profileText, { color: colors.text }]}>我的</Text>
         </Pressable>
       </View>
 
       <ImageBackground
-        source={hero}
+        source={HOME_ASSETS.hero}
         resizeMode="cover"
-        imageStyle={styles.heroImage}
-        style={[styles.heroCard, { backgroundColor: colors.card }, softShadow(colors.accent, 0.06)]}
+        imageStyle={styles.greetingImage}
+        style={[styles.greetingCard, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }, softShadow(colors.accent, 0.05)]}
       >
         <LinearGradient
-          colors={[hexToRgba(colors.card, 0.78), hexToRgba(colors.card, 0.34), 'rgba(255,255,255,0)']}
-          start={{ x: 0, y: 0.45 }}
-          end={{ x: 0.68, y: 0.5 }}
-          style={styles.heroOverlay}
+          colors={[hexToRgba(colors.card, 0.98), hexToRgba(colors.card, 0.76), hexToRgba(colors.card, 0.08)]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 0.72, y: 0.5 }}
+          style={styles.greetingOverlay}
         >
-          <Text style={[styles.styleName, { color: colors.accent }]}>{lifestyle.styleName}</Text>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>早安，{theme.name}</Text>
-          <Text style={[styles.heroSub, { color: colors.text }]}>今天想一起做点什么呢？</Text>
-          <View style={[styles.contextPill, { backgroundColor: hexToRgba(colors.accent, 0.1) }]}>
-            <Text style={[styles.contextText, { color: colors.accent }]} numberOfLines={1}>{weather} · {location || '当前位置'}</Text>
-          </View>
+          <Text style={[styles.greetingTitle, { color: colors.text }]}>早安，{theme.name}</Text>
+          <Text style={[styles.greetingSub, { color: colors.text }]}>今天想一起做点什么呢？</Text>
+          <Text style={[styles.greetingMeta, { color: colors.accent }]}>{mbti} · {lifestyle.styleName}</Text>
         </LinearGradient>
       </ImageBackground>
 
-      {notice ? (
-        <View style={[styles.noticeBar, { backgroundColor: hexToRgba(colors.accent, 0.08), borderColor: hexToRgba(colors.accent, 0.14) }]}>
-          <Text style={[styles.noticeText, { color: colors.subtext }]} numberOfLines={2}>{notice}</Text>
-          <Pressable onPress={onRefresh} disabled={isLoading}>
-            <Text style={[styles.noticeAction, { color: colors.accent }]}>{isLoading ? '刷新中' : '重试'}</Text>
-          </Pressable>
-        </View>
-      ) : null}
-
-      <Pressable onPress={() => onOpenDetail(featured)} style={styles.featureHit}>
-        <RecommendationCard recommendation={featured} theme={theme} activitySource={source} />
+      <Pressable onPress={() => onOpenDetail(featured)}>
+        <ImageBackground
+          source={HOME_ASSETS.feature}
+          resizeMode="cover"
+          imageStyle={styles.featureImage}
+          style={[styles.featureCard, softShadow(colors.accent, 0.06)]}
+        >
+          <LinearGradient
+            colors={[hexToRgba('#fffaf2', 0.5), hexToRgba('#fffaf2', 0.16), 'rgba(255,255,255,0)']}
+            start={{ x: 0, y: 0.2 }}
+            end={{ x: 1, y: 0.78 }}
+            style={styles.featureOverlay}
+          >
+            <View style={[styles.featureTag, { backgroundColor: colors.accent }]}>
+              <Text style={styles.featureTagText}>今日灵感</Text>
+            </View>
+            <Text style={[styles.featureTitle, { color: colors.text }]} numberOfLines={2}>
+              {featureTitle}
+            </Text>
+            <Text style={[styles.featureSub, { color: colors.text }]} numberOfLines={2}>
+              {featureCopy}。
+            </Text>
+            <Pressable
+              style={[styles.featureButton, { backgroundColor: colors.accent }]}
+              onPress={() => onOpenDetail(featured)}
+            >
+              <Text style={styles.featureButtonText}>开始今日计划</Text>
+              <Text style={styles.featureArrow}>→</Text>
+            </Pressable>
+          </LinearGradient>
+        </ImageBackground>
       </Pressable>
 
-      <View style={styles.quickIdeas}>
-        {HOME_IDEAS.slice(0, 3).map((idea) => (
-          <Pressable
-            key={idea.key}
-            style={[styles.quickIdea, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }]}
-            onPress={() => onPrompt(idea.prompt)}
-          >
-            <Text style={[styles.quickTag, { color: colors.accent }]}>{idea.tag}</Text>
-            <Text style={[styles.quickTitle, { color: colors.text }]} numberOfLines={1}>{idea.title}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={[styles.section, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }]}>
+      <View style={[styles.section, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.1) }]}>
         <View style={styles.sectionHeader}>
-          <View>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>个性化推荐</Text>
-            <Text style={[styles.sectionSub, { color: colors.subtext }]}>{sourceLabel} · 点开看完整安排</Text>
-          </View>
-          <Pressable onPress={onRefresh}>
-            <Text style={[styles.sectionAction, { color: colors.accent }]}>刷新</Text>
-          </Pressable>
-        </View>
-        {recommendations.slice(0, 3).map((item) => (
-          <Pressable
-            key={item.activity_id}
-            style={[styles.compactCard, { borderColor: hexToRgba(colors.accent, 0.12), backgroundColor: hexToRgba(colors.accent, 0.05) }]}
-            onPress={() => onOpenDetail(item)}
-          >
-            <View style={styles.compactCopy}>
-              <Text style={[styles.compactTitle, { color: colors.text }]} numberOfLines={1}>
-                {item.specific_info?.name || item.activity_name}
-              </Text>
-              <Text style={[styles.compactMeta, { color: colors.subtext }]} numberOfLines={1}>
-                {[item.specific_info?.location || item.specific_info?.platform, item.specific_info?.duration, item.specific_info?.price || item.budget].filter(Boolean).join(' · ')}
-              </Text>
-            </View>
-            <Text style={[styles.compactArrow, { color: colors.accent }]}>›</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={[styles.section, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }]}>
-        <View style={styles.sectionHeader}>
-          <View>
+          <View style={styles.sectionTitleRow}>
+            <Text style={[styles.sectionIcon, { color: colors.accent }]}>⌁</Text>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>今日灵感卡片</Text>
-            <Text style={[styles.sectionSub, { color: colors.subtext }]}>不想思考时，直接点一个方向</Text>
           </View>
+          <Pressable style={styles.refreshInline} onPress={onRefresh} disabled={isLoading}>
+            <Text style={[styles.refreshText, { color: colors.subtext }]}>{isLoading ? '刷新中' : '换一批'}</Text>
+            <Text style={[styles.refreshIcon, { color: colors.subtext }]}>↻</Text>
+          </Pressable>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.ideaList}>
-          {HOME_IDEAS.map((idea) => (
+
+        <View style={styles.ideaGrid}>
+          {HOME_IDEAS.slice(0, 3).map((idea) => (
             <Pressable
               key={idea.key}
-              style={[styles.ideaCard, { borderColor: hexToRgba(colors.accent, 0.12) }]}
+              style={[styles.ideaCard, { borderColor: hexToRgba(colors.accent, 0.1) }]}
               onPress={() => onPrompt(idea.prompt)}
             >
               <ImageBackground source={idea.image} resizeMode="cover" imageStyle={styles.ideaImage} style={styles.ideaVisual} />
               <View style={styles.ideaCopy}>
                 <Text style={[styles.ideaTitle, { color: colors.text }]} numberOfLines={1}>{idea.title}</Text>
                 <Text style={[styles.ideaSub, { color: colors.subtext }]} numberOfLines={1}>{idea.subtitle}</Text>
-                <Text style={[styles.ideaTag, { color: colors.accent }]}>{idea.tag}</Text>
+                <View style={styles.ideaFooter}>
+                  <Text style={[styles.ideaTag, { color: colors.accent, backgroundColor: hexToRgba(colors.accent, 0.1) }]} numberOfLines={1}>
+                    {idea.tag}
+                  </Text>
+                  <Text style={[styles.ideaDistance, { color: colors.subtext }]} numberOfLines={1}>{idea.distance}</Text>
+                </View>
               </View>
             </Pressable>
           ))}
-        </ScrollView>
+        </View>
+      </View>
+
+      <View style={[styles.section, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.1) }]}>
+        <View style={styles.sectionTitleRow}>
+          <Text style={[styles.sectionIcon, { color: colors.accent }]}>☑</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>今日日程</Text>
+        </View>
+        <View style={[styles.scheduleCard, { borderColor: hexToRgba(colors.accent, 0.12) }]}>
+          <View style={styles.dateBlock}>
+            <Text style={[styles.weekText, { color: colors.subtext }]}>今天</Text>
+            <Text style={[styles.dateText, { color: colors.text }]}>现在</Text>
+          </View>
+          <View style={[styles.checkCircle, { backgroundColor: hexToRgba(colors.accent, 0.12) }]}>
+            <Text style={[styles.checkText, { color: colors.accent }]}>✓</Text>
+          </View>
+          <View style={styles.scheduleCopy}>
+            <Text style={[styles.scheduleTitle, { color: colors.text }]} numberOfLines={1}>给自己留一段轻时间</Text>
+            <Text style={[styles.scheduleTime, { color: colors.subtext }]} numberOfLines={1}>
+              {featured.specific_info?.duration || '约 60-90 分钟'}
+            </Text>
+          </View>
+          <Pressable style={[styles.doneButton, { borderColor: hexToRgba(colors.accent, 0.18) }]} onPress={onCompleteToday}>
+            <Text style={[styles.doneText, { color: colors.accent }]}>完成</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={[styles.memoryBanner, { backgroundColor: colors.accent }]}>
+        <View style={styles.memoryAvatar}>
+          <Text style={[styles.memoryFace, { color: colors.accent }]}>•ᴗ•</Text>
+        </View>
+        <View style={styles.memoryCopy}>
+          <Text style={styles.memoryTitle}>记录我们的美好瞬间</Text>
+          <Text style={styles.memorySub}>珍藏每一个值得回忆的时刻</Text>
+        </View>
+        <Pressable style={styles.memoryButton} onPress={() => onPrompt('帮我记录今天这个活动的感受')}>
+          <Text style={[styles.memoryButtonText, { color: colors.accent }]}>去记录</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -173,8 +189,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   wordmark: {
-    fontSize: 29,
-    lineHeight: 34,
+    fontSize: 30,
+    lineHeight: 36,
     fontWeight: '700',
     fontStyle: 'italic',
   },
@@ -182,103 +198,113 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 2,
   },
-  refreshBtn: {
-    borderRadius: UI.radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  refreshText: {
-    fontSize: 13,
-    fontWeight: '900',
-  },
-  heroCard: {
-    minHeight: 170,
-    borderRadius: UI.radius.xl,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  heroImage: {
-    borderRadius: UI.radius.xl,
-  },
-  heroOverlay: {
-    flex: 1,
-    padding: 17,
-    justifyContent: 'center',
-  },
-  styleName: {
-    fontSize: 13,
-    fontWeight: '800',
-    marginBottom: 10,
-  },
-  heroTitle: {
-    fontSize: 25,
-    lineHeight: 32,
-    fontWeight: '800',
-  },
-  heroSub: {
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  contextPill: {
-    alignSelf: 'flex-start',
-    borderRadius: UI.radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginTop: 16,
-    maxWidth: '80%',
-  },
-  contextText: {
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  featureHit: {
-    marginBottom: 12,
-  },
-  noticeBar: {
-    borderRadius: UI.radius.md,
+  profileButton: {
+    minHeight: 40,
+    borderRadius: 20,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 12,
+    paddingHorizontal: 13,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 7,
   },
-  noticeText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  noticeAction: {
-    fontSize: 12,
+  profileIcon: {
+    fontSize: 15,
     fontWeight: '800',
   },
-  quickIdeas: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 14,
-  },
-  quickIdea: {
-    flex: 1,
-    minHeight: 64,
-    borderRadius: UI.radius.md,
-    borderWidth: 1,
-    padding: 10,
-    justifyContent: 'center',
-  },
-  quickTag: {
-    fontSize: 11,
-    fontWeight: '800',
-    marginBottom: 5,
-  },
-  quickTitle: {
-    fontSize: 13,
+  profileText: {
+    fontSize: 15,
     fontWeight: '700',
   },
+  greetingCard: {
+    height: 150,
+    borderRadius: UI.radius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  greetingImage: {
+    borderRadius: UI.radius.xl,
+  },
+  greetingOverlay: {
+    flex: 1,
+    paddingHorizontal: 22,
+    justifyContent: 'center',
+  },
+  greetingTitle: {
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '800',
+  },
+  greetingSub: {
+    fontSize: 16,
+    lineHeight: 24,
+    marginTop: 6,
+  },
+  greetingMeta: {
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 16,
+  },
+  featureCard: {
+    height: 184,
+    borderRadius: UI.radius.xl,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  featureImage: {
+    borderRadius: UI.radius.xl,
+  },
+  featureOverlay: {
+    flex: 1,
+    padding: 18,
+    justifyContent: 'center',
+  },
+  featureTag: {
+    alignSelf: 'flex-start',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 16,
+  },
+  featureTagText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  featureTitle: {
+    maxWidth: '58%',
+    fontSize: 22,
+    lineHeight: 30,
+    fontWeight: '800',
+  },
+  featureSub: {
+    maxWidth: '60%',
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 7,
+  },
+  featureButton: {
+    alignSelf: 'flex-start',
+    minHeight: 42,
+    borderRadius: 21,
+    paddingHorizontal: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 17,
+  },
+  featureButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  featureArrow: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '800',
+  },
   section: {
-    borderRadius: UI.radius.lg,
+    borderRadius: UI.radius.xl,
     borderWidth: 1,
     padding: 14,
     marginBottom: 16,
@@ -289,74 +315,180 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  sectionSub: {
-    fontSize: 13,
-    marginTop: 4,
-  },
-  sectionAction: {
-    fontSize: 13,
-    fontWeight: '900',
-  },
-  compactCard: {
-    minHeight: 66,
-    borderRadius: UI.radius.md,
-    borderWidth: 1,
-    paddingHorizontal: 13,
-    paddingVertical: 10,
+  sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    gap: 8,
   },
-  compactCopy: {
-    flex: 1,
-  },
-  compactTitle: {
-    fontSize: 16,
+  sectionIcon: {
+    fontSize: 19,
     fontWeight: '800',
   },
-  compactMeta: {
+  sectionTitle: {
+    fontSize: 19,
+    lineHeight: 25,
+    fontWeight: '800',
+  },
+  refreshInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  refreshText: {
     fontSize: 13,
-    marginTop: 6,
-  },
-  compactArrow: {
-    fontSize: 28,
     fontWeight: '700',
-    marginLeft: 10,
   },
-  ideaList: {
-    gap: 11,
+  refreshIcon: {
+    fontSize: 16,
+  },
+  ideaGrid: {
+    flexDirection: 'row',
+    gap: 10,
   },
   ideaCard: {
-    width: 154,
-    borderRadius: UI.radius.lg,
+    flex: 1,
+    borderRadius: UI.radius.md,
     borderWidth: 1,
     overflow: 'hidden',
   },
   ideaVisual: {
-    height: 92,
+    height: 80,
   },
   ideaImage: {
-    borderTopLeftRadius: UI.radius.lg,
-    borderTopRightRadius: UI.radius.lg,
+    borderTopLeftRadius: UI.radius.md,
+    borderTopRightRadius: UI.radius.md,
   },
   ideaCopy: {
-    padding: 10,
+    padding: 9,
   },
   ideaTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
   },
   ideaSub: {
-    fontSize: 12,
-    marginTop: 5,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 4,
+  },
+  ideaFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
+    marginTop: 8,
   },
   ideaTag: {
+    maxWidth: 66,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    fontSize: 10,
+    fontWeight: '700',
+    overflow: 'hidden',
+  },
+  ideaDistance: {
+    flex: 1,
+    textAlign: 'right',
+    fontSize: 11,
+  },
+  scheduleCard: {
+    minHeight: 72,
+    borderRadius: UI.radius.lg,
+    borderWidth: 1,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 14,
+  },
+  dateBlock: {
+    width: 48,
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(130,122,112,0.16)',
+  },
+  weekText: {
     fontSize: 12,
-    fontWeight: '900',
-    marginTop: 9,
+  },
+  dateText: {
+    fontSize: 17,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  checkCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkText: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  scheduleCopy: {
+    flex: 1,
+  },
+  scheduleTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  scheduleTime: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  doneButton: {
+    borderWidth: 1,
+    borderRadius: 17,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+  },
+  doneText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  memoryBanner: {
+    minHeight: 72,
+    borderRadius: UI.radius.xl,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  memoryAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: 'rgba(255,250,242,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  memoryFace: {
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  memoryCopy: {
+    flex: 1,
+  },
+  memoryTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  memorySub: {
+    color: 'rgba(255,255,255,0.82)',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  memoryButton: {
+    minHeight: 38,
+    borderRadius: 19,
+    paddingHorizontal: 15,
+    backgroundColor: 'rgba(255,250,242,0.92)',
+    justifyContent: 'center',
+  },
+  memoryButtonText: {
+    fontSize: 14,
+    fontWeight: '800',
   },
 });
