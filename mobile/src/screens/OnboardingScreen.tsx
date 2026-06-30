@@ -16,6 +16,7 @@ import { useAppStore } from '@/store/appStore';
 import { updateProfile } from '@/services/api';
 import { MBTIType, UserPreferences } from '@/types';
 import { getLifestyleProfile } from '@/data/lifestyleDesign';
+import { MBTI_THEMES } from '@/data/themes';
 
 const ACCENT = '#f5aa27';
 const BG = '#fbf7f0';
@@ -123,6 +124,26 @@ function inferMbtiFromAnswers(answers: DiscoveryAnswers): MBTIType | null {
   return `${energy}${novelty}${reason}${plan}` as MBTIType;
 }
 
+function hexToRgba(hex: string, opacity: number) {
+  const clean = hex.replace('#', '');
+  const value = clean.length === 3
+    ? clean.split('').map((char) => char + char).join('')
+    : clean;
+  const int = parseInt(value, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `rgba(${r},${g},${b},${opacity})`;
+}
+
+type ThemeColors = {
+  bg: string;
+  card: string;
+  accent: string;
+  text: string;
+  subtext: string;
+};
+
 export function OnboardingScreen() {
   const {
     mbti,
@@ -150,6 +171,9 @@ export function OnboardingScreen() {
   const inferredMbti = inferMbtiFromAnswers(discoveryAnswers);
   const finalMbti = useDiscovery ? inferredMbti : selectedMbti;
   const canStart = !!finalMbti;
+  const previewMbti = finalMbti || selectedMbti || mbti || 'INFP';
+  const previewTheme = MBTI_THEMES[previewMbti];
+  const previewColors = previewTheme.colors;
 
   const handleStart = async () => {
     if (!finalMbti) return;
@@ -179,16 +203,25 @@ export function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: previewColors.bg }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.topBar}>
-          <Text style={styles.back}>‹</Text>
+          <Text style={[styles.back, { color: previewColors.text }]}>‹</Text>
           {isReturningUser ? (
-            <Pressable onPress={startAppFromSaved} style={styles.laterBtn}>
-              <Text style={styles.laterText}>稍后设置</Text>
+            <Pressable
+              onPress={startAppFromSaved}
+              style={[
+                styles.laterBtn,
+                {
+                  backgroundColor: previewColors.card,
+                  borderColor: hexToRgba(previewColors.accent, 0.18),
+                },
+              ]}
+            >
+              <Text style={[styles.laterText, { color: previewColors.subtext }]}>稍后设置</Text>
             </Pressable>
           ) : (
             <View />
@@ -198,59 +231,121 @@ export function OnboardingScreen() {
         <View style={styles.progress}>
           {[0, 1, 2, 3].map((item) => (
             <View key={item} style={styles.progressItem}>
-              <View style={[styles.progressDot, item === 0 && styles.progressDotActive]} />
-              {item < 3 ? <View style={styles.progressLine} /> : null}
+              <View
+                style={[
+                  styles.progressDot,
+                  { backgroundColor: hexToRgba(previewColors.accent, 0.14) },
+                  item === 0 && {
+                    backgroundColor: previewColors.accent,
+                    borderColor: hexToRgba(previewColors.accent, 0.18),
+                  },
+                ]}
+              />
+              {item < 3 ? (
+                <View style={[styles.progressLine, { backgroundColor: hexToRgba(previewColors.accent, 0.12) }]} />
+              ) : null}
             </View>
           ))}
         </View>
 
-        <Text style={styles.title}>让 OneDayReco 更懂你</Text>
-        <Text style={styles.subtitle}>简单选择你的偏好，推荐会更贴合你的生活方式。</Text>
+        <Text style={[styles.title, { color: previewColors.text }]}>让 OneDayReco 更懂你</Text>
+        <Text style={[styles.subtitle, { color: previewColors.subtext }]}>
+          简单选择你的偏好，推荐会更贴合你的生活方式。
+        </Text>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionIcon}>♙</Text>
+          <Text style={[styles.sectionIcon, { color: previewColors.accent }]}>♙</Text>
           <View>
             <View style={styles.titleRow}>
-              <Text style={styles.sectionTitle}>你的推荐风格</Text>
-              <Text style={styles.badge}>先定方向</Text>
+              <Text style={[styles.sectionTitle, { color: previewColors.text }]}>你的推荐风格</Text>
+              <Text
+                style={[
+                  styles.badge,
+                  {
+                    color: previewColors.accent,
+                    backgroundColor: hexToRgba(previewColors.accent, 0.1),
+                  },
+                ]}
+              >
+                先定方向
+              </Text>
             </View>
-            <Text style={styles.sectionSub}>不知道 MBTI 也可以直接开始</Text>
+            <Text style={[styles.sectionSub, { color: previewColors.subtext }]}>
+              不知道 MBTI 也可以直接开始
+            </Text>
           </View>
         </View>
 
         <View style={styles.pathChoice}>
           <Pressable
-            style={[styles.pathCard, useDiscovery && styles.pathCardActive]}
+            style={[
+              styles.pathCard,
+              {
+                backgroundColor: previewColors.card,
+                borderColor: useDiscovery ? previewColors.accent : hexToRgba(previewColors.accent, 0.14),
+              },
+            ]}
             onPress={() => {
               setUseDiscovery(true);
               setSelectedMbti(null);
             }}
           >
-            <Text style={[styles.pathTitle, useDiscovery && styles.pathTitleActive]}>不确定，聊几句</Text>
-            <Text style={styles.pathSub}>回答 4 个轻问题</Text>
+            <Text style={[styles.pathTitle, { color: useDiscovery ? previewColors.accent : previewColors.text }]}>
+              不确定，聊几句
+            </Text>
+            <Text style={[styles.pathSub, { color: previewColors.subtext }]}>回答 4 个轻问题</Text>
           </Pressable>
           <Pressable
-            style={[styles.pathCard, !useDiscovery && styles.pathCardActive]}
+            style={[
+              styles.pathCard,
+              {
+                backgroundColor: previewColors.card,
+                borderColor: !useDiscovery ? previewColors.accent : hexToRgba(previewColors.accent, 0.14),
+              },
+            ]}
             onPress={() => setUseDiscovery(false)}
           >
-            <Text style={[styles.pathTitle, !useDiscovery && styles.pathTitleActive]}>我知道 MBTI</Text>
-            <Text style={styles.pathSub}>直接选择类型</Text>
+            <Text style={[styles.pathTitle, { color: !useDiscovery ? previewColors.accent : previewColors.text }]}>
+              我知道 MBTI
+            </Text>
+            <Text style={[styles.pathSub, { color: previewColors.subtext }]}>直接选择类型</Text>
           </Pressable>
         </View>
 
         {useDiscovery ? (
-          <View style={styles.discoveryPanel}>
+          <View
+            style={[
+              styles.discoveryPanel,
+              {
+                backgroundColor: previewColors.card,
+                borderColor: hexToRgba(previewColors.accent, 0.14),
+                shadowColor: previewColors.accent,
+              },
+            ]}
+          >
             {DISCOVERY_QUESTIONS.map((question) => (
               <View key={question.key} style={styles.discoveryQuestion}>
-                <Text style={styles.discoveryQuestionTitle}>{question.title}</Text>
-                <Text style={styles.discoveryQuestionSub}>{question.subtitle}</Text>
+                <Text style={[styles.discoveryQuestionTitle, { color: previewColors.text }]}>
+                  {question.title}
+                </Text>
+                <Text style={[styles.discoveryQuestionSub, { color: previewColors.subtext }]}>
+                  {question.subtitle}
+                </Text>
                 <View style={styles.discoveryOptions}>
                   {question.options.map((option) => {
                     const selected = discoveryAnswers[question.key] === option.value;
                     return (
                       <Pressable
                         key={option.value}
-                        style={[styles.discoveryOption, selected && styles.discoveryOptionSelected]}
+                        style={[
+                          styles.discoveryOption,
+                          {
+                            backgroundColor: selected
+                              ? hexToRgba(previewColors.accent, 0.12)
+                              : hexToRgba(previewColors.accent, 0.04),
+                            borderColor: selected ? previewColors.accent : 'transparent',
+                          },
+                        ]}
                         onPress={() => {
                           setDiscoveryAnswers((current) => ({
                             ...current,
@@ -262,7 +357,7 @@ export function OnboardingScreen() {
                         <Text
                           style={[
                             styles.discoveryOptionText,
-                            selected && styles.discoveryOptionTextSelected,
+                            { color: selected ? previewColors.accent : previewColors.subtext },
                           ]}
                         >
                           {option.label}
@@ -273,9 +368,9 @@ export function OnboardingScreen() {
                 </View>
               </View>
             ))}
-            <View style={styles.inferredBox}>
-              <Text style={styles.inferredLabel}>暂定风格</Text>
-              <Text style={styles.inferredValue}>
+            <View style={[styles.inferredBox, { backgroundColor: hexToRgba(previewColors.accent, 0.1) }]}>
+              <Text style={[styles.inferredLabel, { color: previewColors.accent }]}>暂定风格</Text>
+              <Text style={[styles.inferredValue, { color: previewColors.text }]}>
                 {inferredMbti
                   ? `${inferredMbti} · ${getLifestyleProfile(inferredMbti).styleName} · 后续会根据反馈调整`
                   : '回答完 4 个问题后生成'}
@@ -287,6 +382,8 @@ export function OnboardingScreen() {
             {PERSONALITY_OPTIONS.map((option) => {
               const selected = selectedMbti === option.type;
               const lifestyle = getLifestyleProfile(option.type);
+              const optionTheme = MBTI_THEMES[option.type];
+              const optionColors = optionTheme.colors;
               return (
                 <Pressable
                   key={option.type}
@@ -294,19 +391,49 @@ export function OnboardingScreen() {
                     setSelectedMbti(option.type);
                     setMBTI(option.type);
                   }}
-                  style={[styles.personalityCard, selected && styles.personalityCardSelected]}
+                  style={[
+                    styles.personalityCard,
+                    {
+                      backgroundColor: selected ? optionColors.accent : previewColors.card,
+                      borderColor: selected ? optionColors.accent : hexToRgba(previewColors.accent, 0.12),
+                      shadowColor: selected ? optionColors.accent : previewColors.accent,
+                    },
+                  ]}
                 >
                   {selected ? (
-                    <View style={styles.check}>
-                      <Text style={styles.checkText}>✓</Text>
+                    <View style={[styles.check, { backgroundColor: '#fff' }]}>
+                      <Text style={[styles.checkText, { color: optionColors.accent }]}>✓</Text>
                     </View>
                   ) : null}
-                  <View style={[styles.iconBubble, { backgroundColor: option.tint }]}>
-                    <Text style={styles.optionIcon}>{option.icon}</Text>
+                  <View
+                    style={[
+                      styles.iconBubble,
+                      {
+                        backgroundColor: selected
+                          ? 'rgba(255,255,255,0.2)'
+                          : hexToRgba(optionColors.accent, 0.12),
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.optionIcon, { color: selected ? '#fff' : optionColors.accent }]}>
+                      {option.icon}
+                    </Text>
                   </View>
-                  <Text style={styles.optionLabel}>{option.label}</Text>
-                  <Text style={styles.optionType}>{option.type}</Text>
-                  <Text style={styles.optionStyle} numberOfLines={1}>{lifestyle.styleName}</Text>
+                  <Text style={[styles.optionLabel, { color: selected ? '#fff' : previewColors.text }]}>
+                    {option.label}
+                  </Text>
+                  <Text style={[styles.optionType, { color: selected ? 'rgba(255,255,255,0.84)' : previewColors.subtext }]}>
+                    {option.type}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.optionStyle,
+                      { color: selected ? 'rgba(255,255,255,0.76)' : previewColors.subtext },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {lifestyle.styleName}
+                  </Text>
                 </Pressable>
               );
             })}
@@ -314,10 +441,10 @@ export function OnboardingScreen() {
         )}
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionIcon}>♡</Text>
+          <Text style={[styles.sectionIcon, { color: previewColors.accent }]}>♡</Text>
           <View>
-            <Text style={styles.sectionTitle}>你的偏好设置</Text>
-            <Text style={styles.sectionSub}>这些帮助我们推荐更合适的活动</Text>
+            <Text style={[styles.sectionTitle, { color: previewColors.text }]}>你的偏好设置</Text>
+            <Text style={[styles.sectionSub, { color: previewColors.subtext }]}>这些帮助我们推荐更合适的活动</Text>
           </View>
         </View>
 
@@ -328,6 +455,7 @@ export function OnboardingScreen() {
           options={SOCIAL_OPTIONS}
           value={social}
           onChange={setSocial}
+          colors={previewColors}
         />
         <PreferenceRow
           icon="▣"
@@ -336,6 +464,7 @@ export function OnboardingScreen() {
           options={BUDGET_OPTIONS}
           value={budget}
           onChange={setBudget}
+          colors={previewColors}
         />
         <PreferenceRow
           icon="◷"
@@ -344,6 +473,7 @@ export function OnboardingScreen() {
           options={COMMUTE_OPTIONS}
           value={commute}
           onChange={setCommute}
+          colors={previewColors}
         />
         <PreferenceRow
           icon="⌁"
@@ -352,31 +482,44 @@ export function OnboardingScreen() {
           options={SCENE_OPTIONS}
           value={scene}
           onChange={setScene}
+          colors={previewColors}
         />
 
-        <View style={styles.noteCard}>
-          <Text style={styles.noteTitle}>还有什么想告诉搭子？</Text>
+        <View
+          style={[
+            styles.noteCard,
+            {
+              backgroundColor: previewColors.card,
+              borderColor: hexToRgba(previewColors.accent, 0.12),
+            },
+          ]}
+        >
+          <Text style={[styles.noteTitle, { color: previewColors.text }]}>还有什么想告诉搭子？</Text>
           <TextInput
             value={notes}
             onChangeText={setNotes}
             placeholder="比如：人多会累、想找安静的地方、今晚不想走太远"
-            placeholderTextColor="#b4aca3"
+            placeholderTextColor={hexToRgba(previewColors.subtext, 0.62)}
             multiline
-            style={styles.noteInput}
+            style={[styles.noteInput, { color: previewColors.text }]}
           />
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: previewColors.bg }]}>
         <Pressable
           disabled={!canStart}
           onPress={handleStart}
-          style={[styles.startBtn, !canStart && styles.startBtnDisabled]}
+          style={[
+            styles.startBtn,
+            { backgroundColor: previewColors.accent },
+            !canStart && styles.startBtnDisabled,
+          ]}
         >
           <Text style={styles.startText}>开始使用</Text>
           <Text style={styles.startArrow}>›</Text>
         </Pressable>
-        <Text style={styles.privacy}>▣ 你的选择仅用于个性化推荐，不会公开</Text>
+        <Text style={[styles.privacy, { color: previewColors.subtext }]}>▣ 你的选择仅用于个性化推荐，不会公开</Text>
       </View>
     </SafeAreaView>
   );
@@ -389,6 +532,7 @@ function PreferenceRow({
   options,
   value,
   onChange,
+  colors,
 }: {
   icon: string;
   title: string;
@@ -396,16 +540,26 @@ function PreferenceRow({
   options: Array<{ label: string; value: string }>;
   value: string;
   onChange: (value: string) => void;
+  colors: ThemeColors;
 }) {
   return (
-    <View style={styles.prefCard}>
+    <View
+      style={[
+        styles.prefCard,
+        {
+          backgroundColor: colors.card,
+          borderColor: hexToRgba(colors.accent, 0.12),
+          shadowColor: colors.accent,
+        },
+      ]}
+    >
       <View style={styles.prefLead}>
-        <View style={styles.prefIcon}>
-          <Text style={styles.prefIconText}>{icon}</Text>
+        <View style={[styles.prefIcon, { backgroundColor: hexToRgba(colors.accent, 0.12) }]}>
+          <Text style={[styles.prefIconText, { color: colors.accent }]}>{icon}</Text>
         </View>
         <View style={styles.prefCopy}>
-          <Text style={styles.prefTitle}>{title}</Text>
-          <Text style={styles.prefSub}>{subtitle}</Text>
+          <Text style={[styles.prefTitle, { color: colors.text }]}>{title}</Text>
+          <Text style={[styles.prefSub, { color: colors.subtext }]}>{subtitle}</Text>
         </View>
       </View>
       <View style={styles.segmentGroup}>
@@ -415,9 +569,15 @@ function PreferenceRow({
             <Pressable
               key={option.value}
               onPress={() => onChange(option.value)}
-              style={[styles.segment, selected && styles.segmentSelected]}
+              style={[
+                styles.segment,
+                {
+                  backgroundColor: selected ? hexToRgba(colors.accent, 0.1) : hexToRgba(colors.accent, 0.04),
+                  borderColor: selected ? colors.accent : 'transparent',
+                },
+              ]}
             >
-              <Text style={[styles.segmentText, selected && styles.segmentTextSelected]}>
+              <Text style={[styles.segmentText, { color: selected ? colors.accent : colors.subtext }]}>
                 {option.label}
               </Text>
             </Pressable>

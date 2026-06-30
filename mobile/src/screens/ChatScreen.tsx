@@ -20,7 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { MBTI_PERSONAS } from '@/data/personas';
-import { getLifestyleHero, getLifestyleProfile, HOME_IDEAS } from '@/data/lifestyleDesign';
+import { getLifestyleHero, getLifestyleProfile, HOME_ASSETS, HOME_IDEAS } from '@/data/lifestyleDesign';
 import { chat, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation } from '@/services/api';
 import { ActivitySourceMeta, ChatMessage, Recommendation } from '@/types';
 import { BreathingLoader } from '@/components/BreathingLoader';
@@ -462,12 +462,12 @@ export function ChatScreen() {
         >
           <LinearGradient
             colors={[
-              hexToRgba(colors.card, 0.98),
-              hexToRgba(colors.card, 0.86),
-              hexToRgba(colors.card, 0.2),
+              hexToRgba(colors.card, 0.88),
+              hexToRgba(colors.card, 0.5),
+              hexToRgba(colors.card, 0.04),
             ]}
             start={{ x: 0, y: 0.45 }}
-            end={{ x: 0.82, y: 0.5 }}
+            end={{ x: 0.7, y: 0.5 }}
             style={styles.greetingOverlay}
           >
             <View style={styles.greetingCopy}>
@@ -501,19 +501,19 @@ export function ChatScreen() {
         />
 
         <ImageBackground
-          source={lifestyleHero}
+          source={HOME_ASSETS.feature}
           resizeMode="cover"
           imageStyle={styles.featureImage}
           style={[styles.featureCard, { backgroundColor: colors.card, shadowColor: colors.accent }]}
         >
           <LinearGradient
             colors={[
-              hexToRgba(colors.card, 0.8),
-              hexToRgba(colors.card, 0.46),
+              hexToRgba(colors.card, 0.5),
+              hexToRgba(colors.card, 0.18),
               'rgba(255,255,255,0)',
             ]}
             start={{ x: 0, y: 0.45 }}
-            end={{ x: 1, y: 0.55 }}
+            end={{ x: 0.75, y: 0.55 }}
             style={styles.featureOverlay}
           >
             <View style={[styles.featurePill, { backgroundColor: hexToRgba(colors.accent, 0.82) }]}>
