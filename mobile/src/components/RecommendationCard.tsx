@@ -6,6 +6,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, Linking, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ActivitySourceMeta, MBTITheme, Recommendation } from '@/types';
+import { hexToRgba, softShadow, UI } from '@/styles/ui';
 
 const MAIN_VISUAL = require('../assets/main-visual.jpeg');
 
@@ -16,22 +17,10 @@ interface RecommendationCardProps {
   onAction?: (recommendation: Recommendation) => void;
 }
 
-function hexToRgba(hex: string, opacity: number) {
-  const clean = hex.replace('#', '');
-  const value = clean.length === 3
-    ? clean.split('').map((char) => char + char).join('')
-    : clean;
-  const int = parseInt(value, 16);
-  const r = (int >> 16) & 255;
-  const g = (int >> 8) & 255;
-  const b = int & 255;
-  return `rgba(${r},${g},${b},${opacity})`;
-}
-
 function getPlanMeta(recommendation: Recommendation) {
   const info = recommendation.specific_info;
   return [
-    { label: '准备', value: '10 分钟内' },
+    { label: '地点', value: info?.location || info?.platform || '现在可做' },
     { label: '时长', value: info?.duration || '约 90 分钟' },
     { label: '花费', value: info?.price || recommendation.budget || '按需' },
   ];
@@ -49,7 +38,7 @@ function getSceneCopy(recommendation: Recommendation) {
 function getSpecificSummary(recommendation: Recommendation) {
   const info = recommendation.specific_info;
   if (!info) return '';
-  return [info.name, info.location, info.rating].filter(Boolean).join(' · ');
+  return [info.name, info.rating || info.source].filter(Boolean).join(' · ');
 }
 
 export function RecommendationCard({
@@ -77,9 +66,9 @@ export function RecommendationCard({
         styles.card,
         {
           backgroundColor: colors.card,
-          borderColor: hexToRgba(colors.accent, 0.18),
-          shadowColor: colors.accent,
+          borderColor: hexToRgba(colors.accent, 0.14),
         },
+        softShadow(colors.accent, 0.06),
       ]}
     >
       <ImageBackground
@@ -90,8 +79,8 @@ export function RecommendationCard({
       >
         <LinearGradient
           colors={[
-            hexToRgba(colors.card, 0.94),
-            hexToRgba(colors.card, 0.72),
+            hexToRgba(colors.card, 0.9),
+            hexToRgba(colors.card, 0.54),
             hexToRgba(colors.card, 0.08),
           ]}
           start={{ x: 0, y: 0.4 }}
@@ -167,26 +156,22 @@ export function RecommendationCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 30,
+    borderRadius: UI.radius.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    shadowOpacity: 0.12,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 14 },
-    elevation: 3,
   },
   hero: {
-    minHeight: 180,
+    minHeight: 152,
     backgroundColor: '#f8efe3',
   },
   heroImage: {
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderTopLeftRadius: UI.radius.xl,
+    borderTopRightRadius: UI.radius.xl,
   },
   imageOverlay: {
     flex: 1,
-    minHeight: 180,
-    padding: 18,
+    minHeight: 152,
+    padding: 16,
     justifyContent: 'flex-end',
   },
   heroContent: {
@@ -220,15 +205,15 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   title: {
-    fontSize: 23,
-    lineHeight: 29,
+    fontSize: 21,
+    lineHeight: 27,
     fontWeight: '800',
     letterSpacing: 0,
-    marginBottom: 9,
+    marginBottom: 7,
   },
   recommendText: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 21,
     fontWeight: '500',
   },
   content: {
@@ -242,7 +227,7 @@ const styles = StyleSheet.create({
   },
   metaItem: {
     width: '31.5%',
-    borderRadius: 16,
+    borderRadius: UI.radius.sm,
     paddingHorizontal: 9,
     paddingVertical: 8,
   },
@@ -296,7 +281,7 @@ const styles = StyleSheet.create({
   specificLine: {
     minHeight: 42,
     borderWidth: 1,
-    borderRadius: 15,
+    borderRadius: UI.radius.sm,
     paddingHorizontal: 11,
     flexDirection: 'row',
     alignItems: 'center',
@@ -330,8 +315,8 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   actionBtn: {
-    height: 52,
-    borderRadius: 26,
+    height: 48,
+    borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -339,7 +324,7 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
   },
   actionArrow: {

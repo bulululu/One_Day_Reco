@@ -25,24 +25,25 @@ import { PreferenceEditorSheet } from '@/components/PreferenceEditorSheet';
 import { ProfileView } from '@/components/ProfileView';
 import { RecommendView } from '@/components/RecommendView';
 import { RecommendationCard } from '@/components/RecommendationCard';
+import { hexToRgba, softShadow, UI } from '@/styles/ui';
 
 const DEFAULT_RECOMMENDATION: Recommendation = {
-  activity_id: 'slow_evening',
-  activity_name: '给今晚留一段慢下来的小时间',
-  recommend_text: '不用把今天安排得很满。泡一杯热饮，挑一部轻松的纪录片，或者把一直没翻开的书读两章，让自己从屏幕里退出来一会儿。',
-  tips: '建议先把手机放到看不见的地方。只准备一杯喝的和一个舒服的位置，启动门槛越低越好。',
+  activity_id: 'local_documentary_evening',
+  activity_name: '今晚看一部 90 分钟纪录片',
+  recommend_text: '现在不用出门。打开 B 站搜索《人生果实》或同类生活纪录片，泡一杯热饮，给自己留一段完整的安静时间。',
+  tips: '建议 20:30 后开始，先把手机通知关掉。只准备一杯喝的和一个舒服的位置，降低启动门槛。',
   safety_note: '',
-  action_url: 'https://www.bilibili.com',
-  action_label: '开始安排',
+  action_url: 'https://search.bilibili.com/all?keyword=%E4%BA%BA%E7%94%9F%E6%9E%9C%E5%AE%9E',
+  action_label: '打开 B站搜索',
   category: '居家休闲',
   budget: '低预算',
   specific_info: {
-    name: '慢夜纪录片',
-    location: '家里',
+    name: '《人生果实》同类生活纪录片',
+    location: 'B站 / 家里',
     duration: '约 90 分钟',
     price: '低预算',
-    rating: '',
-    source: '本地兜底',
+    rating: '本地灵感',
+    source: 'local_fallback',
   },
 };
 
@@ -54,16 +55,6 @@ const TABS = [
 ] as const;
 
 type TabKey = typeof TABS[number]['key'];
-
-function hexToRgba(hex: string, opacity: number) {
-  const clean = hex.replace('#', '');
-  const value = clean.length === 3 ? clean.split('').map((char) => char + char).join('') : clean;
-  const int = parseInt(value, 16);
-  const r = (int >> 16) & 255;
-  const g = (int >> 8) & 255;
-  const b = int & 255;
-  return `rgba(${r},${g},${b},${opacity})`;
-}
 
 export function MainAppScreen() {
   const {
@@ -97,6 +88,8 @@ export function MainAppScreen() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [preferenceVisible, setPreferenceVisible] = useState(false);
+  const [recommendationNotice, setRecommendationNotice] = useState('当前使用本地灵感，实时地点稍后刷新');
+  const [feedbackNotice, setFeedbackNotice] = useState('');
   const scrollRef = useRef<ScrollView>(null);
   const theme = currentTheme;
   const colors = theme.colors;
@@ -114,22 +107,8 @@ export function MainAppScreen() {
 
   const displayMessages = useMemo<ChatMessage[]>(() => {
     if (messages.length) return messages;
-    return [{
-      role: 'assistant',
-      content: '今天想做点什么？你可以直接说状态，我会尽量给到具体地点、时长、价格和下一步。',
-      timestamp: Date.now(),
-    }];
+    return [];
   }, [messages]);
-
-  useEffect(() => {
-    if (!messages.length) {
-      addMessage({
-        role: 'assistant',
-        content: '我会先给你一组现在能执行的推荐。不喜欢就点换一个，或者直接告诉我你的状态。',
-        timestamp: Date.now(),
-      });
-    }
-  }, []);
 
   useEffect(() => {
     void refreshRecommendation(false);
@@ -142,6 +121,7 @@ export function MainAppScreen() {
 
   const refreshRecommendation = async (appendMessage = true) => {
     if (isLoading) return;
+    setRecommendationNotice('');
     setLoading(true);
     try {
       const res = await recommend(getUserProfile(), context);
@@ -149,8 +129,9 @@ export function MainAppScreen() {
         setRecommendations(res.recommendations);
         setSource(res.activity_source);
         setHistoryRefreshKey((value) => value + 1);
+        setRecommendationNotice(res.activity_source?.is_realtime ? '已根据实时数据更新推荐' : '当前使用精选灵感，实时地点稍后刷新');
       }
-      if (appendMessage) {
+      if (appendMessage && activeTab === 'chat') {
         addMessage({
           role: 'assistant',
           content: res.agent_message || '我换了一批更贴合当前状态的推荐。',
@@ -159,10 +140,11 @@ export function MainAppScreen() {
         });
       }
     } catch {
-      if (appendMessage) {
+      setRecommendationNotice('当前使用本地灵感，实时地点稍后刷新');
+      if (appendMessage && activeTab === 'chat') {
         addMessage({
           role: 'assistant',
-          content: '推荐服务暂时没有连上。我会保留本地兜底推荐，并明确标记来源，不伪造实时地点或场次。',
+          content: '我先用本地灵感陪你想一个能开始的小计划。实时地点恢复后，我再把路线和场次补上。',
           timestamp: Date.now(),
         });
       }
@@ -228,6 +210,11 @@ export function MainAppScreen() {
     const result = await submitFeedback(userId, target.activity_id, feedback, target.activity_name);
     if (result.feedback_summary) setFeedbackSummary(result.feedback_summary);
     setHistoryRefreshKey((value) => value + 1);
+    setFeedbackNotice({
+      liked: '已收藏。之后会多给类似但不重复的选择。',
+      completed: '已记录完成。下次会按这个节奏推荐。',
+      skipped: '已跳过。我会换一个更轻的方向。',
+    }[feedback]);
     setDetail(null);
     if (feedback === 'skipped') {
       void refreshRecommendation(true);
@@ -316,6 +303,7 @@ export function MainAppScreen() {
           location={location}
           weather={weather}
           isLoading={isLoading}
+          notice={feedbackNotice || recommendationNotice}
           onRefresh={() => void refreshRecommendation(true)}
           onOpenDetail={setDetail}
           onPrompt={handleSend}
@@ -367,6 +355,19 @@ export function MainAppScreen() {
               <Text style={[styles.chatSub, { color: colors.subtext }]}>{persona.placeholder}</Text>
             </View>
           </View>
+          {!displayMessages.length ? (
+            <View style={[styles.chatWelcome, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }]}>
+              <Text style={[styles.chatWelcomeTitle, { color: colors.text }]}>今天想怎么安排？</Text>
+              <Text style={[styles.chatWelcomeText, { color: colors.subtext }]}>
+                可以直接说“想放松一下”“不想出门”或“随便推荐一个”，我会把它变成具体计划。
+              </Text>
+              {['想放松一下', '不想出门', '随便推荐一个'].map((item) => (
+                <Pressable key={item} style={[styles.chatPrompt, { backgroundColor: hexToRgba(colors.accent, 0.08) }]} onPress={() => void handleSend(item)}>
+                  <Text style={[styles.chatPromptText, { color: colors.accent }]}>{item}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
           {displayMessages.map((message, index) => {
             const isUser = message.role === 'user';
             return (
@@ -418,7 +419,7 @@ export function MainAppScreen() {
       </View>
 
       <View style={[styles.navWrap, { backgroundColor: hexToRgba(colors.bg, 0.94) }]}>
-        <View style={[styles.nav, { backgroundColor: colors.card, shadowColor: colors.accent }]}>
+        <View style={[styles.nav, { backgroundColor: colors.card }, softShadow(colors.accent, 0.08)]}>
           {TABS.map((tab) => {
             const active = activeTab === tab.key;
             return (
@@ -465,9 +466,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chatContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: UI.space.pageX,
     paddingTop: 18,
-    paddingBottom: 24,
+    paddingBottom: 28,
   },
   chatHeader: {
     flexDirection: 'row',
@@ -487,8 +488,8 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   chatTitle: {
-    fontSize: 23,
-    fontWeight: '900',
+    fontSize: 22,
+    fontWeight: '800',
   },
   chatSub: {
     fontSize: 13,
@@ -515,15 +516,43 @@ const styles = StyleSheet.create({
   bubbleText: {
     fontSize: 15,
     lineHeight: 23,
-    fontWeight: '700',
+    fontWeight: '600',
+  },
+  chatWelcome: {
+    borderWidth: 1,
+    borderRadius: UI.radius.xl,
+    padding: 18,
+    marginBottom: 18,
+  },
+  chatWelcomeTitle: {
+    fontSize: 21,
+    lineHeight: 28,
+    fontWeight: '800',
+  },
+  chatWelcomeText: {
+    fontSize: 14,
+    lineHeight: 22,
+    marginTop: 8,
+    marginBottom: 14,
+  },
+  chatPrompt: {
+    minHeight: 42,
+    borderRadius: UI.radius.md,
+    paddingHorizontal: 13,
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  chatPromptText: {
+    fontSize: 14,
+    fontWeight: '800',
   },
   messageCard: {
     width: '100%',
     marginTop: 10,
   },
   inputBar: {
-    marginHorizontal: 16,
-    marginBottom: 106,
+    marginHorizontal: UI.space.pageX,
+    marginBottom: 98,
     minHeight: 58,
     borderRadius: 28,
     flexDirection: 'row',
@@ -562,37 +591,33 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 16,
+    paddingHorizontal: UI.space.pageX,
     paddingTop: 10,
-    paddingBottom: 18,
+    paddingBottom: 16,
   },
   nav: {
     width: '100%',
     maxWidth: 430,
     alignSelf: 'center',
-    minHeight: 70,
-    borderRadius: 30,
+    minHeight: 64,
+    borderRadius: 28,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 4,
   },
   navItem: {
     flex: 1,
-    minHeight: 58,
+    minHeight: 54,
     alignItems: 'center',
     justifyContent: 'center',
   },
   navIcon: {
-    fontSize: 22,
-    fontWeight: '900',
-    marginBottom: 4,
+    fontSize: 19,
+    fontWeight: '800',
+    marginBottom: 3,
   },
   navText: {
-    fontSize: 12,
-    fontWeight: '900',
+    fontSize: 11,
+    fontWeight: '800',
   },
 });

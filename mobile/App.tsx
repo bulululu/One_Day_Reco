@@ -8,12 +8,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
-import { AuthScreen } from '@/screens/AuthScreen';
 import { OnboardingScreen } from '@/screens/OnboardingScreen';
 import { MainAppScreen } from '@/screens/MainAppScreen';
 
 export type RootStackParamList = {
-  Auth: undefined;
   Onboarding: undefined;
   Chat: undefined;
 };
@@ -21,9 +19,8 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function AppContent() {
-  const { authToken, hasSkippedAuth, isOnboarding, currentTheme } = useAppStore();
+  const { isOnboarding, currentTheme } = useAppStore();
   const colors = currentTheme.colors;
-  const needsAuth = !authToken && !hasSkippedAuth;
 
   return (
     <>
@@ -47,9 +44,7 @@ function AppContent() {
             contentStyle: { backgroundColor: colors.bg },
           }}
         >
-          {needsAuth ? (
-            <Stack.Screen name="Auth" component={AuthScreen} />
-          ) : isOnboarding ? (
+          {isOnboarding ? (
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           ) : (
             <Stack.Screen name="Chat" component={MainAppScreen} />

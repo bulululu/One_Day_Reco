@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getConfigStatus, getRecommendationHistory } from '@/services/api';
 import { ConfigStatusResponse, MBTITheme, RecommendationHistoryRecord, UserPreferences } from '@/types';
+import { hexToRgba, UI } from '@/styles/ui';
 
 type ProfileViewProps = {
   theme: MBTITheme;
@@ -17,16 +18,6 @@ type ProfileViewProps = {
   onRedoOnboarding: () => void;
   onLogout: () => void;
 };
-
-function hexToRgba(hex: string, opacity: number) {
-  const clean = hex.replace('#', '');
-  const value = clean.length === 3 ? clean.split('').map((char) => char + char).join('') : clean;
-  const int = parseInt(value, 16);
-  const r = (int >> 16) & 255;
-  const g = (int >> 8) & 255;
-  const b = int & 255;
-  return `rgba(${r},${g},${b},${opacity})`;
-}
 
 function compactUserId(userId: string) {
   if (!userId) return '本地用户';
@@ -213,12 +204,12 @@ function InfoRow({
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: 16,
+    paddingHorizontal: UI.space.pageX,
     paddingTop: 18,
     paddingBottom: 112,
   },
   profileCard: {
-    borderRadius: 28,
+    borderRadius: UI.radius.xl,
     borderWidth: 1,
     padding: 18,
     flexDirection: 'row',
@@ -240,8 +231,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontSize: 24,
-    fontWeight: '900',
+    fontSize: 22,
+    fontWeight: '800',
   },
   account: {
     fontSize: 13,
@@ -273,14 +264,14 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   section: {
-    borderRadius: 24,
+    borderRadius: UI.radius.lg,
     borderWidth: 1,
     padding: 14,
     marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 19,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: '800',
     marginBottom: 12,
   },
   infoRow: {
@@ -308,7 +299,7 @@ const styles = StyleSheet.create({
   primaryText: {
     color: '#fff',
     fontSize: 15,
-    fontWeight: '900',
+    fontWeight: '800',
   },
   historyItem: {
     borderBottomWidth: 1,

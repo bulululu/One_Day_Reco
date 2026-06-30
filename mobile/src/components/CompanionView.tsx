@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ActivityInspirationPanel } from '@/components/ActivityInspirationPanel';
 import { ScreenBreakPanel } from '@/components/ScreenBreakPanel';
 import { MBTITheme } from '@/types';
+import { hexToRgba, UI } from '@/styles/ui';
 
 type ScreenBreakTrigger = {
   appName: string;
@@ -18,16 +19,6 @@ type CompanionViewProps = {
   onPrompt: (prompt: string) => void;
   onTrigger: (trigger: ScreenBreakTrigger) => void;
 };
-
-function hexToRgba(hex: string, opacity: number) {
-  const clean = hex.replace('#', '');
-  const value = clean.length === 3 ? clean.split('').map((char) => char + char).join('') : clean;
-  const int = parseInt(value, 16);
-  const r = (int >> 16) & 255;
-  const g = (int >> 8) & 255;
-  const b = int & 255;
-  return `rgba(${r},${g},${b},${opacity})`;
-}
 
 const MOOD_PROMPTS = [
   { label: '放松一下', prompt: '我现在想放松一下，推荐一个具体活动' },
@@ -74,12 +65,12 @@ export function CompanionView({ theme, location, isLoading, onPrompt, onTrigger 
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: 16,
+    paddingHorizontal: UI.space.pageX,
     paddingTop: 18,
     paddingBottom: 112,
   },
   hero: {
-    borderRadius: 28,
+    borderRadius: UI.radius.xl,
     borderWidth: 1,
     padding: 18,
     flexDirection: 'row',
@@ -101,9 +92,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 25,
-    lineHeight: 32,
-    fontWeight: '900',
+    fontSize: 22,
+    lineHeight: 29,
+    fontWeight: '800',
   },
   subtitle: {
     fontSize: 14,
@@ -119,14 +110,14 @@ const styles = StyleSheet.create({
   promptCard: {
     width: '48.3%',
     minHeight: 92,
-    borderRadius: 22,
+    borderRadius: UI.radius.lg,
     borderWidth: 1,
     padding: 14,
     justifyContent: 'space-between',
   },
   promptTitle: {
-    fontSize: 17,
-    fontWeight: '900',
+    fontSize: 16,
+    fontWeight: '800',
   },
   promptArrow: {
     fontSize: 28,

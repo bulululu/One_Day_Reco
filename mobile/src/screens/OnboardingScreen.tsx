@@ -5,17 +5,18 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ImageBackground,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { updateProfile } from '@/services/api';
 import { MBTIType, UserPreferences } from '@/types';
 import { getLifestyleHero, getLifestyleProfile } from '@/data/lifestyleDesign';
 import { MBTI_THEMES } from '@/data/themes';
+import { hexToRgba, UI } from '@/styles/ui';
 
 const PERSONALITY_OPTIONS: Array<{ type: MBTIType; label: string; icon: string }> = [
   { type: 'ISTJ', label: '沉稳内敛', icon: '▣' },
@@ -66,16 +67,6 @@ function inferMbtiFromAnswers(answers: DiscoveryAnswers): MBTIType | null {
   const plan = answers.plan;
   if (!energy || !novelty || !reason || !plan) return null;
   return `${energy}${novelty}${reason}${plan}` as MBTIType;
-}
-
-function hexToRgba(hex: string, opacity: number) {
-  const clean = hex.replace('#', '');
-  const value = clean.length === 3 ? clean.split('').map((char) => char + char).join('') : clean;
-  const int = parseInt(value, 16);
-  const r = (int >> 16) & 255;
-  const g = (int >> 8) & 255;
-  const b = int & 255;
-  return `rgba(${r},${g},${b},${opacity})`;
 }
 
 function toggleItem(items: string[], item: string) {
@@ -295,9 +286,8 @@ export function OnboardingScreen() {
                       style={[
                         styles.mbtiCard,
                         {
-                          backgroundColor: selected ? optionColors.accent : colors.card,
+                          backgroundColor: selected ? hexToRgba(optionColors.accent, 0.12) : colors.card,
                           borderColor: selected ? optionColors.accent : hexToRgba(colors.accent, 0.12),
-                          shadowColor: selected ? optionColors.accent : colors.accent,
                         },
                       ]}
                       onPress={() => {
@@ -305,9 +295,9 @@ export function OnboardingScreen() {
                         setMBTI(option.type);
                       }}
                     >
-                      <Text style={[styles.mbtiIcon, { color: selected ? '#fff' : optionColors.accent }]}>{option.icon}</Text>
-                      <Text style={[styles.mbtiCode, { color: selected ? '#fff' : colors.text }]}>{option.type}</Text>
-                      <Text style={[styles.mbtiLabel, { color: selected ? 'rgba(255,255,255,0.78)' : colors.subtext }]} numberOfLines={1}>
+                      <Text style={[styles.mbtiIcon, { color: optionColors.accent }]}>{option.icon}</Text>
+                      <Text style={[styles.mbtiCode, { color: selected ? optionColors.accent : colors.text }]}>{option.type}</Text>
+                      <Text style={[styles.mbtiLabel, { color: colors.subtext }]} numberOfLines={1}>
                         {optionStyle}
                       </Text>
                     </Pressable>
@@ -330,14 +320,14 @@ export function OnboardingScreen() {
                     style={[
                       styles.typeCard,
                       {
-                        backgroundColor: selected ? colors.accent : colors.card,
+                        backgroundColor: selected ? hexToRgba(colors.accent, 0.1) : colors.card,
                         borderColor: selected ? colors.accent : hexToRgba(colors.accent, 0.12),
                       },
                     ]}
                     onPress={() => setActivityTypes((current) => toggleItem(current, item))}
                   >
-                    <Text style={[styles.typeIcon, { color: selected ? '#fff' : colors.accent }]}>✦</Text>
-                    <Text style={[styles.typeText, { color: selected ? '#fff' : colors.text }]}>{item}</Text>
+                    <Text style={[styles.typeIcon, { color: colors.accent }]}>✦</Text>
+                    <Text style={[styles.typeText, { color: selected ? colors.accent : colors.text }]}>{item}</Text>
                   </Pressable>
                 );
               })}
@@ -516,41 +506,41 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 430,
     alignSelf: 'center',
-    paddingHorizontal: 22,
+    paddingHorizontal: UI.space.pageX,
     paddingBottom: 132,
   },
   startStep: {
     paddingTop: 14,
   },
   wordmark: {
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '800',
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '700',
     fontStyle: 'italic',
   },
   startTitle: {
-    fontSize: 27,
-    lineHeight: 35,
-    fontWeight: '900',
-    marginTop: 34,
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: '800',
+    marginTop: 20,
   },
   startSub: {
     fontSize: 16,
     lineHeight: 24,
     marginTop: 10,
-    marginBottom: 24,
+    marginBottom: 18,
   },
   heroCard: {
-    minHeight: 330,
-    borderRadius: 28,
+    minHeight: 260,
+    borderRadius: UI.radius.xl,
     overflow: 'hidden',
   },
   heroImage: {
-    borderRadius: 28,
+    borderRadius: UI.radius.xl,
   },
   heroOverlay: {
     flex: 1,
-    padding: 24,
+    padding: 20,
     justifyContent: 'flex-end',
   },
   heroLabel: {
@@ -559,19 +549,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   heroText: {
-    fontSize: 22,
-    lineHeight: 32,
-    fontWeight: '900',
-    maxWidth: '78%',
+    fontSize: 18,
+    lineHeight: 27,
+    fontWeight: '800',
+    maxWidth: '82%',
   },
   stepTitleWrap: {
     paddingTop: 18,
     marginBottom: 18,
   },
   stepTitle: {
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '900',
+    fontSize: 24,
+    lineHeight: 31,
+    fontWeight: '800',
   },
   stepSubtitle: {
     fontSize: 15,
@@ -585,17 +575,17 @@ const styles = StyleSheet.create({
   },
   switchItem: {
     flex: 1,
-    minHeight: 46,
-    borderRadius: 18,
+    minHeight: 42,
+    borderRadius: UI.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   switchText: {
-    fontSize: 14,
-    fontWeight: '900',
+    fontSize: 13,
+    fontWeight: '800',
   },
   discoveryPanel: {
-    borderRadius: 24,
+    borderRadius: UI.radius.xl,
     borderWidth: 1,
     padding: 14,
     gap: 14,
@@ -604,8 +594,8 @@ const styles = StyleSheet.create({
     gap: 9,
   },
   questionTitle: {
-    fontSize: 17,
-    fontWeight: '900',
+    fontSize: 16,
+    fontWeight: '800',
   },
   answerRow: {
     flexDirection: 'row',
@@ -614,7 +604,7 @@ const styles = StyleSheet.create({
   answerChip: {
     flex: 1,
     minHeight: 44,
-    borderRadius: 16,
+    borderRadius: UI.radius.md,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -639,29 +629,25 @@ const styles = StyleSheet.create({
   mbtiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
   mbtiCard: {
-    width: '22.9%',
-    minHeight: 96,
-    borderRadius: 17,
+    width: '23.3%',
+    minHeight: 84,
+    borderRadius: UI.radius.md,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
-    shadowOpacity: 0.07,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 2,
   },
   mbtiIcon: {
-    fontSize: 20,
-    fontWeight: '900',
-    marginBottom: 7,
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 5,
   },
   mbtiCode: {
-    fontSize: 13,
-    fontWeight: '900',
+    fontSize: 12,
+    fontWeight: '800',
   },
   mbtiLabel: {
     fontSize: 9,
@@ -671,12 +657,12 @@ const styles = StyleSheet.create({
   typeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 11,
+    gap: 10,
   },
   typeCard: {
-    width: '47.8%',
-    minHeight: 86,
-    borderRadius: 22,
+    width: '48.4%',
+    minHeight: 76,
+    borderRadius: UI.radius.lg,
     borderWidth: 1,
     padding: 14,
     justifyContent: 'space-between',
@@ -686,11 +672,11 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   typeText: {
-    fontSize: 16,
-    fontWeight: '900',
+    fontSize: 15,
+    fontWeight: '800',
   },
   scaleCard: {
-    borderRadius: 22,
+    borderRadius: UI.radius.lg,
     borderWidth: 1,
     padding: 15,
     marginBottom: 12,
@@ -701,8 +687,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scaleTitle: {
-    fontSize: 18,
-    fontWeight: '900',
+    fontSize: 16,
+    fontWeight: '800',
   },
   scaleValue: {
     fontSize: 13,
@@ -724,9 +710,9 @@ const styles = StyleSheet.create({
   },
   scaleDot: {
     width: 48,
-    height: 12,
+    height: 7,
     borderRadius: 8,
-    borderWidth: 2,
+    borderWidth: 1,
   },
   doneStep: {
     alignItems: 'center',
@@ -734,13 +720,13 @@ const styles = StyleSheet.create({
   },
   doneHero: {
     width: '100%',
-    minHeight: 220,
-    borderRadius: 28,
+    minHeight: 190,
+    borderRadius: UI.radius.xl,
     overflow: 'hidden',
     marginBottom: 24,
   },
   doneImage: {
-    borderRadius: 28,
+    borderRadius: UI.radius.xl,
   },
   doneOverlay: {
     flex: 1,
@@ -752,8 +738,8 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   doneTitle: {
-    fontSize: 28,
-    fontWeight: '900',
+    fontSize: 25,
+    fontWeight: '800',
     textAlign: 'center',
   },
   doneSub: {
@@ -790,13 +776,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 22,
+    paddingHorizontal: UI.space.pageX,
     paddingTop: 12,
     paddingBottom: 24,
   },
   primaryBtn: {
-    height: 58,
-    borderRadius: 28,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -805,8 +791,8 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '900',
+    fontSize: 16,
+    fontWeight: '800',
   },
   privacy: {
     textAlign: 'center',

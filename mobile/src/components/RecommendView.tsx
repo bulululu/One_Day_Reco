@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ActivitySourceMeta, MBTITheme, MBTIType, Recommendation } from '@/types';
 import { HOME_IDEAS, getLifestyleHero, getLifestyleProfile } from '@/data/lifestyleDesign';
 import { RecommendationCard } from '@/components/RecommendationCard';
+import { hexToRgba, softShadow, UI } from '@/styles/ui';
 
 type RecommendViewProps = {
   mbti: MBTIType;
@@ -14,20 +15,11 @@ type RecommendViewProps = {
   location: string;
   weather: string;
   isLoading: boolean;
+  notice?: string;
   onRefresh: () => void;
   onOpenDetail: (recommendation: Recommendation) => void;
   onPrompt: (prompt: string) => void;
 };
-
-function hexToRgba(hex: string, opacity: number) {
-  const clean = hex.replace('#', '');
-  const value = clean.length === 3 ? clean.split('').map((char) => char + char).join('') : clean;
-  const int = parseInt(value, 16);
-  const r = (int >> 16) & 255;
-  const g = (int >> 8) & 255;
-  const b = int & 255;
-  return `rgba(${r},${g},${b},${opacity})`;
-}
 
 export function RecommendView({
   mbti,
@@ -41,6 +33,7 @@ export function RecommendView({
   onRefresh,
   onOpenDetail,
   onPrompt,
+  notice,
 }: RecommendViewProps) {
   const colors = theme.colors;
   const lifestyle = getLifestyleProfile(mbti);
@@ -63,11 +56,16 @@ export function RecommendView({
         </Pressable>
       </View>
 
-      <ImageBackground source={hero} resizeMode="cover" imageStyle={styles.heroImage} style={[styles.heroCard, { backgroundColor: colors.card }]}>
+      <ImageBackground
+        source={hero}
+        resizeMode="cover"
+        imageStyle={styles.heroImage}
+        style={[styles.heroCard, { backgroundColor: colors.card }, softShadow(colors.accent, 0.06)]}
+      >
         <LinearGradient
-          colors={[hexToRgba(colors.card, 0.9), hexToRgba(colors.card, 0.48), 'rgba(255,255,255,0)']}
+          colors={[hexToRgba(colors.card, 0.78), hexToRgba(colors.card, 0.34), 'rgba(255,255,255,0)']}
           start={{ x: 0, y: 0.45 }}
-          end={{ x: 0.78, y: 0.5 }}
+          end={{ x: 0.68, y: 0.5 }}
           style={styles.heroOverlay}
         >
           <Text style={[styles.styleName, { color: colors.accent }]}>{lifestyle.styleName}</Text>
@@ -79,9 +77,31 @@ export function RecommendView({
         </LinearGradient>
       </ImageBackground>
 
+      {notice ? (
+        <View style={[styles.noticeBar, { backgroundColor: hexToRgba(colors.accent, 0.08), borderColor: hexToRgba(colors.accent, 0.14) }]}>
+          <Text style={[styles.noticeText, { color: colors.subtext }]} numberOfLines={2}>{notice}</Text>
+          <Pressable onPress={onRefresh} disabled={isLoading}>
+            <Text style={[styles.noticeAction, { color: colors.accent }]}>{isLoading ? '刷新中' : '重试'}</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       <Pressable onPress={() => onOpenDetail(featured)} style={styles.featureHit}>
         <RecommendationCard recommendation={featured} theme={theme} activitySource={source} />
       </Pressable>
+
+      <View style={styles.quickIdeas}>
+        {HOME_IDEAS.slice(0, 3).map((idea) => (
+          <Pressable
+            key={idea.key}
+            style={[styles.quickIdea, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }]}
+            onPress={() => onPrompt(idea.prompt)}
+          >
+            <Text style={[styles.quickTag, { color: colors.accent }]}>{idea.tag}</Text>
+            <Text style={[styles.quickTitle, { color: colors.text }]} numberOfLines={1}>{idea.title}</Text>
+          </Pressable>
+        ))}
+      </View>
 
       <View style={[styles.section, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }]}>
         <View style={styles.sectionHeader}>
@@ -142,8 +162,8 @@ export function RecommendView({
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: 16,
-    paddingTop: 18,
+    paddingHorizontal: UI.space.pageX,
+    paddingTop: 16,
     paddingBottom: 112,
   },
   brandRow: {
@@ -153,9 +173,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   wordmark: {
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '800',
+    fontSize: 29,
+    lineHeight: 34,
+    fontWeight: '700',
     fontStyle: 'italic',
   },
   brandSub: {
@@ -163,7 +183,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   refreshBtn: {
-    borderRadius: 18,
+    borderRadius: UI.radius.md,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -172,52 +192,93 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   heroCard: {
-    minHeight: 202,
-    borderRadius: 28,
+    minHeight: 170,
+    borderRadius: UI.radius.xl,
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   heroImage: {
-    borderRadius: 28,
+    borderRadius: UI.radius.xl,
   },
   heroOverlay: {
     flex: 1,
-    padding: 20,
+    padding: 17,
     justifyContent: 'center',
   },
   styleName: {
-    fontSize: 14,
-    fontWeight: '900',
-    marginBottom: 13,
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 10,
   },
   heroTitle: {
-    fontSize: 31,
-    lineHeight: 38,
-    fontWeight: '900',
+    fontSize: 25,
+    lineHeight: 32,
+    fontWeight: '800',
   },
   heroSub: {
-    fontSize: 18,
-    lineHeight: 26,
-    fontWeight: '800',
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '700',
     marginTop: 4,
   },
   contextPill: {
     alignSelf: 'flex-start',
-    borderRadius: 18,
+    borderRadius: UI.radius.md,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    marginTop: 18,
+    marginTop: 16,
     maxWidth: '80%',
   },
   contextText: {
-    fontSize: 14,
-    fontWeight: '900',
+    fontSize: 13,
+    fontWeight: '800',
   },
   featureHit: {
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  noticeBar: {
+    borderRadius: UI.radius.md,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  noticeText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  noticeAction: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  quickIdeas: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  quickIdea: {
+    flex: 1,
+    minHeight: 64,
+    borderRadius: UI.radius.md,
+    borderWidth: 1,
+    padding: 10,
+    justifyContent: 'center',
+  },
+  quickTag: {
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 5,
+  },
+  quickTitle: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   section: {
-    borderRadius: 26,
+    borderRadius: UI.radius.lg,
     borderWidth: 1,
     padding: 14,
     marginBottom: 16,
@@ -229,8 +290,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: '800',
   },
   sectionSub: {
     fontSize: 13,
@@ -241,8 +302,8 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   compactCard: {
-    minHeight: 72,
-    borderRadius: 19,
+    minHeight: 66,
+    borderRadius: UI.radius.md,
     borderWidth: 1,
     paddingHorizontal: 13,
     paddingVertical: 10,
@@ -254,8 +315,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   compactTitle: {
-    fontSize: 17,
-    fontWeight: '900',
+    fontSize: 16,
+    fontWeight: '800',
   },
   compactMeta: {
     fontSize: 13,
@@ -271,7 +332,7 @@ const styles = StyleSheet.create({
   },
   ideaCard: {
     width: 154,
-    borderRadius: 20,
+    borderRadius: UI.radius.lg,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -279,15 +340,15 @@ const styles = StyleSheet.create({
     height: 92,
   },
   ideaImage: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: UI.radius.lg,
+    borderTopRightRadius: UI.radius.lg,
   },
   ideaCopy: {
     padding: 10,
   },
   ideaTitle: {
     fontSize: 15,
-    fontWeight: '900',
+    fontWeight: '800',
   },
   ideaSub: {
     fontSize: 12,
