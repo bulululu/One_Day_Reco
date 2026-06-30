@@ -8,7 +8,7 @@
 - Do not fabricate realtime facts. If realtime APIs are unavailable, show fallback/source status clearly.
 
 ## Current Tech Stack
-- Mobile frontend: React Native with Expo SDK 51 and TypeScript.
+- Mobile frontend: React Native with Expo SDK 56 and TypeScript.
 - Navigation: React Navigation native stack in `mobile/App.tsx`.
 - State: Zustand with AsyncStorage persistence in `mobile/src/store/appStore.ts`.
 - Styling: React Native `StyleSheet` plus existing Expo/React Native primitives. Do not introduce NativeWind or Expo Router unless the migration is explicitly requested.
