@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OneDayReco · 原型 v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans SC', -apple-system, sans-serif; }
+
+  /* Phone frame */
+  .phone-shell {
+    width: 390px; height: 844px; margin: 20px auto; border-radius: 55px;
+    background: #0a0a0a; padding: 12px; position: relative;
+    box-shadow: 0 0 0 2px #222, 0 30px 80px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  .phone-screen { width: 100%; height: 100%; border-radius: 44px; overflow: hidden; position: relative; }
+  .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 126px; height: 34px; background: #0a0a0a; border-radius: 0 0 20px 20px; z-index: 999; }
+
+  /* Status bar */
+  .status-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 50px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 28px 4px; z-index: 998; pointer-events: none;
+    font-size: 15px; font-weight: 600;
+  }
+  .status-bar .sb-time { letter-spacing: -0.3px; }
+  .status-bar .sb-right { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+
+  /* Screen system */
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; transition: opacity 0.4s cubic-bezier(0.22,1,0.36,1), transform 0.4s cubic-bezier(0.22,1,0.36,1); }
+  .screen.hidden { opacity: 0; transform: scale(0.96); pointer-events: none; }
+
+  /* ===== ONBOARDING ===== */
+  #onboarding { padding: 0; }
+  .ob-glow { position: absolute; top: 0; left: 0; right: 0; height: 360px; opacity: 0.12; pointer-events: none; transition: opacity 0.3s; }
+  .ob-header { text-align: center; padding: 68px 40px 20px; }
+  .ob-logo { font-size: 48px; }
+  .ob-title { font-size: 28px; font-weight: 800; margin-top: 6px; letter-spacing: -0.5px; }
+  .ob-tagline { font-size: 12px; margin-top: 5px; font-weight: 500; opacity: 0.7; }
+  .ob-sub { font-size: 14px; margin-top: 12px; line-height: 20px; }
+  .ob-section-label { font-size: 13px; font-weight: 500; text-align: center; margin-bottom: 14px; }
+  .ob-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 20px; }
+  .ob-card {
+    aspect-ratio: 1; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent; position: relative;
+  }
+  .ob-card:active { transform: scale(0.93); }
+  .ob-card .emoji { font-size: 24px; }
+  .ob-card .code { font-size: 13px; font-weight: 700; margin-top: 3px; }
+  .ob-card .pname { font-size: 9px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+  .ob-unsure { text-align: center; margin-top: 16px; font-size: 13px; cursor: pointer; transition: opacity 0.15s; }
+  .ob-unsure:active { opacity: 0.6; }
+  .ob-footer { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 24px 36px; }
+  .ob-btn { padding: 17px; border-radius: 30px; text-align: center; font-size: 16px; font-weight: 600; color: #fff; cursor: pointer; transition: all 0.2s; }
+  .ob-btn:active { transform: scale(0.97); }
+  .ob-btn.disabled { opacity: 0.35; }
+
+  /* MBTI quiz overlay */
+  .quiz-overlay {
+    position: absolute; inset: 0; z-index: 900; display: flex; flex-direction: column;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  .quiz-overlay.visible { opacity: 1; pointer-events: auto; }
+  .quiz-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 32px; }
+  .quiz-progress { font-size: 12px; margin-bottom: 20px; opacity: 0.6; }
+  .quiz-question { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 28px; line-height: 32px; }
+  .quiz-options { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+  .quiz-option {
+    padding: 16px 20px; border-radius: 18px; font-size: 15px; cursor: pointer;
+    border: 1.5px solid rgba(255,255,255,0.12); transition: all 0.15s; text-align: center;
+  }
+  .quiz-option:active { transform: scale(0.97); }
+  .quiz-close { position: absolute; top: 60px; right: 24px; font-size: 14px; cursor: pointer; opacity: 0.6; }
+
+  /* ===== HOME (Today's Recommendations) ===== */
+  #home { padding: 0; }
+  .home-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .home-scroll::-webkit-scrollbar { display: none; }
+
+  .home-topbar { display: flex; align-items: center; justify-content: space-between; padding: 58px 20px 8px; }
+  .home-back { font-size: 22px; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.15s; }
+  .home-back:active { background: rgba(255,255,255,0.08); }
+  .home-topbar-right { font-size: 18px; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+
+  .home-greeting { padding: 4px 24px 16px; }
+  .home-greet-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 34px; }
+  .home-greet-sub { font-size: 14px; margin-top: 6px; line-height: 20px; }
+  .home-illustration { height: 100px; margin: 0 24px 8px; border-radius: 20px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+
+  /* Mode card (inspired by image's 家庭模式) */
+  .mode-card {
+    margin: 0 20px 20px; border-radius: 22px; overflow: hidden; position: relative; cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .mode-card:active { transform: scale(0.98); }
+  .mode-card-bg { position: absolute; inset: 0; }
+  .mode-card-content { position: relative; padding: 20px 22px; }
+  .mode-card-tag { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 10px; display: inline-block; }
+  .mode-card-title { font-size: 18px; font-weight: 700; margin-top: 10px; }
+  .mode-card-desc { font-size: 13px; margin-top: 4px; line-height: 18px; opacity: 0.85; }
+  .mode-card-btn { font-size: 13px; font-weight: 600; margin-top: 14px; display: inline-flex; align-items: center; gap: 4px; }
+
+  .home-section { padding: 0 20px; margin-bottom: 20px; }
+  .home-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .home-section-title { font-size: 16px; font-weight: 700; }
+  .home-section-more { font-size: 12px; cursor: pointer; opacity: 0.6; }
+
+  /* Inspiration cards - horizontal scroll */
+  .insp-scroll { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 4px; -webkit-overflow-scrolling: touch; }
+  .insp-scroll::-webkit-scrollbar { display: none; }
+  .insp-card {
+    flex-shrink: 0; width: 200px; border-radius: 18px; overflow: hidden; cursor: pointer; transition: transform 0.15s;
+  }
+  .insp-card:active { transform: scale(0.97); }
+  .insp-visual { height: 90px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .insp-emoji { font-size: 34px; }
+  .insp-budget { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.35); border-radius: 8px; padding: 2px 7px; color: #fff; font-size: 10px; font-weight: 600; }
+  .insp-body { padding: 12px 14px; }
+  .insp-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .insp-meta { font-size: 11px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .insp-meta span { display: flex; align-items: center; gap: 2px; }
+
+  /* Mood tags */
+  .mood-section { padding: 0 20px 16px; }
+  .mood-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mood-tag {
+    padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1.5px solid transparent; transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+  }
+  .mood-tag:active { transform: scale(0.93); }
+
+  /* Card crossfade */
+  @keyframes cardIn { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes cardOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-8px); } }
+  .card-enter { animation: cardIn 0.35s cubic-bezier(0.22,1,0.36,1) backwards; }
+  .card-exit { animation: cardOut 0.2s ease-out forwards; }
+  .insp-card.card-enter:nth-child(1) { animation-delay: 0s; }
+  .insp-card.card-enter:nth-child(2) { animation-delay: 0.06s; }
+  .insp-card.card-enter:nth-child(3) { animation-delay: 0.12s; }
+  .insp-card.card-enter:nth-child(4) { animation-delay: 0.18s; }
+  .insp-card.card-enter:nth-child(5) { animation-delay: 0.24s; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 8px 12px 28px; border-top: 0.5px solid rgba(255,255,255,0.06);
+  }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; transition: opacity 0.15s; }
+  .nav-item:active { opacity: 0.6; }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 10px; font-weight: 500; }
+  .nav-item.active .nav-label { font-weight: 700; }
+  .nav-item.inactive { opacity: 0.4; }
+  .nav-plus {
+    width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: #fff; cursor: pointer; transition: transform 0.15s; margin-top: -12px;
+  }
+  .nav-plus:active { transform: scale(0.9); }
+
+  /* ===== CHAT ===== */
+  #chat { display: flex; flex-direction: column; }
+  .chat-header { display: flex; align-items: center; justify-content: space-between; padding: 54px 16px 10px; border-bottom: 0.5px solid rgba(255,255,255,0.06); }
+  .ch-left { display: flex; align-items: center; gap: 10px; }
+  .ch-back { font-size: 22px; cursor: pointer; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+  .ch-back:active { background: rgba(255,255,255,0.08); }
+  .ch-avatar { font-size: 30px; }
+  .ch-name { font-size: 16px; font-weight: 600; }
+  .ch-status-row { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+  .ch-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
+  .ch-status { font-size: 11px; }
+  .ch-reset { font-size: 13px; cursor: pointer; padding: 6px 10px; }
+
+  .msg-list { flex: 1; overflow-y: auto; padding: 12px 16px 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .msg-list::-webkit-scrollbar { display: none; }
+
+  .msg-user { display: flex; justify-content: flex-end; margin: 3px 0; }
+  .msg-user .bubble { max-width: 78%; padding: 10px 14px; border-radius: 18px 18px 4px 18px; font-size: 15px; line-height: 20px; color: #fff; }
+
+  .msg-bot { display: flex; gap: 8px; margin: 3px 0; }
+  .msg-bot .avatar { font-size: 20px; margin-top: 2px; flex-shrink: 0; }
+  .msg-bot .content { max-width: 85%; }
+  .msg-bot .bubble { padding: 10px 14px; border-radius: 18px 18px 18px 4px; font-size: 15px; line-height: 20px; align-self: flex-start; display: inline-block; }
+
+  /* Breathing loader */
+  .loader-wrap { padding: 4px 0 4px 28px; }
+  .breathing { display: flex; gap: 4px; align-items: center; }
+  .breathing .dot { width: 8px; height: 8px; border-radius: 50%; animation: breathe 1.4s ease-in-out infinite; }
+  .breathing .dot:nth-child(2) { animation-delay: 0.2s; }
+  .breathing .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes breathe { 0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); } 30% { opacity: 1; transform: scale(1.2); } }
+
+  /* Recommendation card in chat */
+  .rec-card { border-radius: 16px; overflow: hidden; margin-top: 8px; }
+  .rec-visual { height: 80px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .rec-emoji { font-size: 36px; }
+  .rec-budget { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.35); border-radius: 10px; padding: 3px 8px; color: #fff; font-size: 11px; font-weight: 600; }
+  .rec-body { padding: 14px; }
+  .rec-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .rec-text { font-size: 14px; line-height: 20px; margin-bottom: 10px; }
+  .rec-info { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .rec-info-row { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 18px; }
+  .rec-info-label { width: 18px; flex-shrink: 0; }
+  .rec-tips { font-size: 12px; line-height: 17px; margin-bottom: 4px; }
+  .rec-action { padding: 11px 16px; border-radius: 14px; text-align: center; font-size: 14px; font-weight: 600; color: #fff; cursor: pointer; margin-top: 4px; }
+  .rec-action:active { transform: scale(0.97); }
+
+  /* Quick actions + input */
+  .chat-bottom { padding-bottom: 24px; }
+  .quick-row { display: flex; gap: 8px; padding: 0 16px 8px; overflow-x: auto; scrollbar-width: none; }
+  .quick-row::-webkit-scrollbar { display: none; }
+  .quick-pill { padding: 7px 14px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; }
+  .quick-pill:active { transform: scale(0.94); }
+  .input-bar { display: flex; align-items: flex-end; gap: 8px; padding: 0 12px 12px; }
+  .input-field {
+    flex: 1; padding: 10px 16px; font-size: 15px; border-radius: 22px; min-height: 42px; max-height: 100px;
+    font-family: inherit; resize: none; outline: none; border: none; line-height: 22px;
+  }
+  .send-btn { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; border: none; }
+  .send-btn:active { transform: scale(0.9); }
+  .send-btn span { color: #fff; font-size: 20px; font-weight: 700; margin-top: -2px; }
+
+  /* Reset confirmation */
+  .confirm-overlay {
+    position: absolute; inset: 0; z-index: 900; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .confirm-overlay.visible { opacity: 1; pointer-events: auto; }
+  .confirm-box { width: 280px; border-radius: 20px; padding: 24px; text-align: center; }
+  .confirm-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .confirm-desc { font-size: 13px; line-height: 18px; margin-bottom: 20px; opacity: 0.7; }
+  .confirm-actions { display: flex; gap: 10px; }
+  .confirm-btn { flex: 1; padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.15s; }
+  .confirm-btn:active { transform: scale(0.96); }
+  .confirm-btn.cancel { border: 1px solid rgba(255,255,255,0.12); }
+  .confirm-btn.ok { color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="phone-shell">
+  <div class="notch"></div>
+  <div class="phone-screen" id="screen">
+
+    <!-- Status bar (shared) -->
+    <div class="status-bar" id="statusBar">
+      <span class="sb-time" id="sbTime">9:41</span>
+      <span class="sb-right">●●●● <span style="font-size:15px">▼</span> <span style="font-size:14px">▮▮</span></span>
+    </div>
+
+    <!-- ===== ONBOARDING SCREEN ===== -->
+    <div class="screen" id="onboarding">
+      <div class="ob-glow" id="obGlow"></div>
+      <div class="ob-header">
+        <div class="ob-logo">🌙</div>
+        <div class="ob-title" id="obTitle">OneDayReco</div>
+        <div class="ob-tagline" id="obTagline">每一天，都值得被好好安排</div>
+        <div class="ob-sub" id="obSub">你的私人活动搭子，随时帮你找点事做</div>
+      </div>
+      <div class="ob-section-label" id="obLabel">选一下你的 MBTI，我来匹配搭子风格</div>
+      <div class="ob-grid" id="mbtiGrid"></div>
+      <div class="ob-unsure" id="obUnsure">不太确定？做个 1 分钟测试 →</div>
+      <div class="ob-footer">
+        <div class="ob-btn disabled" id="enterBtn">选择 MBTI 后进入</div>
+      </div>
+
+      <!-- Quiz overlay -->
+      <div class="quiz-overlay" id="quizOverlay">
+        <div class="quiz-close" id="quizClose">✕ 关闭</div>
+        <div class="quiz-content" id="quizContent"></div>
+      </div>
+    </div>
+
+    <!-- ===== HOME SCREEN (Today's Recommendations) ===== -->
+    <div class="screen hidden" id="home">
+      <div class="home-scroll" id="homeScroll">
+        <div class="home-topbar">
+          <div class="home-back" id="homeBack">←</div>
+          <div class="home-topbar-right" id="homeSearch">🔍</div>
+        </div>
+        <div class="home-greeting">
+          <div class="home-greet-title" id="greetTitle">早安</div>
+          <div class="home-greet-sub" id="greetSub">今天想一起做点什么呢？</div>
+        </div>
+        <div class="home-illustration" id="homeIllustration"></div>
+
+        <!-- Mode card -->
+        <div class="mode-card" id="modeCard">
+          <div class="mode-card-bg" id="modeBg"></div>
+          <div class="mode-card-content">
+            <div class="mode-card-tag" id="modeTag">搭子模式</div>
+            <div class="mode-card-title" id="modeTitle">一对一推荐</div>
+            <div class="mode-card-desc" id="modeDesc">根据你的性格，精准匹配活动方案</div>
+            <div class="mode-card-btn" id="modeBtn">查看搭子计划 →</div>
+          </div>
+        </div>
+
+        <!-- Inspiration cards -->
+        <div class="home-section">
+          <div class="home-section-header">
+            <div class="home-section-title" id="inspLabel">✨ 今日灵感</div>
+            <div class="home-section-more" id="inspMore">换一批 ↻</div>
+          </div>
+          <div class="insp-scroll" id="inspScroll"></div>
+        </div>
+
+        <!-- Mood tags -->
+        <div class="mood-section">
+          <div class="home-section-header">
+            <div class="home-section-title" id="moodLabel">今天什么心情？</div>
+          </div>
+          <div class="mood-row" id="moodRow"></div>
+        </div>
+      </div>
+
+      <!-- Bottom nav -->
+      <div class="bottom-nav" id="bottomNav">
+        <div class="nav-item active" id="navHome">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">推荐</span>
+        </div>
+        <div class="nav-item inactive" id="navChat">
+          <span class="nav-icon">💬</span>
+          <span class="nav-label">搭子</span>
+        </div>
+        <div class="nav-plus" id="navPlus">+</div>
+        <div class="nav-item inactive" id="navFav">
+          <span class="nav-icon">⭐</span>
+          <span class="nav-label">收藏</span>
+        </div>
+        <div class="nav-item inactive" id="navMsg">
+          <span class="nav-icon">📬</span>
+          <span class="nav-label">消息</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CHAT SCREEN ===== -->
+    <div class="screen hidden" id="chat">
+      <div class="chat-header" id="chatHeader">
+        <div class="ch-left">
+          <div class="ch-back" id="chBack">←</div>
+          <div class="ch-avatar" id="chAvatar">🤖</div>
+          <div>
+            <div class="ch-name" id="chName">小逻辑</div>
+            <div class="ch-status-row">
+              <div class="ch-dot"></div>
+              <div class="ch-status" id="chStatus">在线</div>
+            </div>
+          </div>
+        </div>
+        <div class="ch-reset" id="resetBtn">重置</div>
+      </div>
+      <div class="msg-list" id="msgList"></div>
+      <div class="chat-bottom" id="chatBottom">
+        <div class="quick-row" id="quickRow"></div>
+        <div class="input-bar" id="inputBar">
+          <textarea class="input-field" id="inputField" rows="1" placeholder="说点什么…"></textarea>
+          <button class="send-btn" id="sendBtn"><span>↑</span></button>
+        </div>
+      </div>
+
+      <!-- Reset confirmation -->
+      <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box" id="confirmBox">
+          <div class="confirm-title">确定要重置吗？</div>
+          <div class="confirm-desc">会清空当前对话和选择，回到 MBTI 选择页</div>
+          <div class="confirm-actions">
+            <div class="confirm-btn cancel" id="confirmCancel">取消</div>
+            <div class="confirm-btn ok" id="confirmOk">重置</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const THEMES = {
+  INTJ: { colors:{bg:'#1a1a2e',card:'#16213e',accent:'#e94560',text:'#eee',subtext:'#999'}, avatar:'🦉', name:'小策略', status:'待命中', placeholder:'直接说…', quickActions:['推荐活动','安排今晚','换方案','查路线'], mood:'策划模式' },
+  INTP: { colors:{bg:'#1e1e2e',card:'#2a2a3e',accent:'#89b4fa',text:'#cdd6f4',subtext:'#888'}, avatar:'🤖', name:'小逻辑', status:'在线', placeholder:'说点什么…', quickActions:['推荐个活动','换个推荐','随便看看','安静的'], mood:'思考模式' },
+  ENTJ: { colors:{bg:'#0f0f1a',card:'#1a1a2e',accent:'#00d9ff',text:'#eee',subtext:'#999'}, avatar:'🐯', name:'小队长', status:'待命中', placeholder:'直接说…', quickActions:['推荐活动','安排今晚','换方案','查路线'], mood:'行动模式' },
+  ENTP: { colors:{bg:'#1a1520',card:'#241e30',accent:'#ff79c6',text:'#eee',subtext:'#999'}, avatar:'🦊', name:'小点子', status:'在线', placeholder:'聊点什么…', quickActions:['推荐活动','有什么好玩的','换一个','来点新鲜的'], mood:'探索模式' },
+  INFJ: { colors:{bg:'#1c1726',card:'#2a2339',accent:'#c4a7e7',text:'#e0def4',subtext:'#999'}, avatar:'🦌', name:'小洞察', status:'在线', placeholder:'跟搭子聊聊…', quickActions:['推荐个活动','不想出门','换个推荐','安静一点的'], mood:'内省模式' },
+  INFP: { colors:{bg:'#2a1f2e',card:'#352840',accent:'#f6c177',text:'#f0e6e6',subtext:'#b0a0a0'}, avatar:'🐰', name:'小暖', status:'在线', placeholder:'跟搭子聊聊…', quickActions:['推荐个活动','不想出门','换个推荐','安静一点的'], mood:'治愈模式' },
+  ENFJ: { colors:{bg:'#2a1f1a',card:'#3a2a22',accent:'#ff9e64',text:'#fff5ee',subtext:'#c0a090'}, avatar:'🐶', name:'小暖阳', status:'在线', placeholder:'跟我说说…', quickActions:['推荐活动','安排今晚','换个推荐','社交类的'], mood:'陪伴模式' },
+  ENFP: { colors:{bg:'#2a2418',card:'#353020',accent:'#ffe066',text:'#fffbe6',subtext:'#c0b860'}, avatar:'🌻', name:'小太阳', status:'在线', placeholder:'跟我聊聊…', quickActions:['推荐个活动','有什么好玩的','换一个','来点新鲜的'], mood:'灵感模式' },
+  ISTJ: { colors:{bg:'#1a1e2a',card:'#242a3a',accent:'#6cace4',text:'#dde',subtext:'#889'}, avatar:'🦅', name:'小稳', status:'待命中', placeholder:'直接说…', quickActions:['推荐活动','安排今晚','换方案','查路线'], mood:'计划模式' },
+  ISFJ: { colors:{bg:'#241f2a',card:'#2e2839',accent:'#d4a5d4',text:'#f0e6f0',subtext:'#a090a0'}, avatar:'🕊️', name:'小护', status:'在线', placeholder:'跟我说说…', quickActions:['推荐个活动','不想出门','换个推荐','安静一点的'], mood:'守护模式' },
+  ESTJ: { colors:{bg:'#1a2a1f',card:'#243a2e',accent:'#5cd685',text:'#e0f0e0',subtext:'#90b090'}, avatar:'🦬', name:'小执行', status:'待命中', placeholder:'直接说…', quickActions:['推荐活动','安排今晚','换方案','查路线'], mood:'执行模式' },
+  ESFJ: { colors:{bg:'#2a1f20',card:'#3a282a',accent:'#ff8a80',text:'#fff0ee',subtext:'#c0a0a0'}, avatar:'🐝', name:'小贴心', status:'在线', placeholder:'跟我说说…', quickActions:['推荐活动','有什么好玩的','换个推荐','社交类的'], mood:'关怀模式' },
+  ISTP: { colors:{bg:'#1e282e',card:'#283440',accent:'#73c991',text:'#dde8e0',subtext:'#889'}, avatar:'🐱', name:'小酷', status:'在线', placeholder:'说点什么…', quickActions:['推荐个活动','换个推荐','随便看看','安静的'], mood:'随性模式' },
+  ISFP: { colors:{bg:'#26201e',card:'#332a28',accent:'#ea8f8f',text:'#f0e8e6',subtext:'#a09898'}, avatar:'🦋', name:'小雅', status:'在线', placeholder:'跟搭子聊聊…', quickActions:['推荐个活动','不想出门','换个推荐','安静一点的'], mood:'审美模式' },
+  ESTP: { colors:{bg:'#2a2018',card:'#3a2e22',accent:'#ffb74d',text:'#fff5e6',subtext:'#c0a878'}, avatar:'🐆', name:'小冲', status:'在线', placeholder:'聊点什么…', quickActions:['推荐活动','有什么好玩的','换一个','来点新鲜的'], mood:'冒险模式' },
+  ESFP: { colors:{bg:'#2a2518',card:'#353022',accent:'#ffd54f',text:'#fffce6',subtext:'#c0b870'}, avatar:'🦜', name:'小闪耀', status:'在线', placeholder:'跟我聊聊…', quickActions:['推荐个活动','有什么好玩的','换一个','来点新鲜的'], mood:'派对模式' },
+};
+
+const MBTI_TYPES = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP'];
+
+const CATEGORY_VISUALS = {
+  '文化娱乐': { gradient:['#667eea','#764ba2'], emoji:'🎬' },
+  '户外自然': { gradient:['#11998e','#38ef7d'], emoji:'🌿' },
+  '居家休闲': { gradient:['#f6d365','#fda085'], emoji:'🏠' },
+  '社交聚会': { gradient:['#ff6e7f','#bfe9ff'], emoji:'🎉' },
+  '运动健身': { gradient:['#fa709a','#fee140'], emoji:'💪' },
+  '学习提升': { gradient:['#a18cd1','#fbc2eb'], emoji:'📚' },
+  '创意手工': { gradient:['#ff9a9e','#fecfef'], emoji:'🎨' },
+  '城市探索': { gradient:['#f093fb','#f5576c'], emoji:'🗺️' },
+};
+
+const MOCK_RECS = [
+  { activity_name:'看一场冷门佳作', recommend_text:'挑一部评分 8.5+ 的小众电影，买杯热可可，享受两小时的沉浸。', category:'文化娱乐', budget:'¥50-80', specific_info:{name:'万达影城(朝阳店)',location:'朝阳区',duration:'2小时',price:'¥45起',rating:'4.6'}, tips:'选下午场人少，坐中间排体验最佳。', action_label:'查排片', distance:'1.2km' },
+  { activity_name:'去咖啡馆发呆', recommend_text:'找一家安静的独立咖啡馆，带本书或者就坐着放空，让大脑休息一下。', category:'城市探索', budget:'¥30-60', specific_info:{name:'Blue Bottle 咖啡',location:'三里屯',duration:'1-2小时',price:'¥38',rating:'4.5'}, tips:'工作日下午去，人少安静。', action_label:'导航', distance:'0.8km' },
+  { activity_name:'去公园散步', recommend_text:'找个附近的公园走走，呼吸新鲜空气，让身体动起来。不用跑，散步就好。', category:'户外自然', budget:'免费', specific_info:{name:'朝阳公园',location:'朝阳',duration:'1小时',price:'免费',rating:'4.7'}, tips:'傍晚去最舒服，夕阳很好看。', action_label:'查路线', distance:'1.5km' },
+  { activity_name:'在家做一道新菜', recommend_text:'挑一个一直想做但没试过的菜谱，今天就做了它。做饭的过程本身就很治愈。', category:'居家休闲', budget:'¥20-50', specific_info:{name:'小红书菜谱',location:'厨房',duration:'1小时',price:'¥30',rating:'—'}, tips:'先备好所有食材再开火，不会手忙脚乱。', action_label:'看菜谱', distance:'在家' },
+  { activity_name:'约朋友吃火锅', recommend_text:'火锅是最没有社交压力的聚会方式——大家围着锅吃，聊天自然就来了。', category:'社交聚会', budget:'¥80-120/人', specific_info:{name:'海底捞(三里屯店)',location:'三里屯',duration:'2小时',price:'¥110',rating:'4.8'}, tips:'提前在 App 排队，到了直接吃。', action_label:'订位', distance:'2.1km' },
+  { activity_name:'去健身房练一轮', recommend_text:'去健身房跑个步或者撸个铁，出出汗，内啡肽是你现在最需要的。', category:'运动健身', budget:'¥0-50', specific_info:{name:'超级猩猩',location:'国贸',duration:'1小时',price:'¥49',rating:'4.7'}, tips:'记得带毛巾和水壶。', action_label:'预约', distance:'1.8km' },
+  { activity_name:'学一个新技能', recommend_text:'花一小时学点有用的：剪辑、设计、编程，B 站上免费教程多得很。', category:'学习提升', budget:'免费', specific_info:{name:'B站教程',location:'家里',duration:'1-2小时',price:'免费',rating:'—'}, tips:'边看边练，光看不练等于没学。', action_label:'去看教程', distance:'在家' },
+  { activity_name:'画画或做手工', recommend_text:'买套水彩或者数字油画，不用画得好，就是让手和心都忙起来。', category:'创意手工', budget:'¥20-50', specific_info:{name:'数字油画套装',location:'家里',duration:'2小时',price:'¥35',rating:'4.5'}, tips:'不用追求完美，享受过程就好。', action_label:'去买材料', distance:'在家' },
+  { activity_name:'去博物馆看展', recommend_text:'挑一个正在展出的展览，慢慢逛，比刷手机有意思多了。', category:'文化娱乐', budget:'¥0-60', specific_info:{name:'国家博物馆',location:'东城区',duration:'2-3小时',price:'免费',rating:'4.8'}, tips:'提前在公众号预约，周末人多家。', action_label:'预约', distance:'3.5km' },
+  { activity_name:'城市骑行', recommend_text:'扫一辆共享单车，沿着河边或者林荫道骑一段，风在耳边的感觉很解压。', category:'城市探索', budget:'¥1.5-3', specific_info:{name:'亮马河绿道',location:'朝阳',duration:'1小时',price:'¥3',rating:'4.6'}, tips:'傍晚骑行最舒服，注意戴头盔。', action_label:'找车', distance:'0.3km' },
+  { activity_name:'在家泡澡放松', recommend_text:'放一缸热水，丢个浴球，放点音乐，把自己泡进去。', category:'居家休闲', budget:'¥5-15', specific_info:{name:'家里浴缸',location:'浴室',duration:'40分钟',price:'¥10',rating:'—'}, tips:'泡澡前先喝杯水，别泡太久。', action_label:'买浴球', distance:'在家' },
+  { activity_name:'组一局桌游', recommend_text:'约三五好友来家里，一局阿瓦隆或者卡坦岛，时间一下就过去了。', category:'社交聚会', budget:'¥0-30', specific_info:{name:'家里',location:'客厅',duration:'2-3小时',price:'免费',rating:'—'}, tips:'提前选好游戏，规则先看一遍。', action_label:'邀请朋友', distance:'在家' },
+  { activity_name:'出门晨跑', recommend_text:'早起跑个三公里，整个上午精神都不一样。空气好，人少，舒服。', category:'运动健身', budget:'免费', specific_info:{name:'奥森公园跑道',location:'朝阳',duration:'30分钟',price:'免费',rating:'4.7'}, tips:'跑前热身，跑后拉伸，别偷懒。', action_label:'查路线', distance:'2.5km' },
+  { activity_name:'读一本好书', recommend_text:'挑一本一直想读但没开始的书，泡杯茶，关掉手机，给自己一小时。', category:'学习提升', budget:'¥0-40', specific_info:{name:'微信读书',location:'家里',duration:'1-2小时',price:'免费',rating:'—'}, tips:'用番茄钟，25分钟专注5分钟休息。', action_label:'开始阅读', distance:'在家' },
+  { activity_name:'写手帐或日记', recommend_text:'拿出一个本子，写下今天的感受、计划或者随便涂鸦。写字本身就是一种整理。', category:'创意手工', budget:'¥10-30', specific_info:{name:'手帐本',location:'家里',duration:'30分钟',price:'¥20',rating:'—'}, tips:'不用写多，几句话也行，坚持比完美重要。', action_label:'去买本子', distance:'在家' },
+  { activity_name:'逛周末市集', recommend_text:'找个附近的创意市集逛逛，看看手作、尝尝小吃，随手拍几张照。', category:'城市探索', budget:'¥0-100', specific_info:{name:'三里屯市集',location:'三里屯',duration:'1-2小时',price:'免费逛',rating:'4.3'}, tips:'下午去最热闹，带点现金。', action_label:'导航', distance:'1.0km' },
+];
+
+// ===== STATE =====
+let selectedMBTI = null;
+let currentTheme = null;
+let messages = [];
+let isLoading = false;
+let chatTurnCount = 0;
+
+let currentMood = '';
+const MOOD_TAGS = [
+  { value: '宅', label: '🏠 宅一下', categories: ['居家休闲','文化娱乐','创意手工'] },
+  { value: '走', label: '🚶 出去走走', categories: ['户外自然','城市探索'] },
+  { value: '闹', label: '🎉 热闹', categories: ['社交聚会','运动健身'] },
+  { value: '学', label: '📚 充电', categories: ['学习提升','文化娱乐'] },
+  { value: '创', label: '🎨 创造', categories: ['创意手工','居家休闲'] },
+];
+
+const MBTI_DEFAULT_RECS = {
+  INTJ: [13, 6, 3],  INTP: [6, 1, 13],  ENTJ: [5, 4, 2],  ENTP: [4, 7, 9],
+  INFJ: [1, 0, 3],  INFP: [7, 3, 14],  ENFJ: [4, 2, 0],  ENFP: [4, 9, 7],
+  ISTJ: [5, 6, 3],  ISFJ: [3, 1, 7],   ESTJ: [5, 4, 2],  ESFJ: [4, 3, 1],
+  ISTP: [5, 2, 9],  ISFP: [7, 1, 14],  ESTP: [4, 2, 5],  ESFP: [4, 15, 0],
+};
+
+// MBTI quiz questions
+const QUIZ_QUESTIONS = [
+  { q: '周末到了，你更想…', options: [
+    { text: '约朋友出来玩', type: 'E' },
+    { text: '一个人待着也挺好', type: 'I' },
+  ]},
+  { q: '你更看重…', options: [
+    { text: '实际的、具体的东西', type: 'S' },
+    { text: '想象的、可能的东西', type: 'N' },
+  ]},
+  { q: '做决定时，你更倾向…', options: [
+    { text: '逻辑分析，讲道理', type: 'T' },
+    { text: '考虑感受，讲人情', type: 'F' },
+  ]},
+  { q: '你更喜欢…', options: [
+    { text: '计划好再行动', type: 'J' },
+    { text: '走着看，灵活应变', type: 'P' },
+  ]},
+];
+
+// ===== HELPERS =====
+function $(id) { return document.getElementById(id); }
+
+function applyTheme(theme) {
+  const c = theme.colors;
+  const screen = $('screen');
+  screen.style.background = c.bg;
+  screen.style.color = c.text;
+  document.documentElement.style.background = c.bg;
+  // Status bar color
+  $('statusBar').style.color = c.text;
+}
+
+function getTimeGreeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 11) return { title: '早安', sub: '新的一天，想怎么开始？' };
+  if (h >= 11 && h < 14) return { title: '午安', sub: '午后有点困，找点事做？' };
+  if (h >= 14 && h < 18) return { title: '下午好', sub: '阳光正好，别辜负了' };
+  if (h >= 18 && h < 22) return { title: '晚上好', sub: '今晚想怎么过？' };
+  return { title: '夜深了', sub: '做点什么好呢？' };
+}
+
+function getMockResponse(text) {
+  let recs = [];
+
+  if (currentMood) {
+    const moodTag = MOOD_TAGS.find(m => m.value === currentMood);
+    if (moodTag && /推荐|建议|安排|活动|干嘛|做什么|没事|无聊|换/.test(text)) {
+      recs = MOCK_RECS.filter(r => moodTag.categories.includes(r.category));
+      if (recs.length === 0) recs = [MOCK_RECS[0]];
+      if (recs.length > 2) recs = recs.slice(0, 2);
+    }
+  }
+
+  if (recs.length === 0) {
+    if (/安静|一个人|宅|咖啡|看书|发呆/.test(text)) { recs = [MOCK_RECS[1], MOCK_RECS[3]]; }
+    else if (/电影|看/.test(text)) { recs = [MOCK_RECS[0]]; }
+    else if (/公园|散步|自然|户外|走走/.test(text)) { recs = [MOCK_RECS[2]]; }
+    else if (/做饭|吃|厨|饿/.test(text)) { recs = [MOCK_RECS[3], MOCK_RECS[4]]; }
+    else if (/朋友|聚|约|社交/.test(text)) { recs = [MOCK_RECS[4]]; }
+    else if (/运动|健身|锻炼|跑/.test(text)) { recs = [MOCK_RECS[5]]; }
+    else if (/学|看视频|教程|提升|读书/.test(text)) { recs = [MOCK_RECS[6], MOCK_RECS[13]]; }
+    else if (/画|手工|创作|艺术|写/.test(text)) { recs = [MOCK_RECS[7], MOCK_RECS[14]]; }
+    else if (/博物|展|展览/.test(text)) { recs = [MOCK_RECS[8]]; }
+    else if (/骑|自行车|单车/.test(text)) { recs = [MOCK_RECS[9]]; }
+    else if (/泡澡|放松|休息/.test(text)) { recs = [MOCK_RECS[10]]; }
+    else if (/桌游|游戏/.test(text)) { recs = [MOCK_RECS[11]]; }
+    else if (/市集|逛/.test(text)) { recs = [MOCK_RECS[15]]; }
+    else {
+      const shuffled = [...MOCK_RECS].sort(() => Math.random() - 0.5);
+      recs = shuffled.slice(0, 2);
+    }
+  }
+
+  const replies = [
+    `好嘞，我帮你看了看，这几个方案你挑挑：`,
+    `根据你的风格，我觉得这几个挺适合你的：`,
+    `来了来了，给你找了几件可以做的事：`,
+    `嗯，我想想… 这几个怎么样：`,
+  ];
+  const reply = replies[Math.floor(Math.random() * replies.length)];
+  return { reply, recommendations: recs };
+}
+
+// ===== STATUS BAR =====
+function updateStatusBar() {
+  const now = new Date();
+  const h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2, '0');
+  $('sbTime').textContent = `${h}:${m}`;
+}
+
+// ===== ONBOARDING =====
+function renderOnboarding() {
+  const grid = $('mbtiGrid');
+  grid.innerHTML = '';
+  MBTI_TYPES.forEach(type => {
+    const t = THEMES[type];
+    const c = t.colors;
+    const card = document.createElement('div');
+    card.className = 'ob-card';
+    card.style.background = c.card;
+    card.innerHTML = `<div class="emoji">${t.avatar}</div><div class="code" style="color:${c.text}">${type}</div>`;
+    card.addEventListener('click', () => selectMBTI(type));
+    grid.appendChild(card);
+  });
+}
+
+function selectMBTI(type) {
+  selectedMBTI = type;
+  currentTheme = THEMES[type];
+  const c = currentTheme.colors;
+
+  applyTheme(currentTheme);
+  $('obGlow').style.background = `linear-gradient(to bottom, ${c.accent}, transparent)`;
+  $('obTitle').style.color = c.text;
+  $('obTagline').style.color = c.subtext;
+  $('obSub').style.color = c.subtext;
+  $('obLabel').style.color = c.subtext;
+  $('obUnsure').style.color = c.subtext;
+
+  document.querySelectorAll('.ob-card').forEach((card, idx) => {
+    const t = THEMES[MBTI_TYPES[idx]];
+    const isSelected = MBTI_TYPES[idx] === type;
+    card.style.background = isSelected ? t.colors.accent : c.card;
+    card.style.borderColor = isSelected ? t.colors.accent : 'transparent';
+    const codeEl = card.querySelector('.code');
+    codeEl.style.color = isSelected ? '#fff' : c.text;
+    const existing = card.querySelector('.pname');
+    if (isSelected && !existing) {
+      const nameEl = document.createElement('div');
+      nameEl.className = 'pname';
+      nameEl.textContent = t.name;
+      card.appendChild(nameEl);
+    } else if (!isSelected && existing) {
+      existing.remove();
+    }
+  });
+
+  const btn = $('enterBtn');
+  btn.classList.remove('disabled');
+  btn.style.background = c.accent;
+  btn.textContent = `进入 · ${currentTheme.name}`;
+}
+
+// ===== MBTI QUIZ =====
+let quizState = { step: 0, letters: [] };
+
+function openQuiz() {
+  quizState = { step: 0, letters: [] };
+  $('quizOverlay').classList.add('visible');
+  renderQuizStep();
+}
+
+function renderQuizStep() {
+  const content = $('quizContent');
+  const c = currentTheme ? currentTheme.colors : THEMES['INTP'].colors;
+
+  if (quizState.step >= QUIZ_QUESTIONS.length) {
+    // Determine MBTI
+    const result = quizState.letters.join('');
+    // Find closest match
+    const match = MBTI_TYPES.find(t => {
+      let score = 0;
+      for (let i = 0; i < 4; i++) if (t[i] === result[i]) score++;
+      return score === 4;
+    }) || MBTI_TYPES.find(t => {
+      let score = 0;
+      for (let i = 0; i < 4; i++) if (t[i] === result[i]) score++;
+      return score >= 3;
+    }) || 'INTP';
+
+    const matched = THEMES[match];
+    content.innerHTML = `
+      <div style="font-size:12px;opacity:0.6;margin-bottom:16px">测试结果</div>
+      <div style="font-size:48px;margin-bottom:8px">${matched.avatar}</div>
+      <div style="font-size:28px;font-weight:800;margin-bottom:6px;color:${c.accent}">${match}</div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:8px">${matched.name}</div>
+      <div style="font-size:14px;opacity:0.7;margin-bottom:28px;text-align:center;line-height:20px">根据你的回答，这个搭子风格最适合你</div>
+      <div style="width:100%;padding:16px;border-radius:18px;text-align:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer;background:${c.accent}" id="quizUseResult">就用这个 →</div>
+    `;
+    $('quizUseResult').addEventListener('click', () => {
+      closeQuiz();
+      selectMBTI(match);
+    });
+    return;
+  }
+
+  const q = QUIZ_QUESTIONS[quizState.step];
+  content.innerHTML = `
+    <div class="quiz-progress">${quizState.step + 1} / ${QUIZ_QUESTIONS.length}</div>
+    <div class="quiz-question" style="color:${c.text}">${q.q}</div>
+    <div class="quiz-options" id="quizOpts"></div>
+  `;
+  const optsContainer = $('quizOpts');
+  q.options.forEach(opt => {
+    const el = document.createElement('div');
+    el.className = 'quiz-option';
+    el.style.background = c.card;
+    el.style.color = c.text;
+    el.textContent = opt.text;
+    el.addEventListener('click', () => {
+      quizState.letters.push(opt.type);
+      quizState.step++;
+      renderQuizStep();
+    });
+    optsContainer.appendChild(el);
+  });
+}
+
+function closeQuiz() {
+  $('quizOverlay').classList.remove('visible');
+}
+
+// ===== HOME (Today's Recommendations) =====
+function enterHome() {
+  if (!selectedMBTI) return;
+  const c = currentTheme.colors;
+
+  // Greeting
+  const g = getTimeGreeting();
+  $('greetTitle').textContent = `${g.title}，${currentTheme.name}`;
+  $('greetSub').textContent = g.sub;
+  $('greetTitle').style.color = c.text;
+  $('greetSub').style.color = c.subtext;
+
+  // Illustration
+  const illust = $('homeIllustration');
+  illust.style.background = `linear-gradient(135deg, ${c.card}, ${c.bg})`;
+  illust.innerHTML = `<span style="font-size:48px;opacity:0.8">${currentTheme.avatar}</span>`;
+
+  // Top bar
+  $('homeBack').style.color = c.text;
+  $('homeSearch').style.color = c.subtext;
+
+  // Mode card
+  const modeBg = $('modeBg');
+  const visual = CATEGORY_VISUALS['城市探索'];
+  modeBg.style.background = `linear-gradient(135deg, ${visual.gradient[0]}, ${visual.gradient[1]})`;
+  $('modeTag').style.background = 'rgba(0,0,0,0.25)';
+  $('modeTag').style.color = '#fff';
+  $('modeTitle').textContent = currentTheme.mood || '搭子模式';
+  $('modeTitle').style.color = '#fff';
+  $('modeDesc').textContent = `${currentTheme.name}已就位，根据你的性格精准推荐`;
+  $('modeDesc').style.color = 'rgba(255,255,255,0.85)';
+  $('modeBtn').style.color = '#fff';
+
+  // Section labels
+  $('inspLabel').style.color = c.text;
+  $('inspMore').style.color = c.subtext;
+  $('moodLabel').style.color = c.text;
+
+  // Bottom nav
+  $('bottomNav').style.background = c.bg;
+  $('bottomNav').style.borderTopColor = 'rgba(255,255,255,0.06)';
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.style.color = c.subtext;
+  });
+  $('navHome').style.color = c.accent;
+  $('navPlus').style.background = c.accent;
+
+  // Render recs and moods
+  currentMood = '';
+  renderInspCards();
+  renderMoodTags();
+
+  // Switch screens
+  $('onboarding').classList.add('hidden');
+  setTimeout(() => { $('home').classList.remove('hidden'); }, 300);
+}
+
+function renderInspCards() {
+  const c = currentTheme.colors;
+  const scroll = $('inspScroll');
+  scroll.innerHTML = '';
+
+  let recIndices;
+  if (currentMood) {
+    const moodTag = MOOD_TAGS.find(m => m.value === currentMood);
+    recIndices = MOCK_RECS
+      .map((r, i) => ({ r, i }))
+      .filter(({ r }) => moodTag.categories.includes(r.category))
+      .map(({ i }) => i);
+  } else {
+    recIndices = MBTI_DEFAULT_RECS[selectedMBTI] || [0, 1, 2];
+  }
+
+  // Show up to 5
+  recIndices.slice(0, 5).forEach((idx, displayIdx) => {
+    const rec = MOCK_RECS[idx];
+    const card = document.createElement('div');
+    card.className = 'insp-card card-enter';
+    card.style.background = c.card;
+    card.style.animationDelay = `${displayIdx * 0.06}s`;
+
+    const visual = CATEGORY_VISUALS[rec.category] || CATEGORY_VISUALS['城市探索'];
+    const grad = `linear-gradient(135deg, ${visual.gradient[0]}, ${visual.gradient[1]})`;
+    const info = rec.specific_info;
+
+    card.innerHTML = `
+      <div class="insp-visual" style="background:${grad}">
+        <div class="insp-emoji">${visual.emoji}</div>
+        ${rec.budget ? `<div class="insp-budget">${rec.budget}</div>` : ''}
+      </div>
+      <div class="insp-body">
+        <div class="insp-title" style="color:${c.text}">${rec.activity_name}</div>
+        <div class="insp-meta" style="color:${c.subtext}">
+          ${info && info.duration ? `<span>⏱ ${info.duration}</span>` : ''}
+          ${rec.distance ? `<span>📍 ${rec.distance}</span>` : ''}
+        </div>
+      </div>
+    `;
+    card.addEventListener('click', () => {
+      // Clicking a card goes to chat with this rec
+      enterChatFromHome(rec);
+    });
+    scroll.appendChild(card);
+  });
+
+  if (recIndices.length === 0) {
+    scroll.innerHTML = `<div style="color:${c.subtext};font-size:13px;padding:20px">暂无推荐，换个心情试试？</div>`;
+  }
+}
+
+function renderMoodTags() {
+  const c = currentTheme.colors;
+  const row = $('moodRow');
+  row.innerHTML = '';
+
+  const allTag = document.createElement('div');
+  allTag.className = 'mood-tag';
+  allTag.textContent = '✨ 全部';
+  allTag.style.background = currentMood === '' ? c.accent : c.card;
+  allTag.style.color = currentMood === '' ? '#fff' : c.text;
+  allTag.style.borderColor = currentMood === '' ? c.accent : 'transparent';
+  allTag.addEventListener('click', () => switchMood(''));
+  row.appendChild(allTag);
+
+  MOOD_TAGS.forEach(mood => {
+    const tag = document.createElement('div');
+    tag.className = 'mood-tag';
+    tag.textContent = mood.label;
+    tag.style.background = currentMood === mood.value ? c.accent : c.card;
+    tag.style.color = currentMood === mood.value ? '#fff' : c.text;
+    tag.style.borderColor = currentMood === mood.value ? c.accent : 'transparent';
+    tag.addEventListener('click', () => switchMood(currentMood === mood.value ? '' : mood.value));
+    row.appendChild(tag);
+  });
+}
+
+function switchMood(mood) {
+  currentMood = mood;
+  // Fade out existing cards
+  const scroll = $('inspScroll');
+  const cards = scroll.querySelectorAll('.insp-card');
+  cards.forEach(card => card.classList.add('card-exit'));
+
+  // Update mood tags immediately
+  updateMoodSelection();
+
+  // After fade out, render new cards
+  setTimeout(() => {
+    renderInspCards();
+  }, 200);
+}
+
+function updateMoodSelection() {
+  const c = currentTheme.colors;
+  const tags = $('moodRow').querySelectorAll('.mood-tag');
+  tags.forEach((tag, idx) => {
+    if (idx === 0) {
+      const active = currentMood === '';
+      tag.style.background = active ? c.accent : c.card;
+      tag.style.color = active ? '#fff' : c.text;
+      tag.style.borderColor = active ? c.accent : 'transparent';
+    } else {
+      const mood = MOOD_TAGS[idx - 1];
+      const active = currentMood === mood.value;
+      tag.style.background = active ? c.accent : c.card;
+      tag.style.color = active ? '#fff' : c.text;
+      tag.style.borderColor = active ? c.accent : 'transparent';
+    }
+  });
+}
+
+// ===== CHAT =====
+function enterChatFromHome(prefillRec) {
+  const c = currentTheme.colors;
+
+  // Update chat header
+  $('chAvatar').textContent = currentTheme.avatar;
+  $('chName').textContent = currentTheme.name;
+  $('chName').style.color = c.text;
+  $('chStatus').textContent = currentTheme.status;
+  $('chStatus').style.color = c.subtext;
+  $('chBack').style.color = c.text;
+  $('chatHeader').style.borderBottomColor = 'rgba(255,255,255,0.06)';
+  $('resetBtn').style.color = c.subtext;
+
+  // Quick actions - initial set
+  renderQuickActions('initial');
+
+  // Input
+  const input = $('inputField');
+  input.placeholder = currentTheme.placeholder;
+  input.style.background = c.card;
+  input.style.color = c.text;
+  $('sendBtn').style.background = 'rgba(255,255,255,0.08)';
+
+  // Switch screens
+  $('home').classList.add('hidden');
+  setTimeout(() => {
+    $('chat').classList.remove('hidden');
+    if (messages.length === 0) {
+      let welcome = `嘿，我是${currentTheme.name}～`;
+      if (currentMood) {
+        const moodDescMap = { '宅': '想宅一下', '走': '想出去走走', '闹': '想热闹一下', '学': '想充充电', '创': '想搞点创作' };
+        welcome += `我知道你${moodDescMap[currentMood] || currentMood}。`;
+      }
+      welcome += `跟我说说现在的心情，我帮你找点事做。`;
+      addMessage('assistant', welcome);
+    }
+
+    // If a rec was pre-selected from card click, send it
+    if (prefillRec) {
+      setTimeout(() => {
+        addMessage('user', `我想${prefillRec.activity_name}`);
+        showLoader();
+        setTimeout(() => {
+          removeLoader();
+          addMessage('assistant', `好选择！${prefillRec.activity_name}确实很适合你。这是详细信息：`, [prefillRec]);
+          chatTurnCount++;
+          renderQuickActions('post-rec');
+        }, 1200);
+      }, 600);
+    }
+  }, 300);
+}
+
+function renderQuickActions(mode) {
+  const c = currentTheme.colors;
+  const qr = $('quickRow');
+  qr.innerHTML = '';
+
+  let actions;
+  if (mode === 'post-rec') {
+    actions = ['换一个', '就这个了', '附近还有什么', '再来一个推荐'];
+  } else if (mode === 'conversation') {
+    actions = ['换个推荐', '不想出门', '来点新鲜的', '安静一点的'];
+  } else {
+    actions = currentTheme.quickActions.slice(0, 3);
+  }
+
+  actions.forEach(action => {
+    const pill = document.createElement('div');
+    pill.className = 'quick-pill';
+    pill.style.background = c.card;
+    pill.style.color = c.text;
+    pill.textContent = action;
+    pill.addEventListener('click', () => handleSend(action));
+    qr.appendChild(pill);
+  });
+}
+
+function addMessage(role, content, recommendations) {
+  const c = currentTheme.colors;
+  messages.push({ role, content, recommendations });
+
+  const list = $('msgList');
+  const msgDiv = document.createElement('div');
+
+  if (role === 'user') {
+    msgDiv.className = 'msg-user';
+    msgDiv.innerHTML = `<div class="bubble" style="background:${c.accent}">${content}</div>`;
+  } else {
+    msgDiv.className = 'msg-bot';
+    let recsHtml = '';
+    if (recommendations && recommendations.length > 0) {
+      recsHtml = recommendations.map(rec => renderRecCard(rec)).join('');
+    }
+    msgDiv.innerHTML = `
+      <div class="avatar">${currentTheme.avatar}</div>
+      <div class="content">
+        <div class="bubble" style="background:${c.card};color:${c.text}">${content}</div>
+        ${recsHtml}
+      </div>
+    `;
+  }
+
+  list.appendChild(msgDiv);
+  setTimeout(() => { list.scrollTop = list.scrollHeight; }, 50);
+}
+
+function renderRecCard(rec) {
+  const c = currentTheme.colors;
+  const category = rec.category || '城市探索';
+  const visual = CATEGORY_VISUALS[category] || CATEGORY_VISUALS['城市探索'];
+  const info = rec.specific_info;
+  const grad = `linear-gradient(135deg, ${visual.gradient[0]}, ${visual.gradient[1]})`;
+
+  let infoHtml = '';
+  if (info) {
+    const rows = [];
+    if (info.name) rows.push(`<div class="rec-info-row"><span class="rec-info-label">📍</span><span style="color:${c.text}">${info.name}${info.location ? ` · ${info.location}` : ''}</span></div>`);
+    if (info.duration) rows.push(`<div class="rec-info-row"><span class="rec-info-label">⏱</span><span style="color:${c.subtext}">${info.duration}</span></div>`);
+    if (info.price) rows.push(`<div class="rec-info-row"><span class="rec-info-label">💰</span><span style="color:${c.subtext}">${info.price}</span></div>`);
+    if (info.rating) rows.push(`<div class="rec-info-row"><span class="rec-info-label">⭐</span><span style="color:${c.subtext}">${info.rating}</span></div>`);
+    infoHtml = `<div class="rec-info">${rows.join('')}</div>`;
+  }
+
+  let tipsHtml = '';
+  if (rec.tips) tipsHtml += `<div class="rec-tips" style="color:${c.subtext}">💡 ${rec.tips}</div>`;
+
+  let actionHtml = '';
+  if (rec.action_label) actionHtml = `<div class="rec-action" style="background:${c.accent}">${rec.action_label}</div>`;
+
+  return `
+    <div class="rec-card" style="background:${c.card}">
+      <div class="rec-visual" style="background:${grad}">
+        <div class="rec-emoji">${visual.emoji}</div>
+        ${rec.budget ? `<div class="rec-budget">${rec.budget}</div>` : ''}
+      </div>
+      <div class="rec-body">
+        <div class="rec-title" style="color:${c.text}">${rec.activity_name}</div>
+        <div class="rec-text" style="color:${c.text}">${rec.recommend_text}</div>
+        ${infoHtml}
+        ${tipsHtml}
+        ${actionHtml}
+      </div>
+    </div>
+  `;
+}
+
+function showLoader() {
+  const list = $('msgList');
+  const c = currentTheme.colors;
+  const loader = document.createElement('div');
+  loader.className = 'loader-wrap';
+  loader.id = 'loader';
+  loader.innerHTML = `
+    <div class="breathing" style="background:${c.card};display:inline-flex;padding:10px 16px;border-radius:18px 18px 18px 4px;">
+      <div class="dot" style="background:${c.accent}"></div>
+      <div class="dot" style="background:${c.accent}"></div>
+      <div class="dot" style="background:${c.accent}"></div>
+    </div>
+  `;
+  list.appendChild(loader);
+  setTimeout(() => { list.scrollTop = list.scrollHeight; }, 50);
+}
+
+function removeLoader() {
+  const loader = $('loader');
+  if (loader) loader.remove();
+}
+
+async function handleSend(text) {
+  const content = (text || $('inputField').value).trim();
+  if (!content || isLoading) return;
+
+  addMessage('user', content);
+  $('inputField').value = '';
+  $('inputField').style.height = 'auto';
+  $('sendBtn').style.background = 'rgba(255,255,255,0.08)';
+  isLoading = true;
+
+  showLoader();
+
+  await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
+
+  removeLoader();
+
+  const res = getMockResponse(content);
+  addMessage('assistant', res.reply, res.recommendations);
+
+  chatTurnCount++;
+  if (chatTurnCount === 1) {
+    renderQuickActions('post-rec');
+  } else if (chatTurnCount >= 2) {
+    renderQuickActions('conversation');
+  }
+
+  isLoading = false;
+}
+
+// ===== RESET =====
+function showResetConfirm() {
+  const c = currentTheme.colors;
+  $('confirmBox').style.background = c.card;
+  $('confirmTitle').style.color = c.text;
+  $('confirmDesc').style.color = c.subtext;
+  $('confirmCancel').style.color = c.text;
+  $('confirmOk').style.background = c.accent;
+  $('confirmOverlay').classList.add('visible');
+}
+
+function hideResetConfirm() {
+  $('confirmOverlay').classList.remove('visible');
+}
+
+function resetApp() {
+  hideResetConfirm();
+  messages = [];
+  chatTurnCount = 0;
+  $('msgList').innerHTML = '';
+  selectedMBTI = null;
+  currentTheme = null;
+  currentMood = '';
+  $('chat').classList.add('hidden');
+  $('home').classList.add('hidden');
+  const defaultTheme = THEMES['INTP'];
+  applyTheme(defaultTheme);
+  $('obGlow').style.background = `linear-gradient(to bottom, ${defaultTheme.colors.accent}, transparent)`;
+  $('obTitle').style.color = defaultTheme.colors.text;
+  $('obTagline').style.color = defaultTheme.colors.subtext;
+  $('obSub').style.color = defaultTheme.colors.subtext;
+  $('obLabel').style.color = defaultTheme.colors.subtext;
+  $('obUnsure').style.color = defaultTheme.colors.subtext;
+  $('enterBtn').classList.add('disabled');
+  $('enterBtn').style.background = 'rgba(255,255,255,0.08)';
+  $('enterBtn').textContent = '选择 MBTI 后进入';
+  document.querySelectorAll('.ob-card').forEach((card, idx) => {
+    const t = THEMES[MBTI_TYPES[idx]];
+    card.style.background = defaultTheme.colors.card;
+    card.style.borderColor = 'transparent';
+    card.querySelector('.code').style.color = defaultTheme.colors.text;
+    const pname = card.querySelector('.pname');
+    if (pname) pname.remove();
+  });
+  setTimeout(() => { $('onboarding').classList.remove('hidden'); }, 300);
+}
+
+// ===== INIT =====
+renderOnboarding();
+const defaultTheme = THEMES['INTP'];
+applyTheme(defaultTheme);
+$('obGlow').style.background = `linear-gradient(to bottom, ${defaultTheme.colors.accent}, transparent)`;
+$('obTitle').style.color = defaultTheme.colors.text;
+$('obTagline').style.color = defaultTheme.colors.subtext;
+$('obSub').style.color = defaultTheme.colors.subtext;
+$('obLabel').style.color = defaultTheme.colors.subtext;
+$('obUnsure').style.color = defaultTheme.colors.subtext;
+
+updateStatusBar();
+setInterval(updateStatusBar, 30000);
+
+// Event listeners
+$('enterBtn').addEventListener('click', enterHome);
+$('obUnsure').addEventListener('click', openQuiz);
+$('quizClose').addEventListener('click', closeQuiz);
+$('homeBack').addEventListener('click', () => {
+  $('home').classList.add('hidden');
+  setTimeout(() => { $('onboarding').classList.remove('hidden'); }, 300);
+});
+$('inspMore').addEventListener('click', () => {
+  // Shuffle and re-render
+  const cards = $('inspScroll').querySelectorAll('.insp-card');
+  cards.forEach(card => card.classList.add('card-exit'));
+  setTimeout(() => {
+    // Shuffle the default indices
+    let recIndices;
+    if (currentMood) {
+      const moodTag = MOOD_TAGS.find(m => m.value === currentMood);
+      recIndices = MOCK_RECS.map((r, i) => ({ r, i })).filter(({ r }) => moodTag.categories.includes(r.category)).map(({ i }) => i);
+    } else {
+      recIndices = [...MBTI_DEFAULT_RECS[selectedMBTI]];
+    }
+    recIndices = recIndices.sort(() => Math.random() - 0.5);
+    renderInspCardsShuffled(recIndices);
+  }, 200);
+});
+
+function renderInspCardsShuffled(recIndices) {
+  const c = currentTheme.colors;
+  const scroll = $('inspScroll');
+  scroll.innerHTML = '';
+
+  recIndices.slice(0, 5).forEach((idx, displayIdx) => {
+    const rec = MOCK_RECS[idx];
+    const card = document.createElement('div');
+    card.className = 'insp-card card-enter';
+    card.style.background = c.card;
+    card.style.animationDelay = `${displayIdx * 0.06}s`;
+
+    const visual = CATEGORY_VISUALS[rec.category] || CATEGORY_VISUALS['城市探索'];
+    const grad = `linear-gradient(135deg, ${visual.gradient[0]}, ${visual.gradient[1]})`;
+    const info = rec.specific_info;
+
+    card.innerHTML = `
+      <div class="insp-visual" style="background:${grad}">
+        <div class="insp-emoji">${visual.emoji}</div>
+        ${rec.budget ? `<div class="insp-budget">${rec.budget}</div>` : ''}
+      </div>
+      <div class="insp-body">
+        <div class="insp-title" style="color:${c.text}">${rec.activity_name}</div>
+        <div class="insp-meta" style="color:${c.subtext}">
+          ${info && info.duration ? `<span>⏱ ${info.duration}</span>` : ''}
+          ${rec.distance ? `<span>📍 ${rec.distance}</span>` : ''}
+        </div>
+      </div>
+    `;
+    card.addEventListener('click', () => enterChatFromHome(rec));
+    scroll.appendChild(card);
+  });
+}
+
+$('modeCard').addEventListener('click', () => enterChatFromHome(null));
+$('navChat').addEventListener('click', () => enterChatFromHome(null));
+$('navHome').addEventListener('click', () => {
+  $('chat').classList.add('hidden');
+  setTimeout(() => { $('home').classList.remove('hidden'); }, 300);
+});
+$('navPlus').addEventListener('click', () => enterChatFromHome(null));
+$('navFav').addEventListener('click', () => {
+  // Placeholder - just shake
+  $('navFav').animate([{ transform: 'translateX(0)' },{ transform: 'translateX(-5px)' },{ transform: 'translateX(5px)' },{ transform: 'translateX(0)' }], { duration: 300 });
+});
+$('navMsg').addEventListener('click', () => enterChatFromHome(null));
+
+$('chBack').addEventListener('click', () => {
+  $('chat').classList.add('hidden');
+  setTimeout(() => { $('home').classList.remove('hidden'); }, 300);
+});
+$('resetBtn').addEventListener('click', showResetConfirm);
+$('confirmCancel').addEventListener('click', hideResetConfirm);
+$('confirmOk').addEventListener('click', resetApp);
+
+$('inputField').addEventListener('input', () => {
+  const input = $('inputField');
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+  const c = currentTheme.colors;
+  $('sendBtn').style.background = input.value.trim() ? c.accent : 'rgba(255,255,255,0.08)';
+});
+
+$('inputField').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleSend();
+  }
+});
+
+$('sendBtn').addEventListener('click', () => handleSend());
+</script>
+
+</body>
+</html>
