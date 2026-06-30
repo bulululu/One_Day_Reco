@@ -63,6 +63,7 @@ interface AppState {
   // 入职引导
   isOnboarding: boolean;
   isReturningUser: boolean;
+  isHydratingUser: boolean;
 
   // 用户数据
   mbti: MBTIType | null;
@@ -136,6 +137,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   // 初始状态
   isOnboarding: !initialSavedUser,
   isReturningUser: !!initialSavedUser,
+  isHydratingUser: true,
   mbti: initialSavedUser?.mbti ?? null,
   preferences: initialSavedUser?.preferences ?? null,
   feedbackSummary: initialSavedUser?.feedbackSummary ?? '',
@@ -203,6 +205,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       isOnboarding: true,
       isReturningUser: false,
+      isHydratingUser: false,
       mbti: null,
       preferences: null,
       feedbackSummary: '',
@@ -237,7 +240,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         createdAt: userId.split('_')[1] || Date.now().toString(),
       });
     }
-    set({ isOnboarding: false });
+    set({ isOnboarding: false, isHydratingUser: false });
   },
 
   // 从已保存数据直接进入
@@ -247,6 +250,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         mbti: savedUser.mbti,
         preferences: savedUser.preferences,
         currentTheme: MBTI_THEMES[savedUser.mbti],
+        isHydratingUser: false,
         isOnboarding: false,
         isReturningUser: true,
       });
@@ -264,10 +268,23 @@ export const useAppStore = create<AppState>((set, get) => ({
             preferences: user.preferences,
             feedbackSummary: user.feedbackSummary ?? '',
             currentTheme: MBTI_THEMES[user.mbti],
+            isHydratingUser: false,
             isOnboarding: false,
             isReturningUser: true,
           });
+        } else {
+          set({
+            isHydratingUser: false,
+            isOnboarding: true,
+            isReturningUser: false,
+          });
         }
+      }).catch(() => {
+        set({
+          isHydratingUser: false,
+          isOnboarding: true,
+          isReturningUser: false,
+        });
       });
     }
   },
@@ -278,6 +295,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       isOnboarding: true,
       isReturningUser: false,
+      isHydratingUser: false,
       mbti: null,
       preferences: null,
       feedbackSummary: '',
@@ -351,6 +369,7 @@ loadSavedUser().then((user) => {
   if (user) {
     savedUser = user;
     useAppStore.setState({
+      isHydratingUser: false,
       isOnboarding: false,
       isReturningUser: true,
       mbti: user.mbti,
@@ -362,5 +381,17 @@ loadSavedUser().then((user) => {
       hasSkippedAuth: user.hasSkippedAuth ?? false,
       currentTheme: MBTI_THEMES[user.mbti],
     });
+  } else {
+    useAppStore.setState({
+      isHydratingUser: false,
+      isOnboarding: true,
+      isReturningUser: false,
+    });
   }
+}).catch(() => {
+  useAppStore.setState({
+    isHydratingUser: false,
+    isOnboarding: true,
+    isReturningUser: false,
+  });
 });

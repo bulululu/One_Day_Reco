@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -19,8 +20,17 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function AppContent() {
-  const { isOnboarding, currentTheme } = useAppStore();
+  const { isOnboarding, isHydratingUser, currentTheme } = useAppStore();
   const colors = currentTheme.colors;
+
+  if (isHydratingUser) {
+    return (
+      <>
+        <StatusBar style="dark" />
+        <View style={{ flex: 1, backgroundColor: colors.bg }} />
+      </>
+    );
+  }
 
   return (
     <>
