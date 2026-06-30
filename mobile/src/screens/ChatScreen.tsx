@@ -13,13 +13,16 @@ import {
   Platform,
   Keyboard,
   ScrollView,
+  ImageBackground,
+  Linking,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { MBTI_PERSONAS } from '@/data/personas';
+import { getLifestyleProfile, HOME_ASSETS, HOME_IDEAS } from '@/data/lifestyleDesign';
 import { chat, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation } from '@/services/api';
 import { ActivitySourceMeta, ChatMessage, Recommendation } from '@/types';
-import { RecommendationCard } from '@/components/RecommendationCard';
 import { BreathingLoader } from '@/components/BreathingLoader';
 import { ActivityInspirationPanel } from '@/components/ActivityInspirationPanel';
 import { ContextEditor } from '@/components/ContextEditor';
@@ -132,6 +135,11 @@ export function ChatScreen() {
   const persona = mbti ? MBTI_PERSONAS[mbti] : MBTI_PERSONAS.INTP;
   const colors = currentTheme.colors;
   const activeMode = MODES.find((item) => item.key === mode) || MODES[0];
+  const lifestyle = getLifestyleProfile(mbti || 'INTP');
+  const todayLabel = useMemo(() => {
+    const now = new Date();
+    return `${now.getMonth() + 1}.${String(now.getDate()).padStart(2, '0')}`;
+  }, []);
 
   const buildContext = (targetMode: RecoMode = activeMode) => ({
     weather,
@@ -362,6 +370,15 @@ export function ChatScreen() {
     }).catch(() => undefined);
   };
 
+  const handleStartPlan = () => {
+    handleRecommendationAction(featured);
+    if (featured.action_url) {
+      void Linking.openURL(featured.action_url).catch(() => undefined);
+    } else {
+      void handleSend('把这个计划展开成具体步骤');
+    }
+  };
+
   const handleScreenBreakTrigger = async (trigger: {
     appName: string;
     appCategory: string;
@@ -436,26 +453,37 @@ export function ChatScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.header}>
-          <View style={styles.profile}>
-            <View style={[styles.avatar, { backgroundColor: hexToRgba(colors.accent, 0.14) }]}>
-              <Text style={styles.avatarText}>{currentTheme.avatar}</Text>
+        <ImageBackground
+          source={HOME_ASSETS.hero}
+          resizeMode="cover"
+          imageStyle={styles.greetingImage}
+          style={[styles.greetingCard, { backgroundColor: colors.card, shadowColor: colors.accent }]}
+        >
+          <LinearGradient
+            colors={[
+              hexToRgba(colors.card, 0.98),
+              hexToRgba(colors.card, 0.86),
+              hexToRgba(colors.card, 0.2),
+            ]}
+            start={{ x: 0, y: 0.45 }}
+            end={{ x: 0.82, y: 0.5 }}
+            style={styles.greetingOverlay}
+          >
+            <View style={styles.greetingCopy}>
+              <Text style={[styles.styleLabel, { color: colors.accent }]}>{lifestyle.styleName}</Text>
+              <Text style={[styles.greetingTitle, { color: colors.text }]}>早安，{currentTheme.name}</Text>
+              <Text style={[styles.greetingSub, { color: colors.text }]}>今天想一起做点什么呢？</Text>
+              <Pressable
+                style={[styles.contextPill, { backgroundColor: hexToRgba(colors.accent, 0.11) }]}
+                onPress={() => setContextExpanded((value) => !value)}
+              >
+                <Text style={[styles.contextPillText, { color: colors.accent }]} numberOfLines={1}>
+                  {weather} · {location || '当前位置'}
+                </Text>
+              </Pressable>
             </View>
-            <View>
-              <Text style={[styles.name, { color: colors.text }]}>早安，{currentTheme.name}</Text>
-              <Text style={[styles.role, { color: colors.subtext }]}>今天想一起做点什么呢？</Text>
-            </View>
-          </View>
-
-          <View style={styles.contextBlock}>
-            <View style={styles.timeRow}>
-              <Text style={[styles.time, { color: colors.text }]}>9:41</Text>
-              <View style={styles.divider} />
-              <Text style={[styles.weather, { color: colors.text }]}>☀ {weather}</Text>
-            </View>
-            <Text style={[styles.location, { color: colors.subtext }]}>⌖ {location || '当前位置'}</Text>
-          </View>
-        </View>
+          </LinearGradient>
+        </ImageBackground>
 
         <ContextEditor
           theme={currentTheme}
@@ -471,12 +499,39 @@ export function ChatScreen() {
           onFetchWeather={handleFetchWeather}
         />
 
-        <RecommendationCard
-          recommendation={featured}
-          theme={currentTheme}
-          activitySource={featuredSource}
-          onAction={handleRecommendationAction}
-        />
+        <ImageBackground
+          source={HOME_ASSETS.feature}
+          resizeMode="cover"
+          imageStyle={styles.featureImage}
+          style={[styles.featureCard, { backgroundColor: colors.card, shadowColor: colors.accent }]}
+        >
+          <LinearGradient
+            colors={[
+              hexToRgba(colors.card, 0.8),
+              hexToRgba(colors.card, 0.46),
+              'rgba(255,255,255,0)',
+            ]}
+            start={{ x: 0, y: 0.45 }}
+            end={{ x: 1, y: 0.55 }}
+            style={styles.featureOverlay}
+          >
+            <View style={[styles.featurePill, { backgroundColor: hexToRgba(colors.accent, 0.82) }]}>
+              <Text style={styles.featurePillText}>
+                {featuredSource?.is_realtime ? '实时候选' : '今日灵感'}
+              </Text>
+            </View>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>给自己的温柔时光。</Text>
+            <Text style={[styles.featureText, { color: colors.text }]} numberOfLines={2}>
+              {featured.recommend_text}
+            </Text>
+            <Pressable
+              style={[styles.featureAction, { backgroundColor: colors.accent }]}
+              onPress={handleStartPlan}
+            >
+              <Text style={styles.featureActionText}>{featured.action_label || '开始今日计划'} →</Text>
+            </Pressable>
+          </LinearGradient>
+        </ImageBackground>
 
         <View style={styles.feedbackRow}>
           <Pressable
@@ -504,6 +559,170 @@ export function ChatScreen() {
             {feedbackStatus}
           </Text>
         ) : null}
+
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, shadowColor: colors.accent }]}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <Text style={[styles.sectionIcon, { color: colors.accent }]}>⌁</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>今日灵感卡片</Text>
+            </View>
+            <Pressable onPress={() => refreshRecommendation()}>
+              <Text style={[styles.sectionAction, { color: colors.subtext }]}>换一批 ↻</Text>
+            </Pressable>
+          </View>
+          <View style={styles.ideaGrid}>
+            {HOME_IDEAS.map((idea) => (
+              <Pressable
+                key={idea.key}
+                style={[styles.ideaCard, { borderColor: hexToRgba(colors.accent, 0.13) }]}
+                onPress={() => handleSend(idea.prompt)}
+              >
+                <ImageBackground
+                  source={idea.image}
+                  resizeMode="cover"
+                  imageStyle={styles.ideaImage}
+                  style={styles.ideaImageWrap}
+                />
+                <View style={styles.ideaCopy}>
+                  <Text style={[styles.ideaTitle, { color: colors.text }]} numberOfLines={1}>
+                    {idea.title}
+                  </Text>
+                  <Text style={[styles.ideaSub, { color: colors.subtext }]} numberOfLines={1}>
+                    {idea.subtitle}
+                  </Text>
+                  <View style={styles.ideaMeta}>
+                    <Text style={[styles.ideaTag, { color: colors.accent, backgroundColor: hexToRgba(colors.accent, 0.1) }]}>
+                      {idea.tag}
+                    </Text>
+                    <Text style={[styles.ideaDistance, { color: colors.subtext }]}>{idea.distance}</Text>
+                  </View>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={[styles.scheduleCard, { backgroundColor: colors.card, shadowColor: colors.accent }]}>
+          <View style={styles.sectionTitleRow}>
+            <Text style={[styles.sectionIcon, { color: colors.accent }]}>▣</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>今日日程</Text>
+          </View>
+          <View style={[styles.scheduleItem, { borderColor: hexToRgba(colors.accent, 0.12) }]}>
+            <View style={styles.dateBlock}>
+              <Text style={[styles.dateWeek, { color: colors.subtext }]}>今天</Text>
+              <Text style={[styles.dateText, { color: colors.text }]}>{todayLabel}</Text>
+            </View>
+            <View style={[styles.checkDot, { backgroundColor: hexToRgba(colors.accent, 0.14) }]}>
+              <Text style={[styles.checkText, { color: colors.accent }]}>✓</Text>
+            </View>
+            <View style={styles.scheduleCopy}>
+              <Text style={[styles.scheduleTitle, { color: colors.text }]} numberOfLines={1}>
+                {featured.specific_info?.name || featured.activity_name}
+              </Text>
+              <Text style={[styles.scheduleTime, { color: colors.subtext }]}>
+                {featured.specific_info?.duration || '约 90 分钟'} · {featured.specific_info?.price || featured.budget || '按需'}
+              </Text>
+            </View>
+            <Pressable
+              style={[styles.donePill, { borderColor: hexToRgba(colors.accent, 0.2) }]}
+              onPress={() => handleFeedback('completed')}
+            >
+              <Text style={[styles.doneText, { color: colors.accent }]}>完成</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={[styles.memoryBanner, { backgroundColor: colors.accent }]}>
+          <View style={styles.memoryMascot}>
+            <Text style={styles.memoryMascotText}>{currentTheme.avatar}</Text>
+          </View>
+          <View style={styles.memoryCopy}>
+            <Text style={styles.memoryTitle}>记录我们的美好瞬间</Text>
+            <Text style={styles.memorySub}>珍藏每一个值得回忆的时刻</Text>
+          </View>
+          <Pressable
+            style={styles.memoryButton}
+            onPress={() => handleSend('我想记录今天这个计划')}
+          >
+            <Text style={[styles.memoryButtonText, { color: colors.accent }]}>去记录</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.chatArea}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <Text style={[styles.sectionIcon, { color: colors.accent }]}>◌</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>消息</Text>
+            </View>
+            <Text style={[styles.sectionAction, { color: colors.subtext }]}>{lifestyle.subtitle}</Text>
+          </View>
+          {displayMessages.map((message, index) => {
+            const isUser = message.role === 'user';
+            return (
+              <View key={`${message.timestamp || index}-${index}`} style={styles.messageRow}>
+                {!isUser ? (
+                <View style={[styles.miniAvatar, { backgroundColor: hexToRgba(colors.accent, 0.14) }]}>
+                  <Text style={styles.miniAvatarText}>{currentTheme.avatar}</Text>
+                </View>
+              ) : null}
+                <View
+                  style={[
+                    styles.bubble,
+                    { backgroundColor: colors.card, shadowColor: colors.accent },
+                    isUser && { backgroundColor: colors.accent },
+                    isUser && styles.userBubble,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.bubbleText,
+                      { color: isUser ? '#fff' : colors.text },
+                    ]}
+                  >
+                    {message.content}
+                  </Text>
+                  <Text style={[styles.bubbleTime, { color: colors.subtext }, isUser && styles.userBubbleTime]}>9:41 AM</Text>
+                </View>
+              </View>
+            );
+          })}
+
+          {isLoading ? (
+            <View style={styles.loaderWrap}>
+              <BreathingLoader theme={currentTheme} />
+            </View>
+          ) : null}
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={0}
+            style={styles.inlineComposerWrap}
+          >
+            <View style={[styles.inputBar, { backgroundColor: colors.card, shadowColor: colors.accent }]}>
+              <TextInput
+                style={[styles.input, { color: colors.text }]}
+                placeholder={persona.placeholder || '告诉我你的想法吧…'}
+                placeholderTextColor={colors.subtext}
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+                maxLength={500}
+                editable={!isLoading}
+              />
+              <Pressable
+                style={[
+                  styles.sendBtn,
+                  { backgroundColor: colors.accent },
+                  (!inputText.trim() || isLoading) && styles.sendBtnDisabled,
+                ]}
+                onPress={() => handleSend()}
+                disabled={!inputText.trim() || isLoading}
+              >
+                <Text style={styles.sendText}>➤</Text>
+              </Pressable>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
 
         <Pressable
           style={[
@@ -561,6 +780,44 @@ export function ChatScreen() {
               </ScrollView>
             </View>
 
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.quickList}
+            >
+              {persona.quickActions.slice(0, 3).map((action) => (
+                <Pressable
+                  key={action}
+                  style={[
+                    styles.quickChip,
+                    {
+                      backgroundColor: hexToRgba(colors.accent, 0.08),
+                      borderColor: hexToRgba(colors.accent, 0.18),
+                    },
+                  ]}
+                  onPress={() => handleSend(action)}
+                >
+                  <Text style={[styles.quickText, { color: colors.accent }]}>{action}</Text>
+                </Pressable>
+              ))}
+              {mode !== 'personal' ? (
+                <Pressable
+                  style={[
+                    styles.quickChip,
+                    {
+                      backgroundColor: hexToRgba(colors.accent, 0.12),
+                      borderColor: hexToRgba(colors.accent, 0.28),
+                    },
+                  ]}
+                  onPress={() => handleSend(activeMode.prompt)}
+                >
+                  <Text style={[styles.quickText, { color: colors.accent }]}>
+                    {activeMode.label}模式推荐
+                  </Text>
+                </Pressable>
+              ) : null}
+            </ScrollView>
+
             <ScreenBreakPanel
               theme={currentTheme}
               isLoading={isLoading}
@@ -577,116 +834,34 @@ export function ChatScreen() {
             <ActivityInspirationPanel theme={currentTheme} location={location} onPrompt={handleSend} />
           </View>
         ) : null}
-
-        <View style={styles.chatArea}>
-          {displayMessages.map((message, index) => {
-            const isUser = message.role === 'user';
-            return (
-              <View key={`${message.timestamp || index}-${index}`} style={styles.messageRow}>
-                {!isUser ? (
-                <View style={[styles.miniAvatar, { backgroundColor: hexToRgba(colors.accent, 0.14) }]}>
-                  <Text style={styles.miniAvatarText}>{currentTheme.avatar}</Text>
-                </View>
-              ) : null}
-                <View
-                  style={[
-                    styles.bubble,
-                    { backgroundColor: colors.card, shadowColor: colors.accent },
-                    isUser && { backgroundColor: colors.accent },
-                    isUser && styles.userBubble,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.bubbleText,
-                      { color: isUser ? '#fff' : colors.text },
-                    ]}
-                  >
-                    {message.content}
-                  </Text>
-                  <Text style={[styles.bubbleTime, { color: colors.subtext }, isUser && styles.userBubbleTime]}>9:41 AM</Text>
-                </View>
-              </View>
-            );
-          })}
-
-          {isLoading ? (
-            <View style={styles.loaderWrap}>
-              <BreathingLoader theme={currentTheme} />
-            </View>
-          ) : null}
-        </View>
-
-        {toolsExpanded ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.quickList}
-          >
-            {persona.quickActions.slice(0, 3).map((action) => (
-              <Pressable
-                key={action}
-                style={[
-                  styles.quickChip,
-                  {
-                    backgroundColor: hexToRgba(colors.accent, 0.08),
-                    borderColor: hexToRgba(colors.accent, 0.18),
-                  },
-                ]}
-                onPress={() => handleSend(action)}
-              >
-                <Text style={[styles.quickText, { color: colors.accent }]}>{action}</Text>
-              </Pressable>
-            ))}
-            {mode !== 'personal' ? (
-              <Pressable
-                style={[
-                  styles.quickChip,
-                  {
-                    backgroundColor: hexToRgba(colors.accent, 0.12),
-                    borderColor: hexToRgba(colors.accent, 0.28),
-                  },
-                ]}
-                onPress={() => handleSend(activeMode.prompt)}
-              >
-                <Text style={[styles.quickText, { color: colors.accent }]}>
-                  {activeMode.label}模式推荐
-                </Text>
-              </Pressable>
-            ) : null}
-          </ScrollView>
-        ) : null}
       </ScrollView>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-        style={[styles.inputDock, { backgroundColor: colors.bg }]}
-      >
-        <View style={[styles.inputBar, { backgroundColor: colors.card, shadowColor: colors.accent }]}>
-          <TextInput
-            style={[styles.input, { color: colors.text }]}
-            placeholder={persona.placeholder || '告诉我你的想法吧…'}
-            placeholderTextColor={colors.subtext}
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            maxLength={500}
-            editable={!isLoading}
-          />
+      <View style={[styles.bottomNavWrap, { backgroundColor: hexToRgba(colors.bg, 0.92) }]}>
+        <View style={[styles.bottomNav, { backgroundColor: colors.card, shadowColor: colors.accent }]}>
+          <Pressable style={styles.navItem} onPress={() => refreshRecommendation()}>
+            <Text style={[styles.navIcon, { color: colors.accent }]}>⌁</Text>
+            <Text style={[styles.navText, { color: colors.subtext }]}>推荐</Text>
+          </Pressable>
+          <Pressable style={styles.navItem} onPress={() => handleSend('把今天的计划整理成日程')}>
+            <Text style={[styles.navIcon, { color: colors.accent }]}>▣</Text>
+            <Text style={[styles.navText, { color: colors.accent }]}>计划</Text>
+          </Pressable>
           <Pressable
-            style={[
-              styles.sendBtn,
-              { backgroundColor: colors.accent },
-              (!inputText.trim() || isLoading) && styles.sendBtnDisabled,
-            ]}
-            onPress={() => handleSend()}
-            disabled={!inputText.trim() || isLoading}
+            style={[styles.navAdd, { backgroundColor: colors.accent }]}
+            onPress={() => handleSend('随便推荐一个现在能做的具体活动')}
           >
-            <Text style={styles.sendText}>➤</Text>
+            <Text style={styles.navAddText}>＋</Text>
+          </Pressable>
+          <Pressable style={styles.navItem} onPress={() => handleFeedback('liked')}>
+            <Text style={[styles.navIcon, { color: colors.subtext }]}>♡</Text>
+            <Text style={[styles.navText, { color: colors.subtext }]}>收藏</Text>
+          </Pressable>
+          <Pressable style={styles.navItem} onPress={() => handleSend('我想聊聊今天可以做什么')}>
+            <Text style={[styles.navIcon, { color: colors.subtext }]}>◌</Text>
+            <Text style={[styles.navText, { color: colors.subtext }]}>消息</Text>
           </Pressable>
         </View>
-      </KeyboardAvoidingView>
+      </View>
 
       <ProfilePanel
         visible={profileVisible}
@@ -721,17 +896,17 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 16,
     paddingTop: 18,
-    paddingBottom: 126,
+    paddingBottom: 132,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   wordmark: {
-    fontSize: 35,
-    lineHeight: 42,
+    fontSize: 34,
+    lineHeight: 40,
     fontWeight: '800',
     fontStyle: 'italic',
     letterSpacing: 0,
@@ -745,87 +920,460 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.48)',
   },
   settingsText: {
     fontSize: 15,
     fontWeight: '700',
   },
-  header: {
+  greetingCard: {
+    height: 170,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: 12,
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 2,
+  },
+  greetingImage: {
+    borderRadius: 24,
+  },
+  greetingOverlay: {
+    flex: 1,
+    padding: 22,
+    justifyContent: 'center',
+  },
+  greetingCopy: {
+    width: '68%',
+  },
+  styleLabel: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 12,
+  },
+  greetingTitle: {
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '900',
+    letterSpacing: 0,
+    marginBottom: 8,
+  },
+  greetingSub: {
+    fontSize: 17,
+    lineHeight: 24,
+    fontWeight: '600',
+  },
+  contextPill: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginTop: 14,
+  },
+  contextPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  featureCard: {
+    height: 214,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginTop: 14,
+    shadowOpacity: 0.09,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 2,
+  },
+  featureImage: {
+    borderRadius: 24,
+  },
+  featureOverlay: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  featurePill: {
+    alignSelf: 'flex-start',
+    borderRadius: 18,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    marginBottom: 18,
+  },
+  featurePillText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  featureTitle: {
+    fontSize: 26,
+    lineHeight: 33,
+    fontWeight: '900',
+    letterSpacing: 0,
+    marginBottom: 8,
+    maxWidth: '72%',
+  },
+  featureText: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+    maxWidth: '72%',
+  },
+  featureAction: {
+    alignSelf: 'flex-start',
+    minHeight: 42,
+    borderRadius: 22,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
+  },
+  featureActionText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  feedbackRow: {
+    flexDirection: 'row',
+    gap: 9,
+    marginTop: 12,
+  },
+  feedbackBtn: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.38)',
+  },
+  feedbackText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  feedbackStatus: {
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  sectionCard: {
+    borderRadius: 24,
+    padding: 14,
+    marginTop: 22,
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 1,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 22,
+    gap: 12,
+    marginBottom: 12,
   },
-  profile: {
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sectionIcon: {
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  sectionTitle: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '900',
+    letterSpacing: 0,
+  },
+  sectionAction: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  ideaGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  ideaCard: {
+    flex: 1,
+    minWidth: 0,
+    borderWidth: 1,
+    borderRadius: 18,
+    overflow: 'hidden',
+    backgroundColor: '#fffaf5',
+  },
+  ideaImageWrap: {
+    height: 92,
+  },
+  ideaImage: {
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+  },
+  ideaCopy: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  ideaTitle: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '900',
+  },
+  ideaSub: {
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  ideaMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 9,
+  },
+  ideaTag: {
+    maxWidth: 72,
+    borderRadius: 12,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    fontSize: 11,
+    fontWeight: '800',
+    overflow: 'hidden',
+  },
+  ideaDistance: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  scheduleCard: {
+    borderRadius: 24,
+    padding: 16,
+    marginTop: 22,
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 1,
+  },
+  scheduleItem: {
+    minHeight: 82,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginTop: 14,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: '#efe5d8',
+  dateBlock: {
+    width: 50,
+    alignItems: 'center',
+  },
+  dateWeek: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  dateText: {
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '900',
+  },
+  checkDot: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: 28,
-  },
-  name: {
+  checkText: {
     fontSize: 24,
-    fontWeight: '800',
+    fontWeight: '900',
   },
-  role: {
-    fontSize: 14,
-    marginTop: 4,
+  scheduleCopy: {
+    flex: 1,
+    minWidth: 0,
   },
-  contextBlock: {
-    alignItems: 'flex-end',
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  time: {
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  divider: {
-    width: 1,
-    height: 26,
-    backgroundColor: '#e5ddd4',
-  },
-  weather: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  location: {
+  scheduleTitle: {
     fontSize: 17,
-    marginTop: 10,
-    fontWeight: '600',
+    lineHeight: 23,
+    fontWeight: '900',
   },
-  modeBlock: {
-    marginBottom: 16,
-  },
-  modeHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  modeTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  modeSub: {
+  scheduleTime: {
     fontSize: 13,
     marginTop: 4,
+    fontWeight: '700',
   },
-  modeSoon: {
+  donePill: {
+    borderWidth: 1,
+    borderRadius: 17,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  doneText: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  memoryBanner: {
+    minHeight: 72,
+    borderRadius: 24,
+    marginTop: 22,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    overflow: 'hidden',
+  },
+  memoryMascot: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: 'rgba(255,255,255,0.86)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  memoryMascotText: {
+    fontSize: 27,
+  },
+  memoryCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  memoryTitle: {
+    color: '#fff',
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: '900',
+  },
+  memorySub: {
+    color: 'rgba(255,255,255,0.82)',
     fontSize: 12,
+    marginTop: 3,
+    fontWeight: '700',
+  },
+  memoryButton: {
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  memoryButtonText: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  chatArea: {
+    marginTop: 22,
+    gap: 10,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  miniAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  miniAvatarText: {
+    fontSize: 19,
+  },
+  bubble: {
+    maxWidth: '80%',
+    borderRadius: 22,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 1,
+  },
+  userBubble: {
+    marginLeft: 'auto',
+  },
+  bubbleText: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+  },
+  bubbleTime: {
+    fontSize: 11,
+    marginTop: 7,
+  },
+  userBubbleTime: {
+    color: 'rgba(255,255,255,0.75)',
+  },
+  loaderWrap: {
+    marginLeft: 48,
+    paddingVertical: 6,
+  },
+  inlineComposerWrap: {
+    marginTop: 4,
+  },
+  inputBar: {
+    width: '100%',
+    minHeight: 58,
+    borderRadius: 29,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingLeft: 18,
+    paddingRight: 7,
+    paddingVertical: 7,
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 21,
+    minHeight: 40,
+    maxHeight: 88,
+    paddingVertical: 9,
+  },
+  sendBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendBtnDisabled: {
+    opacity: 0.55,
+  },
+  sendText: {
+    color: '#fff',
+    fontSize: 20,
+    lineHeight: 22,
     fontWeight: '800',
+  },
+  moreToggle: {
+    minHeight: 42,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
+  },
+  moreToggleText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  advancedBlock: {
+    marginTop: 12,
+  },
+  modeBlock: {
+    marginBottom: 14,
+  },
+  modeTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 10,
   },
   modeList: {
     gap: 9,
@@ -841,112 +1389,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
   },
-  feedbackRow: {
-    flexDirection: 'row',
-    gap: 9,
-    marginTop: 12,
-  },
-  feedbackBtn: {
-    flex: 1,
-    minHeight: 42,
-    borderRadius: 18,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  feedbackText: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  feedbackStatus: {
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: 8,
-    paddingHorizontal: 4,
-  },
-  moreToggle: {
-    minHeight: 44,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-  },
-  moreToggleText: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  advancedBlock: {
-    marginTop: 4,
-  },
-  chatArea: {
-    marginTop: 18,
-    gap: 10,
-  },
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  miniAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#efe5d8',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
-  },
-  miniAvatarText: {
-    fontSize: 21,
-  },
-  bubble: {
-    maxWidth: '78%',
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 1,
-  },
-  userBubble: {
-    marginLeft: 'auto',
-  },
-  bubbleText: {
-    fontSize: 17,
-    lineHeight: 25,
-  },
-  bubbleTime: {
-    fontSize: 12,
-    marginTop: 9,
-  },
-  userBubbleTime: {
-    color: 'rgba(255,255,255,0.75)',
-  },
-  loaderWrap: {
-    marginLeft: 50,
-    paddingVertical: 6,
-  },
   quickList: {
     gap: 10,
-    paddingTop: 20,
-    paddingBottom: 8,
+    paddingBottom: 12,
   },
   quickChip: {
     borderWidth: 1,
-    borderColor: '#e8dccd',
-    backgroundColor: '#fffaf3',
     borderRadius: 22,
     paddingHorizontal: 17,
     paddingVertical: 11,
   },
   quickText: {
-    color: '#7b6b59',
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  inputDock: {
+  bottomNavWrap: {
     position: 'absolute',
     left: 0,
     right: 0,
@@ -954,45 +1411,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 18,
+    paddingBottom: 16,
   },
-  inputBar: {
+  bottomNav: {
     width: '100%',
     maxWidth: 430,
-    minHeight: 66,
-    borderRadius: 33,
+    minHeight: 74,
+    borderRadius: 28,
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingLeft: 20,
-    paddingRight: 8,
-    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: 14,
     shadowOpacity: 0.12,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
     elevation: 3,
   },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    lineHeight: 22,
-    minHeight: 42,
-    maxHeight: 98,
-    paddingVertical: 9,
-  },
-  sendBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  navItem: {
+    minWidth: 48,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 3,
   },
-  sendBtnDisabled: {
-    opacity: 0.55,
+  navIcon: {
+    fontSize: 24,
+    lineHeight: 26,
+    fontWeight: '900',
   },
-  sendText: {
-    color: '#fff',
-    fontSize: 23,
-    lineHeight: 24,
+  navText: {
+    fontSize: 12,
     fontWeight: '800',
+  },
+  navAdd: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -24,
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
+  },
+  navAddText: {
+    color: '#fff',
+    fontSize: 36,
+    lineHeight: 38,
+    fontWeight: '700',
   },
 });
