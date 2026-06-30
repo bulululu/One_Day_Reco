@@ -154,7 +154,20 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // 设置偏好
   setPreferences: (prefs) => {
+    const state = get();
     set({ preferences: prefs });
+    if (state.mbti) {
+      saveSavedUser({
+        mbti: state.mbti,
+        preferences: prefs,
+        userId: state.userId,
+        email: state.email ?? undefined,
+        authToken: state.authToken ?? undefined,
+        hasSkippedAuth: state.hasSkippedAuth,
+        feedbackSummary: state.feedbackSummary,
+        createdAt: state.userId.split('_')[1] || Date.now().toString(),
+      });
+    }
   },
 
   setAuthSession: (token, user) => {

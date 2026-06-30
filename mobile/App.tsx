@@ -10,7 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { AuthScreen } from '@/screens/AuthScreen';
 import { OnboardingScreen } from '@/screens/OnboardingScreen';
-import { ChatScreen } from '@/screens/ChatScreen';
+import { MainAppScreen } from '@/screens/MainAppScreen';
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -52,7 +52,7 @@ function AppContent() {
           ) : isOnboarding ? (
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           ) : (
-            <Stack.Screen name="Chat" component={ChatScreen} />
+            <Stack.Screen name="Chat" component={MainAppScreen} />
           )}
         </Stack.Navigator>
       </NavigationContainer>
