@@ -6,9 +6,12 @@ export default {
   slug: 'onedayreco',
   version: '1.0.0',
   orientation: 'portrait',
-  userInterfaceStyle: 'dark',
+  userInterfaceStyle: 'light',
   splash: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#fbf4ee',
+  },
+  web: {
+    favicon: './src/assets/generated/home-hero.png',
   },
   assetBundlePatterns: ['**/*'],
   ios: {

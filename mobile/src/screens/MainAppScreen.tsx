@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
-import { chat, recommend, recordActivityEvent, submitFeedback, triggerRecommendation, updateProfile } from '@/services/api';
+import { chat, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation, updateProfile } from '@/services/api';
 import { ActivitySourceMeta, ChatMessage, MBTIType, Recommendation, UserPreferences } from '@/types';
 import { ActivityDetailSheet } from '@/components/ActivityDetailSheet';
 import { ChatPanel } from '@/components/ChatPanel';
@@ -80,8 +80,9 @@ export function MainAppScreen() {
   const [currentIntent, setCurrentIntent] = useState<DailyIntent | null>(null);
   const [chatVisible, setChatVisible] = useState(false);
   const [inputText, setInputText] = useState('');
-  const [location] = useState('上海 · 徐汇区');
-  const [weather] = useState('晴');
+  const [location, setLocation] = useState('上海 徐汇');
+  const [weather, setWeather] = useState('天气获取中');
+  const [isResolvingContext, setResolvingContext] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([DEFAULT_RECOMMENDATION]);
   const [source, setSource] = useState<ActivitySourceMeta | undefined>(undefined);
   const [detail, setDetail] = useState<Recommendation | null>(null);
@@ -109,15 +110,40 @@ export function MainAppScreen() {
   }, [messages]);
 
   useEffect(() => {
-    if (intentReady) void refreshRecommendation(false);
+    if (!intentReady) return;
+    let ignore = false;
+    const resolveContextAndRecommend = async () => {
+      setResolvingContext(true);
+      try {
+        const weatherResult = await getWeather(location);
+        const nextWeather = weatherResult.display || weatherResult.weather || '天气未获取';
+        if (!ignore) {
+          setWeather(nextWeather);
+          void refreshRecommendation(false, {
+            ...context,
+            location,
+            weather: nextWeather,
+          });
+        }
+      } finally {
+        if (!ignore) {
+          setResolvingContext(false);
+        }
+      }
+    };
+    void resolveContextAndRecommend();
+    return () => {
+      ignore = true;
+    };
   }, [intentReady, currentIntent?.key]);
 
-  const refreshRecommendation = async (appendMessage = true) => {
+  const refreshRecommendation = async (appendMessage = true, contextOverride?: typeof context) => {
     if (isLoading) return;
+    const requestContext = contextOverride || context;
     setRecommendationNotice('');
     setLoading(true);
     try {
-      const res = await recommend(getUserProfile(), context);
+      const res = await recommend(getUserProfile(), requestContext);
       if (res.recommendations?.length) {
         setRecommendations(res.recommendations);
         setSource(res.activity_source);
@@ -358,6 +384,9 @@ export function MainAppScreen() {
         <DailyIntentView
           theme={theme}
           companionName={theme.name}
+          location={location}
+          isResolvingContext={isResolvingContext}
+          onLocationChange={setLocation}
           onSelect={handleIntentSelect}
           onSkip={() => {
             setCurrentIntent(null);

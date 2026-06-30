@@ -1,5 +1,5 @@
 import React from 'react';
-import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { MBTITheme } from '@/types';
 import { HOME_ASSETS } from '@/data/lifestyleDesign';
 import { hexToRgba, softShadow, UI } from '@/styles/ui';
@@ -24,12 +24,24 @@ const INTENTS: DailyIntent[] = [
 type Props = {
   theme: MBTITheme;
   companionName: string;
+  location: string;
+  isResolvingContext: boolean;
+  onLocationChange: (location: string) => void;
   onSelect: (intent: DailyIntent) => void;
   onSkip: () => void;
   onChat: () => void;
 };
 
-export function DailyIntentView({ theme, companionName, onSelect, onSkip, onChat }: Props) {
+export function DailyIntentView({
+  theme,
+  companionName,
+  location,
+  isResolvingContext,
+  onLocationChange,
+  onSelect,
+  onSkip,
+  onChat,
+}: Props) {
   const colors = theme.colors;
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -53,6 +65,21 @@ export function DailyIntentView({ theme, companionName, onSelect, onSkip, onChat
             <Text style={[styles.heroSub, { color: colors.subtext }]}>选一个方向，我会直接进入推荐；不想选也可以跳过。</Text>
           </View>
         </ImageBackground>
+
+        <View style={[styles.locationCard, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }]}>
+          <Text style={[styles.locationLabel, { color: colors.subtext }]}>现在在哪里？</Text>
+          <TextInput
+            style={[styles.locationInput, { color: colors.text }]}
+            placeholder="输入城市、商圈或附近位置"
+            placeholderTextColor={colors.subtext}
+            value={location}
+            onChangeText={onLocationChange}
+            maxLength={40}
+          />
+          <Text style={[styles.locationHint, { color: colors.subtext }]}>
+            {isResolvingContext ? '正在获取天气...' : '我会按这个位置找附近活动、影院和路线。'}
+          </Text>
+        </View>
 
         <View style={styles.grid}>
           {INTENTS.map((intent) => (
@@ -139,7 +166,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    marginTop: 18,
+    marginTop: 14,
+  },
+  locationCard: {
+    borderRadius: UI.radius.xl,
+    borderWidth: 1,
+    padding: 14,
+    marginTop: 14,
+  },
+  locationLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  locationInput: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '900',
+    paddingVertical: 8,
+  },
+  locationHint: {
+    fontSize: 12,
+    lineHeight: 18,
   },
   intentCard: {
     width: '48.5%',

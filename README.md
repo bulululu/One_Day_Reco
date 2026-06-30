@@ -7,7 +7,7 @@ OneDayReco 是一个“任何地点、任何时间，帮你直接决定现在做
 - 推荐必须具体、可执行，不给泛泛建议。
 - 活动、游戏、电影、地点、内容候选优先来自后端 API。
 - 无实时数据时只显示明确兜底或搜索入口，不伪造排片、评分、排队和地点。
-- 默认交互保持简单：一张推荐卡、一个行动按钮、反馈和聊天输入。
+- 默认交互保持简单：首次只确认 MBTI；每次进入 App 先选“现在想做什么”或跳过；推荐页负责生活氛围，发现页负责具体活动，聊天入口由顶部胶囊、底部 `+` 和“去聊天”统一打开。
 
 ## 本地启动
 
@@ -26,6 +26,8 @@ export TMDB_API_KEY=...
 export ONEDAYRECO_ACTIVITY_API_URL=...
 export ONEDAYRECO_GAME_API_URL=...
 ```
+
+也可以在项目根目录放本地 `.env`，后端会自动读取；`.env` 已被 git 忽略，不要提交真实 key。
 
 ### 2. 移动端 / Web 预览
 
@@ -60,6 +62,8 @@ cd mobile
 EXPO_PUBLIC_API_BASE=http://192.168.1.10:8000 npx expo start
 ```
 
+当前移动端会优先读取 `EXPO_PUBLIC_API_BASE`；未设置时会从 Expo/Web 当前 host 推导 `http://<host>:8000`，适合 Expo Go 内测。
+
 ## 当前 API
 
 - `POST /api/recommend`
@@ -84,9 +88,19 @@ cd mobile && npx tsc --noEmit
 
 ```bash
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_chat_endpoint.py
+PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_real_chat_endpoint.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_media_sources.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_config_status.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_recommendation_dedupe.py
+```
+
+移动端构建检查：
+
+```bash
+cd mobile
+npx tsc --noEmit
+npx expo-doctor
+npx expo export --platform web --output-dir /private/tmp/onedayreco-web
 ```
 
 ## 目录

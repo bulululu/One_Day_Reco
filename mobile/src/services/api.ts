@@ -40,7 +40,7 @@ function getDevApiBase() {
   return 'http://localhost:8000';
 }
 
-const API_BASE = __DEV__ ? getDevApiBase() : 'https://api.onedayreco.com';
+const API_BASE = getDevApiBase();
 
 // ===== 请求封装 =====
 async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
