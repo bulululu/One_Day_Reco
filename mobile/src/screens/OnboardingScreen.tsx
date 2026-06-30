@@ -15,6 +15,7 @@ import {
 import { useAppStore } from '@/store/appStore';
 import { updateProfile } from '@/services/api';
 import { MBTIType, UserPreferences } from '@/types';
+import { getLifestyleProfile } from '@/data/lifestyleDesign';
 
 const ACCENT = '#f5aa27';
 const BG = '#fbf7f0';
@@ -275,7 +276,9 @@ export function OnboardingScreen() {
             <View style={styles.inferredBox}>
               <Text style={styles.inferredLabel}>暂定风格</Text>
               <Text style={styles.inferredValue}>
-                {inferredMbti ? `${inferredMbti} · 后续会根据反馈调整` : '回答完 4 个问题后生成'}
+                {inferredMbti
+                  ? `${inferredMbti} · ${getLifestyleProfile(inferredMbti).styleName} · 后续会根据反馈调整`
+                  : '回答完 4 个问题后生成'}
               </Text>
             </View>
           </View>
@@ -283,6 +286,7 @@ export function OnboardingScreen() {
           <View style={styles.personalityGrid}>
             {PERSONALITY_OPTIONS.map((option) => {
               const selected = selectedMbti === option.type;
+              const lifestyle = getLifestyleProfile(option.type);
               return (
                 <Pressable
                   key={option.type}
@@ -302,6 +306,7 @@ export function OnboardingScreen() {
                   </View>
                   <Text style={styles.optionLabel}>{option.label}</Text>
                   <Text style={styles.optionType}>{option.type}</Text>
+                  <Text style={styles.optionStyle} numberOfLines={1}>{lifestyle.styleName}</Text>
                 </Pressable>
               );
             })}
@@ -631,6 +636,13 @@ const styles = StyleSheet.create({
   optionType: {
     color: SUBTEXT,
     fontSize: 13,
+  },
+  optionStyle: {
+    color: '#a79686',
+    fontSize: 9,
+    lineHeight: 13,
+    marginTop: 2,
+    maxWidth: '92%',
   },
   discoveryCard: {
     backgroundColor: CARD,

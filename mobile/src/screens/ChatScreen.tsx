@@ -20,7 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { MBTI_PERSONAS } from '@/data/personas';
-import { getLifestyleProfile, HOME_ASSETS, HOME_IDEAS } from '@/data/lifestyleDesign';
+import { getLifestyleHero, getLifestyleProfile, HOME_IDEAS } from '@/data/lifestyleDesign';
 import { chat, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation } from '@/services/api';
 import { ActivitySourceMeta, ChatMessage, Recommendation } from '@/types';
 import { BreathingLoader } from '@/components/BreathingLoader';
@@ -136,6 +136,7 @@ export function ChatScreen() {
   const colors = currentTheme.colors;
   const activeMode = MODES.find((item) => item.key === mode) || MODES[0];
   const lifestyle = getLifestyleProfile(mbti || 'INTP');
+  const lifestyleHero = getLifestyleHero(mbti || 'INTP');
   const todayLabel = useMemo(() => {
     const now = new Date();
     return `${now.getMonth() + 1}.${String(now.getDate()).padStart(2, '0')}`;
@@ -454,7 +455,7 @@ export function ChatScreen() {
         </View>
 
         <ImageBackground
-          source={HOME_ASSETS.hero}
+          source={lifestyleHero}
           resizeMode="cover"
           imageStyle={styles.greetingImage}
           style={[styles.greetingCard, { backgroundColor: colors.card, shadowColor: colors.accent }]}
@@ -500,7 +501,7 @@ export function ChatScreen() {
         />
 
         <ImageBackground
-          source={HOME_ASSETS.feature}
+          source={lifestyleHero}
           resizeMode="cover"
           imageStyle={styles.featureImage}
           style={[styles.featureCard, { backgroundColor: colors.card, shadowColor: colors.accent }]}

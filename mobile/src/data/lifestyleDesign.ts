@@ -22,6 +22,25 @@ export const HOME_ASSETS = {
   feature: require('../assets/generated/daily-feature.png'),
 };
 
+export const MBTI_HERO_ASSETS: Record<MBTIType, ImageSourcePropType> = {
+  ISTJ: require('../assets/mbti/istj-hero.png'),
+  ISFJ: require('../assets/mbti/isfj-hero.png'),
+  INFJ: require('../assets/mbti/infj-hero.png'),
+  INTJ: require('../assets/mbti/intj-hero.png'),
+  ISTP: require('../assets/mbti/istp-hero.png'),
+  ISFP: require('../assets/mbti/isfp-hero.png'),
+  INFP: require('../assets/mbti/infp-hero.png'),
+  INTP: require('../assets/mbti/intp-hero.png'),
+  ESTP: require('../assets/mbti/estp-hero.png'),
+  ESFP: require('../assets/mbti/esfp-hero.png'),
+  ENFP: require('../assets/mbti/enfp-hero.png'),
+  ENTP: require('../assets/mbti/entp-hero.png'),
+  ESTJ: require('../assets/mbti/estj-hero.png'),
+  ESFJ: require('../assets/mbti/esfj-hero.png'),
+  ENFJ: require('../assets/mbti/enfj-hero.png'),
+  ENTJ: require('../assets/mbti/entj-hero.png'),
+};
+
 export const HOME_IDEAS: HomeIdeaCard[] = [
   {
     key: 'craft',
@@ -73,4 +92,8 @@ export const LIFESTYLE_PROFILES: Record<MBTIType, LifestyleProfile> = {
 
 export function getLifestyleProfile(mbti: MBTIType): LifestyleProfile {
   return LIFESTYLE_PROFILES[mbti];
+}
+
+export function getLifestyleHero(mbti: MBTIType): ImageSourcePropType {
+  return MBTI_HERO_ASSETS[mbti];
 }
