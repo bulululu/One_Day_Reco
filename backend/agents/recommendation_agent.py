@@ -8,7 +8,13 @@ import json
 import os
 from datetime import datetime
 from typing import Optional
+from urllib.parse import quote
 from openai import AzureOpenAI
+from backend.services.activity_service import get_activity_catalog
+from backend.services.content_service import search_content
+from backend.services.movie_service import get_movie_candidates
+from backend.services.place_service import search_places
+from backend.services.recommendation_quality import quality_issues
 
 # 项目根目录
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -18,8 +24,38 @@ def load_config() -> dict:
     """加载配置"""
     config_path = os.path.join(PROJECT_ROOT, "config", "settings.yaml")
     with open(config_path, "r", encoding="utf-8") as f:
-        import yaml
-        return yaml.safe_load(f)
+        try:
+            import yaml
+            return yaml.safe_load(f)
+        except ModuleNotFoundError:
+            f.seek(0)
+            return _load_simple_yaml(f.read())
+
+
+def _load_simple_yaml(text: str) -> dict:
+    """解析当前 settings.yaml 使用到的简单二级 YAML，避免本地缺 PyYAML 时无法启动。"""
+    config: dict = {}
+    current_section: Optional[str] = None
+    for raw_line in text.splitlines():
+        line = raw_line.split("#", 1)[0].rstrip()
+        if not line.strip():
+            continue
+        if not line.startswith(" ") and line.endswith(":"):
+            current_section = line[:-1].strip()
+            config[current_section] = {}
+            continue
+        if current_section and ":" in line:
+            key, value = line.strip().split(":", 1)
+            value = value.strip().strip('"').strip("'")
+            if value.isdigit():
+                parsed_value: object = int(value)
+            else:
+                try:
+                    parsed_value = float(value)
+                except ValueError:
+                    parsed_value = value
+            config[current_section][key.strip()] = parsed_value
+    return config
 
 
 def load_activities() -> list:
@@ -81,6 +117,29 @@ MBTI_THEME_MAP = {
 }
 
 
+SPECIFICITY_RULES = """
+## 产品定位硬约束
+OneDayReco 要在任何地点、任何时间帮用户找到现在可以做的事，减少决策成本。
+推荐范围可以很小，例如一个人打游戏、看纪录片、吃饭、散步；也可以很大，例如周末短途旅行。
+推荐不是泛泛给灵感，而是直接替用户做掉第一步选择。
+
+## 推荐具体化原则（非常重要！）
+推荐必须具体到可以直接执行，禁止泛泛而谈。每条推荐的 recommend_text 和 tips 中必须包含具体信息：
+
+- 电影推荐：必须包含电影名称、电影院名称或明确检索路径、场次时间、片长、评分。
+- 餐厅推荐：必须包含餐厅名称、菜系、地址或商圈、人均价格、评分/口碑信息、是否需要排队的判断。
+- 户外活动：必须包含具体地点名称、地址/入口、当前天气适宜度、预计耗时、路线或交通建议。
+- 居家活动：必须包含具体内容，例如纪录片名称+B站搜索词、游戏名称+平台+单人/多人+预计时长。
+- 运动：必须包含具体运动名称、场馆名称/地址、价格、开放时段。
+- 展览/演出：必须包含名称、场馆、地址、票价、展期/场次。
+- 购物/市集：必须包含市集/商场名称、地址、特色、开放时间。
+- 旅行：必须包含目的地、出发方式、预计路程、建议停留时间、预算范围。
+
+绝对禁止："去看场电影吧""去公园走走""找个纪录片看看""做做运动""出去吃点东西"。
+如果当前没有实时外部数据，不要编造实时排片或排队结果；必须给出明确获取路径，例如"打开猫眼搜《你想活出怎样的人生》，选择离你最近的影院和 19:00 后场次"。
+"""
+
+
 class RecommendationAgent:
     """活动推荐 Agent v0.2"""
 
@@ -109,6 +168,7 @@ class RecommendationAgent:
         """构建用户画像文本"""
         mbti = user_profile.get("mbti", "未知")
         preferences = user_profile.get("preferences", {})
+        behavior_memory = user_profile.get("behavior_memory") or {}
 
         profile_text = f"""
 用户MBTI: {mbti}
@@ -117,8 +177,16 @@ class RecommendationAgent:
 通勤容忍: {preferences.get('commute_tolerance', '未知')}
 特殊偏好: {preferences.get('notes', '无')}
 历史反馈摘要: {user_profile.get('feedback_summary', '暂无')}
+近期行为记忆: {behavior_memory.get('summary', '暂无')}
 """
         return profile_text.strip()
+
+    def _behavior_memory_sets(self, user_profile: dict) -> tuple[set[str], set[str], set[str]]:
+        behavior_memory = user_profile.get("behavior_memory") or {}
+        positive_ids = set(behavior_memory.get("positive_activity_ids") or [])
+        negative_ids = set(behavior_memory.get("negative_activity_ids") or [])
+        recent_ids = set(behavior_memory.get("recent_activity_ids") or [])
+        return positive_ids, negative_ids, recent_ids
 
     def _build_context_text(self, context: Optional[dict] = None) -> str:
         """构建当日上下文文本"""
@@ -128,19 +196,47 @@ class RecommendationAgent:
         ctx = context or {}
         weather = ctx.get("weather", "未知")
         location = ctx.get("location", "未知")
+        mode = ctx.get("mode", "个人")
+        mode_note = ctx.get("mode_note", "默认个人活动推荐")
+        trigger_reason = ctx.get("trigger_reason", "")
+        screen_usage = ctx.get("screen_usage", {})
         time_period = "上午" if now.hour < 12 else ("下午" if now.hour < 18 else "晚上")
+        trigger_text = ""
+        if trigger_reason:
+            trigger_text = f"""
+触发原因: {trigger_reason}
+屏幕使用: {screen_usage.get('app_name', '未知应用')} 连续使用 {screen_usage.get('continuous_minutes', screen_usage.get('usage_minutes', 0))} 分钟
+触发策略: 如果天气和时间安全，优先推荐短时、低门槛、低人群密度的户外活动，帮助用户从室内屏幕状态切出来；不安全时推荐室内离屏活动。
+"""
 
         return f"""
 当前时间: {now.strftime('%Y-%m-%d')} {weekday} {now.strftime('%H:%M')}
 时间段: {time_period}
 天气: {weather}
 位置: {location}
+推荐模式: {mode}
+模式说明: {mode_note}
+{trigger_text}
 """
 
     def _build_activities_text(self, candidate_activities: list) -> str:
         """构建候选活动文本（含可行性字段）"""
         activities_text = []
         for act in candidate_activities:
+            specific_info = act.get("specific_info") or {}
+            specific_text = ""
+            if specific_info:
+                specific_text = (
+                    f" | 具体信息:"
+                    f"名称:{specific_info.get('name', '')}; "
+                    f"平台/地点:{specific_info.get('platform', specific_info.get('location', ''))}; "
+                    f"类型:{specific_info.get('game_type', '')}; "
+                    f"单人/多人:{specific_info.get('player_mode', '')}; "
+                    f"预计时长:{specific_info.get('duration', '')}; "
+                    f"价格:{specific_info.get('price', '')}; "
+                    f"评价:{specific_info.get('rating', '')}; "
+                    f"来源:{specific_info.get('source', '')}"
+                )
             activities_text.append(
                 f"- [{act['id']}] {act['name']} | 类别:{act['category']} | "
                 f"人群密度:{act['crowd_density']} | 社交强度:{act['social_intensity']} | "
@@ -152,26 +248,162 @@ class RecommendationAgent:
                 f"安全提示:{act.get('safety_note', '无')} | "
                 f"可调节:{act.get('adjustable_factors', '无')} | "
                 f"情绪效果:{act['mood_effect']}"
+                f"{specific_text}"
             )
         return "\n".join(activities_text)
 
-    def _pre_filter_activities(self, user_profile: dict, context: Optional[dict] = None) -> list:
+    def _place_query_for_activity(self, act: dict) -> str:
+        subcategory = act.get("subcategory", "")
+        name = act.get("name", "")
+        mapping = {
+            "电影": "电影院",
+            "阅读": "独立书店 咖啡",
+            "咖啡": "安静咖啡馆",
+            "美食": "餐厅",
+            "户外自然": "公园",
+            "城市探索": name or "附近可去的地方",
+            "展览": "展览 美术馆",
+            "运动": "运动场馆",
+        }
+        return mapping.get(subcategory, name)
+
+    def _lookup_places_for_candidates(self, candidates: list, context: Optional[dict] = None) -> dict:
+        location = (context or {}).get("location", "")
+        place_hints = {}
+        for act in candidates[:8]:
+            if act.get("indoor_outdoor") not in {"室外", "室内外"} and act.get("subcategory") not in {
+                "电影",
+                "阅读",
+                "咖啡",
+                "美食",
+                "城市探索",
+                "展览",
+                "运动",
+            }:
+                continue
+            query = self._place_query_for_activity(act)
+            if not query:
+                continue
+            result = search_places(query, location=location, limit=3)
+            place_hints[act["id"]] = result
+        return place_hints
+
+    def _build_place_hints_text(self, place_hints: dict) -> str:
+        if not place_hints:
+            return "无"
+        lines = []
+        for activity_id, result in place_hints.items():
+            if result.get("is_realtime") and result.get("places"):
+                details = []
+                for place in result["places"][:3]:
+                    label = place.get("name", "")
+                    address = place.get("address", "")
+                    area = place.get("business_area") or place.get("adname", "")
+                    distance = place.get("distance", "")
+                    details.append(f"{label}（{area}，{address}，{distance}）")
+                lines.append(f"- 活动 {activity_id}: 高德实时地点候选: {'; '.join(details)}")
+            else:
+                lines.append(
+                    f"- 活动 {activity_id}: 暂无实时地点数据，使用搜索入口确认: "
+                    f"{result.get('search_url', '')}"
+                )
+        return "\n".join(lines)
+
+    def _lookup_movie_hints_for_candidates(self, candidates: list, context: Optional[dict] = None) -> dict:
+        if not any(act.get("subcategory") == "电影" for act in candidates):
+            return {}
+        return get_movie_candidates(location=(context or {}).get("location", ""), limit=3)
+
+    def _build_movie_hints_text(self, movie_hints: dict) -> str:
+        if not movie_hints:
+            return "无"
+        lines = [
+            f"电影来源: {movie_hints.get('source', 'unknown')}；"
+            f"电影实时: {'是' if movie_hints.get('is_realtime') else '否'}；"
+            f"场次实时: {'是' if movie_hints.get('showtime_realtime') else '否'}；"
+            f"{movie_hints.get('showtime_note', '')}"
+        ]
+        for movie in (movie_hints.get("movies") or [])[:3]:
+            cinemas = movie.get("cinema_candidates") or []
+            cinema_text = "、".join(cinema.get("name", "") for cinema in cinemas[:2] if cinema.get("name"))
+            if not cinema_text:
+                cinema_text = movie.get("cinema_search_url") or "打开猫眼/高德确认最近影院"
+            lines.append(
+                f"- {movie.get('title', '')}: {movie.get('duration', '')}，"
+                f"{movie.get('rating', '')}，影院候选: {cinema_text}，"
+                f"订票入口: {movie.get('booking_url', '')}"
+            )
+        return "\n".join(lines)
+
+    def _lookup_content_hints_for_candidates(self, candidates: list, message: str = "") -> dict:
+        candidate_text = " ".join(f"{act.get('subcategory', '')} {act.get('name', '')}" for act in candidates)
+        combined = f"{candidate_text} {message}"
+        if not any(keyword in combined for keyword in ["纪录片", "视频", "B站", "公开课", "电影夜"]):
+            return {}
+        query = "纪录片"
+        if "公开课" in combined:
+            query = "公开课"
+        elif "电影" in message and "纪录片" not in message:
+            query = "电影解说"
+        return search_content(q=query, limit=3)
+
+    def _build_content_hints_text(self, content_hints: dict) -> str:
+        if not content_hints:
+            return "无"
+        lines = [
+            f"内容来源: {content_hints.get('source', 'unknown')}；"
+            f"内容实时: {'是' if content_hints.get('is_realtime') else '否'}；"
+            f"搜索词: {content_hints.get('query', '')}"
+        ]
+        for item in (content_hints.get("items") or [])[:3]:
+            lines.append(
+                f"- {item.get('title', '')}: {item.get('duration', '')}，"
+                f"{item.get('rating', '')}，入口: {item.get('action_url', '')}"
+            )
+        return "\n".join(lines)
+
+    def _get_activity_catalog(self) -> dict:
+        return get_activity_catalog(self.activities)
+
+    def _activity_source(self, catalog: dict, candidates: list) -> dict:
+        return {
+            "source": catalog.get("source", "local_fallback"),
+            "is_realtime": bool(catalog.get("is_realtime", False)),
+            "total_count": catalog.get("count", len(catalog.get("activities", []))),
+            "candidate_count": len(candidates),
+        }
+
+    def _pre_filter_activities(
+        self,
+        user_profile: dict,
+        context: Optional[dict] = None,
+        activities: Optional[list] = None,
+    ) -> list:
         """预筛选活动（规则层，减少 LLM 输入量）"""
         mbti = user_profile.get("mbti", "")
         candidates = []
+        source_activities = activities if activities is not None else self._get_activity_catalog()["activities"]
 
         is_introvert = "I" in mbti
         ctx = context or {}
         weather = ctx.get("weather", "")
+        trigger_type = ctx.get("trigger_type", "")
+        positive_ids, negative_ids, recent_ids = self._behavior_memory_sets(user_profile)
+        fresh_candidates = []
+        recent_candidates = []
 
         # 当前时间判断
         now = datetime.now()
         current_hour = now.hour
 
-        for act in self.activities:
+        for act in source_activities:
+            activity_id = act.get("id", "")
+            if activity_id in negative_ids:
+                continue
+
             # 天气过滤：室外活动在雨天排除
-            if weather and act["indoor_outdoor"] == "室外":
-                if weather in ["雨", "雪"] and "雨" not in act.get("weather_suitable", []):
+            if weather and act.get("indoor_outdoor") == "室外":
+                if any(word in weather for word in ["雨", "雪", "雷"]) and "雨" not in act.get("weather_suitable", []):
                     continue
 
             # 时段过滤：检查活动适合时段
@@ -181,19 +413,175 @@ class RecommendationAgent:
                     continue
 
             # 内向用户降低高人群密度活动的优先级
-            if is_introvert and act["crowd_density"] == "高":
+            if is_introvert and act.get("crowd_density") == "高":
                 if not act.get("adjustable_factors"):
                     continue
 
             # 安全过滤：夜间不推荐需要远途或户外的活动
-            if current_hour >= 20 and act["indoor_outdoor"] == "室外":
+            if current_hour >= 20 and act.get("indoor_outdoor") == "室外":
                 safety = act.get("safety_note", "")
                 if "结伴" in safety or "安全" in safety.lower():
                     continue
 
-            candidates.append(act)
+            if activity_id in recent_ids and activity_id not in positive_ids:
+                recent_candidates.append(act)
+            else:
+                fresh_candidates.append(act)
+
+        candidates = fresh_candidates + recent_candidates
+        if positive_ids:
+            candidates = sorted(candidates, key=lambda act: 0 if act.get("id") in positive_ids else 1)
+
+        if trigger_type == "screen_overuse":
+            bad_weather = any(word in weather for word in ["雨", "雪", "雷", "大风", "冷"])
+            if not bad_weather and current_hour < 20:
+                outdoor = [
+                    act for act in candidates
+                    if act.get("indoor_outdoor") == "室外"
+                    and act.get("energy_cost") in ["低", "中"]
+                    and act.get("crowd_density") in ["低", "中"]
+                ]
+                if outdoor:
+                    return outdoor + [act for act in candidates if act not in outdoor]
 
         return candidates
+
+    def trigger_recommend(self, user_profile: dict, trigger: dict, context: Optional[dict] = None) -> dict:
+        """Generate a recommendation from app usage triggers."""
+        usage_minutes = int(trigger.get("usage_minutes", 0) or 0)
+        continuous_minutes = int(trigger.get("continuous_minutes", usage_minutes) or usage_minutes)
+        app_name = trigger.get("app_name", "屏幕应用")
+        app_category = trigger.get("app_category", "screen")
+
+        trigger_context = dict(context or {})
+        trigger_context.update(
+            {
+                "trigger_type": "screen_overuse",
+                "trigger_reason": f"{app_name} 使用时间偏长",
+                "screen_usage": {
+                    "app_name": app_name,
+                    "app_category": app_category,
+                    "usage_minutes": usage_minutes,
+                    "continuous_minutes": continuous_minutes,
+                },
+                "mode": trigger_context.get("mode", "个人"),
+                "mode_note": trigger_context.get("mode_note", "屏幕使用时间触发的即时推荐"),
+            }
+        )
+        return self.recommend(user_profile, trigger_context)
+
+    def _enforce_recommendation_quality(
+        self,
+        result: dict,
+        activity_map: dict,
+        context: Optional[dict] = None,
+        place_hints: Optional[dict] = None,
+    ) -> dict:
+        """Patch vague LLM recommendations before they leave the backend."""
+        repaired = 0
+        for rec in result.get("recommendations", []):
+            issues = quality_issues(rec)
+            if not issues:
+                continue
+            act = activity_map.get(rec.get("activity_id", ""))
+            if not act:
+                rec["quality_issues"] = issues
+                continue
+            rec.update(self._build_fallback_recommendation_copy(act, context, place_hints))
+            rec["quality_repaired"] = True
+            rec["quality_issues"] = issues
+            repaired += 1
+        if repaired:
+            result["quality_notice"] = f"repaired_{repaired}_recommendations"
+            print(f"[Agent] 推荐质量修复: {repaired} 条")
+        return result
+
+    def _dedupe_recommendations(self, result: dict) -> dict:
+        unique = []
+        seen: set[tuple[str, str]] = set()
+        duplicates = 0
+        for rec in result.get("recommendations", []):
+            specific = rec.get("specific_info") or {}
+            key = (
+                str(rec.get("activity_id") or "").strip(),
+                str(specific.get("name") or rec.get("activity_name") or "").strip(),
+            )
+            if key in seen:
+                duplicates += 1
+                continue
+            seen.add(key)
+            unique.append(rec)
+        result["recommendations"] = unique
+        if duplicates:
+            result["dedupe_notice"] = f"removed_{duplicates}_duplicate_recommendations"
+        return result
+
+    def _finalize_result(
+        self,
+        result: dict,
+        activity_map: dict,
+        theme: dict,
+        activity_source: dict,
+        context: Optional[dict] = None,
+        place_hints: Optional[dict] = None,
+    ) -> dict:
+        for rec in result.get("recommendations", []):
+            aid = rec.get("activity_id", "")
+            if aid in activity_map:
+                self._attach_activity_metadata(rec, activity_map[aid])
+        result["companion"] = {"avatar": theme["avatar"], "name": theme["name"]}
+        result["theme"] = theme
+        result["activity_source"] = activity_source
+        result = self._enforce_recommendation_quality(result, activity_map, context, place_hints)
+        return self._dedupe_recommendations(result)
+
+    def _attach_activity_metadata(self, rec: dict, act: dict) -> dict:
+        if not rec.get("action_url"):
+            rec["action_url"] = act.get("action_url", "")
+        if not rec.get("action_label"):
+            rec["action_label"] = act.get("action_label", "")
+        rec["action_url"] = self._specific_action_url(rec, act, rec.get("action_url", ""))
+        rec["image_query"] = act.get("image_query", act["name"])
+        rec["category"] = act.get("category", "")
+        rec["budget"] = act.get("budget", "")
+        return rec
+
+    def _is_generic_action_url(self, url: str) -> bool:
+        clean = (url or "").rstrip("/")
+        return clean in {
+            "https://maoyan.com",
+            "https://m.maoyan.com",
+            "https://www.damai.cn",
+            "https://www.dianping.com",
+            "https://search.bilibili.com",
+            "https://www.bilibili.com",
+            "https://map.baidu.com",
+            "https://store.steampowered.com",
+        }
+
+    def _specific_action_url(self, rec: dict, act: dict, current_url: str) -> str:
+        if current_url and not self._is_generic_action_url(current_url):
+            return current_url
+
+        info = rec.get("specific_info") or {}
+        query_name = info.get("name") or rec.get("activity_name") or act.get("name", "")
+        location = info.get("location") or ""
+        source = f"{info.get('source', '')} {act.get('source_platform', '')} {act.get('action_label', '')}"
+        clean_query_name = str(query_name).replace("《", "").replace("》", "").strip()
+        query = quote(clean_query_name)
+        local_query = quote(f"{location} {query_name}".strip())
+
+        if "B站" in source or "Bilibili" in source or act.get("subcategory") == "纪录片":
+            return f"https://search.bilibili.com/all?keyword={query}"
+        if "Steam" in source or act.get("subcategory") == "游戏":
+            return f"https://store.steampowered.com/search/?term={query}"
+        if "猫眼" in source or act.get("subcategory") == "电影":
+            return f"https://m.maoyan.com/search?keyword={local_query}"
+        if "大麦" in source or act.get("subcategory") in {"演出", "赛事"}:
+            return f"https://search.damai.cn/search.html?keyword={query}"
+        if "大众点评" in source:
+            return f"https://www.dianping.com/search/keyword/2/0_{query}"
+        return f"https://ditu.amap.com/search?query={local_query}"
 
     def _is_time_in_window(self, current_hour: int, time_window: str) -> bool:
         """检查当前时间是否在活动适合时段内"""
@@ -242,8 +630,12 @@ class RecommendationAgent:
         personality = MBTI_PERSONALITY_MAP.get(mbti, MBTI_PERSONALITY_MAP["INTP"])
         theme = MBTI_THEME_MAP.get(mbti, MBTI_THEME_MAP["INTP"])
 
-        # Step 1: 预筛选
-        candidates = self._pre_filter_activities(user_profile, context)
+        # Step 1: 获取活动目录并预筛选
+        catalog = self._get_activity_catalog()
+        catalog_activities = catalog.get("activities", [])
+        candidates = self._pre_filter_activities(user_profile, context, catalog_activities)
+        activity_map = {a["id"]: a for a in catalog_activities}
+        activity_source = self._activity_source(catalog, candidates)
         print(f"[Agent] 预筛选后候选活动: {len(candidates)} 条")
 
         if not candidates:
@@ -252,12 +644,19 @@ class RecommendationAgent:
                 "agent_message": "现在这个时间段暂时没有合适的活动推荐，换个时间再来问我吧～",
                 "companion": {"avatar": theme["avatar"], "name": theme["name"]},
                 "theme": theme,
+                "activity_source": activity_source,
             }
 
         # Step 2: 构建提示词
         user_profile_text = self._build_user_profile_text(user_profile)
         context_text = self._build_context_text(context)
         activities_text = self._build_activities_text(candidates)
+        place_hints = self._lookup_places_for_candidates(candidates, context)
+        place_hints_text = self._build_place_hints_text(place_hints)
+        movie_hints = self._lookup_movie_hints_for_candidates(candidates, context)
+        movie_hints_text = self._build_movie_hints_text(movie_hints)
+        content_hints = self._lookup_content_hints_for_candidates(candidates)
+        content_hints_text = self._build_content_hints_text(content_hints)
 
         system_prompt = f"""你是用户的"活动搭子"（互动仔），一个贴心的AI伙伴。你的性格和语气完全匹配用户的MBTI类型。
 
@@ -289,25 +688,7 @@ class RecommendationAgent:
 3. 考虑可调节因素：如果活动有调节项（如选早场可降低人群密度），内向用户也可以被推荐
 4. 如果用户有历史反馈，自然地体现你记住了ta的偏好（但不要说"根据你的历史反馈"）
 
-## 推荐具体化原则（非常重要！）
-推荐必须**具体到可以直接执行**，禁止泛泛而谈。每条推荐的 recommend_text 和 tips 中必须包含具体信息：
-
-- 电影推荐：必须包含电影名称、电影院名称（可虚构合理的）、场次时间、片长、评分。例如："今晚 7:30 的《沙丘2》猫眼评分 9.1，片长 166 分钟，XX影城 IMAX 厅，打车 15 分钟到。"
-- 餐厅推荐：必须包含餐厅名称、菜系、人均价格、评分。例如："附近有家「日新拉面」，日式拉面，人均 45 元，大众点评 4.7 分。"
-- 户外活动：必须包含具体地点名称、预计耗时。例如："朝阳公园西门进去走 10 分钟有个湖边长椅，人少，坐一会儿挺舒服的。"
-- 居家活动：必须包含具体内容。例如纪录片要给出名称和B站搜索词："B站搜「人生果实」，一部豆瓣 9.5 的日本纪录片，片长 91 分钟。"
-- 运动：必须包含具体运动名称、场馆、价格。例如："XX 羽毛球馆，工作日下午场 30 元/小时，打车 10 分钟。"
-- 展览/演出：必须包含名称、场馆、票价。例如：「莫奈特展」在国家美术馆，门票 80 元，展期到 8 月。
-- 游戏：必须包含游戏名称、平台。例如："Steam 上的《潜水员戴夫》，休闲经营类，单人，好评如潮。"
-
-**绝对禁止的推荐语**：
-- "去看场电影吧" → 必须说看什么电影、哪个影院、什么场次
-- "去公园走走" → 必须说哪个公园、去哪块区域
-- "找个纪录片看看" → 必须说纪录片名称、在哪看
-- "做做运动" → 必须说什么运动、去哪做
-
-如果活动库中的信息不够具体，你需要在推荐语中补充合理的具体细节（如当前热映电影名称、附近合理的场所名称等）。
-如果无法获取实时数据，给出获取路径："打开猫眼搜 XXX，最近的场次是…"
+{SPECIFICITY_RULES}
 
 ## 输出格式（严格JSON）
 {{
@@ -342,6 +723,15 @@ class RecommendationAgent:
 候选活动列表：
 {activities_text}
 
+真实地点候选：
+{place_hints_text}
+
+电影候选：
+{movie_hints_text}
+
+视频内容候选：
+{content_hints_text}
+
 请从中选择最适合的 {self.config["RECOMMENDATION"]["daily_count"]} 个活动。
 记住：用你的性格语气说话，不要分析用户，像朋友一样推荐。"""
 
@@ -367,32 +757,208 @@ class RecommendationAgent:
 
                 result = json.loads(result_text)
 
-                # 补充活动元数据（action_url, action_label, image_query）
-                activity_map = {a["id"]: a for a in self.activities}
-                for rec in result.get("recommendations", []):
-                    aid = rec.get("activity_id", "")
-                    if aid in activity_map:
-                        act = activity_map[aid]
-                        rec["action_url"] = act.get("action_url", "")
-                        rec["action_label"] = act.get("action_label", "")
-                        rec["image_query"] = act.get("image_query", act["name"])
-                        rec["category"] = act.get("category", "")
-                        rec["budget"] = act.get("budget", "")
-
-                result["companion"] = {"avatar": theme["avatar"], "name": theme["name"]}
-                result["theme"] = theme
+                result = self._finalize_result(result, activity_map, theme, activity_source, context, place_hints)
 
                 print(f"[Agent] LLM 推荐生成成功，推荐了 {len(result.get('recommendations', []))} 个活动")
                 return result
 
             except Exception as e:
                 print(f"[Agent] LLM 调用失败: {e}")
-                return self._fallback_recommend(candidates, mbti, theme)
+                return self._fallback_recommend(candidates, mbti, theme, context, activity_source, place_hints)
         else:
             print("[Agent] LLM 客户端不可用，使用降级推荐")
-            return self._fallback_recommend(candidates, mbti, theme)
+            return self._fallback_recommend(candidates, mbti, theme, context, activity_source, place_hints)
 
-    def _fallback_recommend(self, candidates: list, mbti: str, theme: dict) -> dict:
+    def _best_place_hint(self, act: dict, place_hints: Optional[dict] = None) -> Optional[dict]:
+        if not place_hints:
+            return None
+        result = place_hints.get(act.get("id"))
+        if not result or not result.get("is_realtime") or not result.get("places"):
+            return None
+        place = dict(result["places"][0])
+        place["search_url"] = result.get("search_url", "")
+        return place
+
+    def _fallback_action_url(self, act: dict, selected: dict, context: Optional[dict] = None) -> str:
+        if act.get("action_url") and not self._is_generic_action_url(act.get("action_url", "")):
+            return act["action_url"]
+        source = selected.get("source", "")
+        name = selected.get("specific_name") or act.get("name", "")
+        location = (context or {}).get("location", "")
+        if "B站" in source:
+            return f"https://search.bilibili.com/all?keyword={name}"
+        if "Steam" in source:
+            return f"https://store.steampowered.com/search/?term={name}"
+        if "猫眼" in source:
+            return f"https://m.maoyan.com/search?keyword={name}"
+        return f"https://ditu.amap.com/search?query={quote(f'{location} {name}'.strip())}"
+
+    def _build_fallback_recommendation_copy(
+        self,
+        act: dict,
+        context: Optional[dict] = None,
+        place_hints: Optional[dict] = None,
+    ) -> dict:
+        """Build concrete copy when LLM is unavailable."""
+        location = (context or {}).get("location", "你附近")
+        weather = (context or {}).get("weather", "当前天气")
+        name = act["name"]
+        subcategory = act.get("subcategory", "")
+        duration = f"约 {act.get('duration_hours', 1)} 小时"
+        budget = act.get("budget", "按需")
+        source = act.get("source_platform", act.get("action_label", "应用内活动库"))
+        act_specific = act.get("specific_info") or {}
+        place = self._best_place_hint(act, place_hints)
+
+        if place and not act_specific:
+            place_name = place.get("name") or name
+            place_address = place.get("address") or location
+            place_area = place.get("business_area") or place.get("adname") or location
+            place_distance = place.get("distance", "")
+            place_location = f"{place_area} · {place_address}".strip(" ·")
+            action_url = place.get("search_url") or f"https://ditu.amap.com/search?query={quote(place_name)}"
+            return {
+                "recommend_text": (
+                    f"可以直接去 {place_name}。它在{place_location}"
+                    f"{f'，距离约 {place_distance}' if place_distance else ''}，"
+                    f"预计{duration}，预算大概{budget}。"
+                    f"这个选择和{name}匹配，先把地点定下来，决策成本会低很多。"
+                ),
+                "tips": (
+                    f"信息来源：高德地图实时地点。出发前再确认营业状态、路线和现场情况；"
+                    f"{act.get('adjustable_factors', '如果人多，就换同商圈评分稳定的近处选项。')}"
+                ),
+                "specific_info": {
+                    "name": place_name,
+                    "location": place_location,
+                    "duration": duration,
+                    "price": budget,
+                    "rating": "以高德/平台实时信息为准",
+                    "source": "高德地图实时地点",
+                },
+                "action_url": action_url,
+                "action_label": "高德地图",
+            }
+
+        if act_specific:
+            specific_name = act_specific.get("name", name)
+            specific_location = act_specific.get("location") or act_specific.get("platform") or location
+            specific_duration = act_specific.get("duration", duration)
+            specific_price = act_specific.get("price", budget)
+            specific_rating = act_specific.get("rating", "")
+            specific_source = act_specific.get("source", source)
+            game_bits = []
+            if act_specific.get("platform"):
+                game_bits.append(f"平台是{act_specific['platform']}")
+            if act_specific.get("game_type"):
+                game_bits.append(f"类型是{act_specific['game_type']}")
+            if act_specific.get("player_mode"):
+                game_bits.append(act_specific["player_mode"])
+            game_detail = "，".join(game_bits)
+            if game_detail:
+                game_detail = f"{game_detail}。"
+            return {
+                "recommend_text": (
+                    f"可以直接安排{specific_name}。{game_detail}"
+                    f"预计{specific_duration}，预算{specific_price}，评价参考是{specific_rating or '以平台实时信息为准'}。"
+                    f"{act_specific.get('setup', f'打开{specific_source}，按名称搜索后直接开始。')}"
+                ),
+                "tips": (
+                    f"信息来源：{specific_source}。"
+                    f"{act.get('adjustable_factors', '开始前先确认时间和状态。')}"
+                ),
+                "specific_info": {
+                    "name": specific_name,
+                    "location": specific_location,
+                    "duration": specific_duration,
+                    "price": specific_price,
+                    "rating": specific_rating,
+                    "source": specific_source,
+                },
+                "action_url": act.get("action_url", ""),
+                "action_label": act.get("action_label", "查看详情"),
+            }
+
+        details = {
+            "电影": {
+                "specific_name": "《你想活出怎样的人生》",
+                "specific_location": f"{location} 附近影院，打开猫眼按距离选择",
+                "duration": "片长约 124 分钟，建议预留 2.5 小时",
+                "price": budget,
+                "rating": "豆瓣约 7.6，猫眼约 9 分",
+                "source": "猫眼搜索：你想活出怎样的人生",
+                "text": f"可以直接去看《你想活出怎样的人生》。现在没有实时排片数据，你打开猫眼搜片名，选 {location} 附近 19:00 后的场次；片长约 124 分钟，整体预留 2.5 小时。它节奏不吵，适合一个人安静看完。",
+                "tips": "优先选工作日或晚间非黄金场，后排中间偏侧的位置更安静。到影院前再确认猫眼评分、票价和开场时间。",
+            },
+            "阅读": {
+                "specific_name": "独立书店看书+咖啡",
+                "specific_location": f"{location} 附近独立书店",
+                "duration": duration,
+                "price": budget,
+                "rating": "以店铺实时评分为准",
+                "source": "地图搜索：独立书店 咖啡",
+                "text": f"你可以搜一下 {location} 附近的独立书店，选评分 4.5 以上、带咖啡座的店，待 {duration}。预算大概 {budget}，不用做复杂准备，带上耳机和一本想读的书就行。{weather} 的时候这类室内安排更稳。",
+                "tips": "地图搜“独立书店 咖啡”，按距离和营业中筛选；优先选工作日下午或晚饭前，人会少一点。",
+            },
+            "游戏": {
+                "specific_name": "《星露谷物语》",
+                "specific_location": "Steam / Switch / 手机",
+                "duration": "45-90 分钟",
+                "price": "约 20-50 元，已有则 0 元",
+                "rating": "Steam 好评如潮",
+                "source": "Steam 搜索：Stardew Valley",
+                "text": "一个人也可以把今天安排得很好。可以玩《星露谷物语》，Steam/Switch/手机都能玩，单人休闲经营，开一局 45-90 分钟刚好。它不需要社交，也不会太刺激，适合想放松但不想出门的时候。",
+                "tips": "如果已经买过就直接开；没买可以在 Steam 搜 Stardew Valley。给自己设 90 分钟上限，玩完就收。",
+            },
+            "纪录片": {
+                "specific_name": "《人生果实》",
+                "specific_location": "B站搜索",
+                "duration": "约 91 分钟",
+                "price": "0 元起",
+                "rating": "豆瓣 9.5",
+                "source": "B站搜索：人生果实 纪录片",
+                "text": "不想折腾的话，今晚可以看《人生果实》。B站搜“人生果实 纪录片”，片长约 91 分钟，豆瓣 9.5，节奏很慢也很温柔。准备一杯热饮，直接从屏幕里退出来一点。",
+                "tips": "把灯光调暗，手机放远一点；如果 20 分钟后不在状态，就换成听播客，不硬撑。",
+            },
+        }
+
+        selected = details.get(subcategory)
+        if not selected:
+            selected = {
+                "specific_name": name,
+                "specific_location": location,
+                "duration": duration,
+                "price": budget,
+                "rating": "",
+                "source": source,
+                "text": f"可以试试{name}。地点先按 {location} 附近来找，预计 {duration}，预算大概 {budget}；它的效果偏向{act.get('mood_effect', '放松')}，现在开始不需要太多准备。{act.get('adjustable_factors', '')}",
+                "tips": f"打开地图或对应平台搜索“{name}”，优先选距离近、营业中、评价稳定的结果；开始前预留 {act.get('min_prep_time', '10分钟')} 准备时间。",
+            }
+
+        return {
+            "recommend_text": selected["text"],
+            "tips": selected["tips"],
+            "specific_info": {
+                "name": selected["specific_name"],
+                "location": selected["specific_location"],
+                "duration": selected["duration"],
+                "price": selected["price"],
+                "rating": selected["rating"],
+                "source": selected["source"],
+            },
+            "action_url": self._fallback_action_url(act, selected, context),
+            "action_label": act.get("action_label") or "打开入口",
+        }
+
+    def _fallback_recommend(
+        self,
+        candidates: list,
+        mbti: str,
+        theme: dict,
+        context: Optional[dict] = None,
+        activity_source: Optional[dict] = None,
+        place_hints: Optional[dict] = None,
+    ) -> dict:
         """降级推荐（无 LLM 时基于规则，但保持对话式语气）"""
         top_n = self.config["RECOMMENDATION"]["daily_count"]
 
@@ -434,23 +1000,29 @@ class RecommendationAgent:
 
         return {
             "recommendations": [
-                {
+                self._attach_activity_metadata(
+                    {
                     "activity_id": act["id"],
                     "activity_name": act["name"],
-                    "recommend_text": f"这个怎么样——{act['name']}，{act.get('mood_effect', '挺不错的')}",
-                    "tips": act.get("adjustable_factors", "无特殊建议"),
+                    **self._build_fallback_recommendation_copy(act, context, place_hints),
                     "safety_note": act.get("safety_note", ""),
-                    "action_url": act.get("action_url", ""),
-                    "action_label": act.get("action_label", ""),
                     "image_query": act.get("image_query", act["name"]),
                     "category": act.get("category", ""),
                     "budget": act.get("budget", ""),
-                }
+                    },
+                    act,
+                )
                 for act in selected
             ],
             "agent_message": agent_message,
             "companion": {"avatar": theme["avatar"], "name": companion_name},
             "theme": theme,
+            "activity_source": activity_source or {
+                "source": "local_fallback",
+                "is_realtime": False,
+                "total_count": len(candidates),
+                "candidate_count": len(candidates),
+            },
         }
 
     def chat(self, user_profile: dict, message: str, context: Optional[dict] = None, history: list = None) -> dict:
@@ -474,8 +1046,20 @@ class RecommendationAgent:
         personality = MBTI_PERSONALITY_MAP.get(mbti, MBTI_PERSONALITY_MAP["INTP"])
         theme = MBTI_THEME_MAP.get(mbti, MBTI_THEME_MAP["INTP"])
 
+        catalog = self._get_activity_catalog()
+        catalog_activities = catalog.get("activities", [])
+        candidates = self._pre_filter_activities(user_profile, context, catalog_activities)
+        activity_map = {a["id"]: a for a in catalog_activities}
+        activity_source = self._activity_source(catalog, candidates)
+        user_profile_text = self._build_user_profile_text(user_profile)
         context_text = self._build_context_text(context)
-        activities_text = self._build_activities_text(self._pre_filter_activities(user_profile, context))
+        activities_text = self._build_activities_text(candidates)
+        place_hints = self._lookup_places_for_candidates(candidates, context)
+        place_hints_text = self._build_place_hints_text(place_hints)
+        movie_hints = self._lookup_movie_hints_for_candidates(candidates, context)
+        movie_hints_text = self._build_movie_hints_text(movie_hints)
+        content_hints = self._lookup_content_hints_for_candidates(candidates, message)
+        content_hints_text = self._build_content_hints_text(content_hints)
 
         system_prompt = f"""你是用户的"活动搭子"（互动仔），一个贴心的AI伙伴。你的名字叫"{theme["name"]}"。
 
@@ -495,27 +1079,25 @@ class RecommendationAgent:
 3. 聊天陪伴：可以闲聊，关心用户的状态
 4. 回答活动相关问题
 
-## 推荐具体化原则（非常重要！）
-推荐必须**具体到可以直接执行**，禁止泛泛而谈。每条推荐的 recommend_text 中必须包含具体信息：
-
-- 电影推荐：必须包含电影名称、电影院名称、场次时间、片长、评分
-- 餐厅推荐：必须包含餐厅名称、菜系、人均价格、评分
-- 户外活动：必须包含具体地点名称、预计耗时
-- 居家活动：必须包含具体内容（如纪录片名称和B站搜索词）
-- 运动：必须包含具体运动名称、场馆、价格
-- 展览/演出：必须包含名称、场馆、票价
-- 游戏：必须包含游戏名称、平台
-
-**绝对禁止**："去看场电影吧""去公园走走""找个纪录片看看"等泛泛推荐。
-
-如果活动库中的信息不够具体，你需要在推荐语中补充合理的具体细节。
-如果无法获取实时数据，给出获取路径："打开猫眼搜 XXX，最近的场次是…"
+{SPECIFICITY_RULES}
 
 ## 当前上下文
 {context_text}
 
+## 用户偏好与行为记忆
+{user_profile_text}
+
 ## 可推荐的活动
 {activities_text}
+
+## 真实地点候选
+{place_hints_text}
+
+## 电影候选
+{movie_hints_text}
+
+## 视频内容候选
+{content_hints_text}
 
 ## 输出格式（严格JSON）
 {{
@@ -565,77 +1147,77 @@ class RecommendationAgent:
 
                 result = json.loads(result_text)
 
-                # 补充活动元数据
-                activity_map = {a["id"]: a for a in self.activities}
-                for rec in result.get("recommendations", []):
-                    aid = rec.get("activity_id", "")
-                    if aid in activity_map:
-                        act = activity_map[aid]
-                        rec["action_url"] = act.get("action_url", "")
-                        rec["action_label"] = act.get("action_label", "")
-                        rec["image_query"] = act.get("image_query", act["name"])
-                        rec["category"] = act.get("category", "")
-                        rec["budget"] = act.get("budget", "")
-
-                result["companion"] = {"avatar": theme["avatar"], "name": theme["name"]}
-                result["theme"] = theme
+                result = self._finalize_result(result, activity_map, theme, activity_source, context, place_hints)
 
                 return result
 
             except Exception as e:
                 print(f"[Agent] 对话调用失败: {e}")
-                return self._fallback_chat(message, mbti, theme)
+                return self._fallback_chat(message, mbti, theme, context, catalog, candidates, place_hints)
         else:
-            return self._fallback_chat(message, mbti, theme)
+            return self._fallback_chat(message, mbti, theme, context, catalog, candidates, place_hints)
 
-    def _fallback_chat(self, message: str, mbti: str, theme: dict) -> dict:
+    def _fallback_chat(
+        self,
+        message: str,
+        mbti: str,
+        theme: dict,
+        context: Optional[dict] = None,
+        catalog: Optional[dict] = None,
+        candidates: Optional[list] = None,
+        place_hints: Optional[dict] = None,
+    ) -> dict:
         """降级对话（无 LLM 时）"""
-        msg_lower = message.lower()
+        if catalog is None:
+            catalog = self._get_activity_catalog()
+        if candidates is None:
+            candidates = self._pre_filter_activities({"mbti": mbti}, context, catalog.get("activities", []))
+        if place_hints is None:
+            place_hints = self._lookup_places_for_candidates(candidates, context)
+        activity_source = self._activity_source(catalog, candidates)
 
         if any(kw in message for kw in ["不想", "换", "别的", "其他"]):
             # 换推荐
-            candidates = self._pre_filter_activities({"mbti": mbti}, None)
             if candidates:
                 import random
                 act = random.choice(candidates[:10])
                 return {
                     "reply": "行，那看看这个？",
-                    "recommendations": [{
-                        "activity_id": act["id"],
-                        "activity_name": act["name"],
-                        "recommend_text": f"这个怎么样——{act['name']}",
-                        "tips": act.get("adjustable_factors", "无特殊建议"),
-                        "safety_note": act.get("safety_note", ""),
-                        "action_url": act.get("action_url", ""),
-                        "action_label": act.get("action_label", ""),
-                        "image_query": act.get("image_query", act["name"]),
-                        "category": act.get("category", ""),
-                        "budget": act.get("budget", ""),
-                    }],
+                    "recommendations": [
+                        self._attach_activity_metadata(
+                            {
+                                "activity_id": act["id"],
+                                "activity_name": act["name"],
+                                **self._build_fallback_recommendation_copy(act, context, place_hints),
+                                "safety_note": act.get("safety_note", ""),
+                            },
+                            act,
+                        )
+                    ],
                     "companion": {"avatar": theme["avatar"], "name": theme["name"]},
                     "theme": theme,
+                    "activity_source": activity_source,
                 }
 
         if any(kw in message for kw in ["推荐", "好玩", "做什么", "干嘛", "无聊"]):
-            candidates = self._pre_filter_activities({"mbti": mbti}, None)
             if candidates:
                 act = candidates[0]
                 return {
                     "reply": "给你找了个活动，看看？",
-                    "recommendations": [{
-                        "activity_id": act["id"],
-                        "activity_name": act["name"],
-                        "recommend_text": f"要不要试试{act['name']}？",
-                        "tips": act.get("adjustable_factors", "无特殊建议"),
-                        "safety_note": act.get("safety_note", ""),
-                        "action_url": act.get("action_url", ""),
-                        "action_label": act.get("action_label", ""),
-                        "image_query": act.get("image_query", act["name"]),
-                        "category": act.get("category", ""),
-                        "budget": act.get("budget", ""),
-                    }],
+                    "recommendations": [
+                        self._attach_activity_metadata(
+                            {
+                                "activity_id": act["id"],
+                                "activity_name": act["name"],
+                                **self._build_fallback_recommendation_copy(act, context, place_hints),
+                                "safety_note": act.get("safety_note", ""),
+                            },
+                            act,
+                        )
+                    ],
                     "companion": {"avatar": theme["avatar"], "name": theme["name"]},
                     "theme": theme,
+                    "activity_source": activity_source,
                 }
 
         # 默认闲聊
@@ -644,6 +1226,7 @@ class RecommendationAgent:
             "recommendations": [],
             "companion": {"avatar": theme["avatar"], "name": theme["name"]},
             "theme": theme,
+            "activity_source": activity_source,
         }
 
     def update_feedback(self, user_id: str, activity_id: str, feedback: str):

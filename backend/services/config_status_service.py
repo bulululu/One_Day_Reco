@@ -1,0 +1,70 @@
+import os
+
+from backend.services.database import DATABASE_URL
+
+
+def _configured(name: str) -> bool:
+    return bool(os.getenv(name, "").strip())
+
+
+def get_config_status(llm_available: bool) -> dict:
+    return {
+        "services": {
+            "llm": {
+                "label": "推荐和聊天 Agent",
+                "configured": llm_available,
+                "is_realtime": llm_available,
+                "source": "Azure OpenAI" if llm_available else "fallback_rules",
+                "detail": "用于生成个性化推荐和对话。",
+            },
+            "weather": {
+                "label": "实时天气",
+                "configured": True,
+                "is_realtime": True,
+                "source": "Open-Meteo",
+                "detail": "无需 key，按用户输入地点获取实时天气。",
+            },
+            "places": {
+                "label": "真实地点",
+                "configured": _configured("AMAP_API_KEY"),
+                "is_realtime": _configured("AMAP_API_KEY"),
+                "source": "AMap" if _configured("AMAP_API_KEY") else "search_fallback",
+                "detail": "配置 AMAP_API_KEY 后返回真实 POI；未配置时只返回搜索入口。",
+            },
+            "activities": {
+                "label": "活动聚合",
+                "configured": _configured("ONEDAYRECO_ACTIVITY_API_URL"),
+                "is_realtime": _configured("ONEDAYRECO_ACTIVITY_API_URL"),
+                "source": "external_api" if _configured("ONEDAYRECO_ACTIVITY_API_URL") else "local_fallback",
+                "detail": "配置外部活动 API 后使用实时活动候选；否则使用精选兜底库。",
+            },
+            "games": {
+                "label": "游戏活动",
+                "configured": _configured("ONEDAYRECO_GAME_API_URL"),
+                "is_realtime": _configured("ONEDAYRECO_GAME_API_URL"),
+                "source": "external_api" if _configured("ONEDAYRECO_GAME_API_URL") else "local_fallback",
+                "detail": "配置外部游戏 API 后使用实时游戏候选；否则使用精选兜底库。",
+            },
+            "movies": {
+                "label": "电影候选",
+                "configured": _configured("TMDB_API_KEY"),
+                "is_realtime": _configured("TMDB_API_KEY"),
+                "source": "TMDb" if _configured("TMDB_API_KEY") else "curated_fallback",
+                "detail": "配置 TMDB_API_KEY 后获取实时热映电影；影院通过高德候选，场次仍跳转票务平台确认。",
+            },
+            "content": {
+                "label": "视频内容",
+                "configured": True,
+                "is_realtime": True,
+                "source": "Bilibili/search_fallback",
+                "detail": "优先尝试 B 站搜索；失败时返回明确搜索入口和精选兜底。",
+            },
+            "database": {
+                "label": "用户和历史数据",
+                "configured": True,
+                "is_realtime": True,
+                "source": "PostgreSQL" if DATABASE_URL.startswith("postgresql") else "SQLite",
+                "detail": "保存账号、画像、反馈、推荐历史和行为事件。",
+            },
+        }
+    }

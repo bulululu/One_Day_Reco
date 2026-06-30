@@ -1,9 +1,8 @@
 /**
- * 主聊天屏幕（极简版）
- * 头部 + 消息列表 + 输入框
- * 快捷操作整合到输入栏上方
+ * 主界面
+ * 打开即推荐：主行动卡 + 备选灵感 + 轻聊天。
  */
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,16 +11,89 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  FlatList,
   Keyboard,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { MBTI_PERSONAS } from '@/data/personas';
-import { chat } from '@/services/api';
-import { ChatMessage } from '@/types';
-import { MessageBubble } from '@/components/MessageBubble';
+import { chat, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation } from '@/services/api';
+import { ActivitySourceMeta, ChatMessage, Recommendation } from '@/types';
+import { RecommendationCard } from '@/components/RecommendationCard';
 import { BreathingLoader } from '@/components/BreathingLoader';
+import { ActivityInspirationPanel } from '@/components/ActivityInspirationPanel';
+import { ContextEditor } from '@/components/ContextEditor';
+import { LearningMemoryPanel } from '@/components/LearningMemoryPanel';
+import { ProfilePanel } from '@/components/ProfilePanel';
+import { ScreenBreakPanel } from '@/components/ScreenBreakPanel';
+
+const DEFAULT_RECOMMENDATION: Recommendation = {
+  activity_id: 'slow_evening',
+  activity_name: '给今晚留一段慢下来的小时间',
+  recommend_text: '不用把今天安排得很满。泡一杯热饮，挑一部轻松的纪录片，或者把一直没翻开的书读两章，让自己从屏幕里退出来一会儿。',
+  tips: '建议 20:30 开始，先把手机放到看不见的地方。只准备一杯喝的和一个舒服的位置，启动门槛越低越好。',
+  safety_note: '',
+  action_url: 'https://www.bilibili.com',
+  action_label: '开始安排',
+  category: '居家休闲',
+  budget: '低预算',
+  specific_info: {
+    name: '慢夜纪录片',
+    location: '家里',
+    duration: '约 90 分钟',
+    price: '低预算',
+    rating: '',
+    source: '今日小计划',
+  },
+};
+
+const MODES = [
+  {
+    key: 'personal',
+    label: '个人',
+    title: '为你安排',
+    subtitle: '按你现在的状态推荐',
+    prompt: '按个人模式推荐一个现在能做的活动',
+  },
+  {
+    key: 'couple',
+    label: '情侣',
+    title: '两个人的计划',
+    subtitle: '后续会加入约会和纪念日场景',
+    prompt: '按情侣模式推荐一个轻松约会活动',
+  },
+  {
+    key: 'friends',
+    label: '朋友',
+    title: '一起出去玩',
+    subtitle: '后续会加入多人偏好协调',
+    prompt: '按朋友模式推荐一个多人活动',
+  },
+  {
+    key: 'family',
+    label: '家庭',
+    title: '家人一起做',
+    subtitle: '后续会加入家庭成员和日程',
+    prompt: '按家庭模式推荐一个温和活动',
+  },
+] as const;
+
+type ModeKey = typeof MODES[number]['key'];
+type RecoMode = typeof MODES[number];
+
+const WEATHER_OPTIONS = ['晴', '阴', '小雨', '大风', '热', '冷', '适合室内'] as const;
+
+function hexToRgba(hex: string, opacity: number) {
+  const clean = hex.replace('#', '');
+  const value = clean.length === 3
+    ? clean.split('').map((char) => char + char).join('')
+    : clean;
+  const int = parseInt(value, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `rgba(${r},${g},${b},${opacity})`;
+}
 
 export function ChatScreen() {
   const {
@@ -32,50 +104,196 @@ export function ChatScreen() {
     addMessage,
     setLoading,
     getUserProfile,
-    resetApp,
+    addActivityFeedback,
+    setFeedbackSummary,
+    userId,
+    email,
+    hasSkippedAuth,
+    preferences,
+    feedbackSummary,
+    logout,
+    redoOnboarding,
   } = useAppStore();
 
   const [inputText, setInputText] = useState('');
-  const flatListRef = useRef<FlatList<ChatMessage>>(null);
+  const [featured, setFeatured] = useState<Recommendation>(DEFAULT_RECOMMENDATION);
+  const [featuredSource, setFeaturedSource] = useState<ActivitySourceMeta | undefined>(undefined);
+  const [mode, setMode] = useState<ModeKey>('personal');
+  const [feedbackStatus, setFeedbackStatus] = useState('');
+  const [location, setLocation] = useState('上海 · 徐汇区');
+  const [weather, setWeather] = useState('晴');
+  const [isWeatherLoading, setWeatherLoading] = useState(false);
+  const [contextExpanded, setContextExpanded] = useState(false);
+  const [toolsExpanded, setToolsExpanded] = useState(false);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+  const [profileVisible, setProfileVisible] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const shouldAutoScrollRef = useRef(false);
+  const persona = mbti ? MBTI_PERSONAS[mbti] : MBTI_PERSONAS.INTP;
   const colors = currentTheme.colors;
-  const persona = mbti ? MBTI_PERSONAS[mbti] : MBTI_PERSONAS['INTP'];
+  const activeMode = MODES.find((item) => item.key === mode) || MODES[0];
 
-  // 初始欢迎消息
+  const buildContext = (targetMode: RecoMode = activeMode) => ({
+    weather,
+    location: location.trim() || '当前位置',
+    mode: targetMode.label,
+    mode_note: targetMode.subtitle,
+  });
+
+  const displayMessages = useMemo<ChatMessage[]>(() => {
+    if (messages.length > 0) return messages.slice(-2);
+    return [
+      {
+        role: 'assistant',
+        content: '今天想做点什么呢？我猜你可能需要放松一下，或者找点灵感。',
+        timestamp: Date.now(),
+      },
+    ];
+  }, [messages]);
+
   useEffect(() => {
     if (messages.length === 0) {
       addMessage({
         role: 'assistant',
-        content: `嘿，我是${currentTheme.name}～今天想干嘛？直接说，我帮你安排。`,
+        content: '我先帮你看一个现在能直接开始的小计划。你不喜欢的话，直接说换一个就行。',
         timestamp: Date.now(),
       });
     }
   }, []);
 
-  // 消息更新时滚动到底部
   useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
+    let cancelled = false;
+    const loadRecommendation = async () => {
+      setLoading(true);
+      try {
+        const res = await recommend(getUserProfile(), buildContext(MODES[0]));
+        if (cancelled) return;
+        if (res.recommendations?.[0]) {
+          setFeatured(res.recommendations[0]);
+          setFeaturedSource(res.activity_source);
+          setHistoryRefreshKey((value) => value + 1);
+        }
+        if (messages.length <= 1 && res.agent_message) {
+          addMessage({
+            role: 'assistant',
+            content: res.agent_message,
+            recommendations: res.recommendations,
+            timestamp: Date.now(),
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          addMessage({
+            role: 'assistant',
+            content: '推荐服务暂时没有连上。我不会用假地点或假场次糊弄你，等服务恢复后再给你具体安排。',
+            timestamp: Date.now(),
+          });
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    loadRecommendation();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!shouldAutoScrollRef.current) return;
+    const timer = setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+      shouldAutoScrollRef.current = false;
+    }, 120);
+    return () => clearTimeout(timer);
   }, [messages.length, isLoading]);
+
+  const refreshRecommendation = async (targetMode: RecoMode = activeMode) => {
+    if (isLoading) return;
+    setLoading(true);
+    try {
+      const res = await recommend(getUserProfile(), buildContext(targetMode));
+      if (res.recommendations?.[0]) {
+        setFeatured(res.recommendations[0]);
+        setFeaturedSource(res.activity_source);
+        setHistoryRefreshKey((value) => value + 1);
+      }
+      addMessage({
+        role: 'assistant',
+        content: res.agent_message || `我按「${location || '当前位置'} · ${weather}」重新安排了一张推荐卡。`,
+        recommendations: res.recommendations,
+        timestamp: Date.now(),
+      });
+    } catch {
+      addMessage({
+        role: 'assistant',
+        content: '当前情况我先记下了，但刚才没连上推荐服务。你可以继续聊天，我会按这个地点和天气来想。',
+        timestamp: Date.now(),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFetchWeather = async () => {
+    if (isWeatherLoading) return;
+    setWeatherLoading(true);
+    try {
+      const result = await getWeather(location || '上海');
+      const nextLocation = result.location || location;
+      const nextWeather = result.display || result.weather;
+      setLocation(nextLocation);
+      setWeather(nextWeather);
+      setLoading(true);
+      const res = await recommend(getUserProfile(), {
+        weather: nextWeather,
+        location: nextLocation || '当前位置',
+        mode: activeMode.label,
+        mode_note: activeMode.subtitle,
+      });
+      if (res.recommendations?.[0]) {
+        setFeatured(res.recommendations[0]);
+        setFeaturedSource(res.activity_source);
+        setHistoryRefreshKey((value) => value + 1);
+      }
+      addMessage({
+        role: 'assistant',
+        content: res.agent_message || `我按「${nextLocation || '当前位置'} · ${nextWeather}」重新安排了一张推荐卡。`,
+        recommendations: res.recommendations,
+        timestamp: Date.now(),
+      });
+    } finally {
+      setLoading(false);
+      setWeatherLoading(false);
+    }
+  };
 
   const handleSend = async (text?: string) => {
     const content = (text || inputText).trim();
     if (!content || isLoading) return;
 
-    addMessage({ role: 'user', content, timestamp: Date.now() });
+    shouldAutoScrollRef.current = true;
+    addMessage({
+      role: 'user',
+      content,
+      timestamp: Date.now(),
+    });
     setInputText('');
     Keyboard.dismiss();
     setLoading(true);
 
     try {
       const profile = getUserProfile();
-      const history = messages.slice(-10).map((m) => ({
+      const history = messages.slice(-8).map((m) => ({
         role: m.role,
         content: m.content,
       }));
-      const res = await chat(profile, content, undefined, history);
+      const res = await chat(profile, content, buildContext(), history);
+      if (res.recommendations?.[0]) {
+        setFeatured(res.recommendations[0]);
+        setFeaturedSource(res.activity_source);
+        setHistoryRefreshKey((value) => value + 1);
+      }
       addMessage({
         role: 'assistant',
         content: res.reply,
@@ -85,7 +303,7 @@ export function ChatScreen() {
     } catch {
       addMessage({
         role: 'assistant',
-        content: '啊，我刚才走神了…能再说一遍吗？',
+        content: '我刚才没连上，不过可以先试试这张推荐卡。想换方向就直接告诉我。',
         timestamp: Date.now(),
       });
     } finally {
@@ -93,89 +311,362 @@ export function ChatScreen() {
     }
   };
 
-  const renderMessage = ({ item }: { item: ChatMessage }) => (
-    <MessageBubble message={item} theme={currentTheme} />
-  );
+  const handleFeedback = async (feedback: 'liked' | 'completed' | 'skipped') => {
+    shouldAutoScrollRef.current = true;
+    setFeedbackStatus('');
+    addActivityFeedback(featured.activity_name, feedback);
+    void recordActivityEvent({
+      userId,
+      activityId: featured.activity_id,
+      activityName: featured.activity_name,
+      eventType: feedback,
+      source: 'feedback',
+      metadata: {
+        category: featured.category,
+        specific_name: featured.specific_info?.name,
+      },
+    }).catch(() => undefined);
+    const saved = await submitFeedback(userId, featured.activity_id, feedback, featured.activity_name);
+    if (saved.feedback_summary) {
+      setFeedbackSummary(saved.feedback_summary);
+    }
+    const feedbackText = {
+      liked: '记下了：这个方向你喜欢。之后我会多给类似但不重复的选择。',
+      completed: '完成了，真不错。我先记下这个活动，下次会按这个节奏推荐。',
+      skipped: '好，那这个先跳过。我换一个更合适的方向。',
+    }[feedback];
+    setFeedbackStatus(feedbackText);
+    setHistoryRefreshKey((value) => value + 1);
+    addMessage({
+      role: 'assistant',
+      content: feedbackText,
+      timestamp: Date.now(),
+    });
+    if (feedback === 'skipped') {
+      handleSend('换一个推荐');
+    }
+  };
+
+  const handleRecommendationAction = (recommendation: Recommendation) => {
+    void recordActivityEvent({
+      userId,
+      activityId: recommendation.activity_id,
+      activityName: recommendation.activity_name,
+      eventType: 'click',
+      source: 'recommendation_card',
+      metadata: {
+        action_label: recommendation.action_label,
+        action_url: recommendation.action_url,
+        specific_name: recommendation.specific_info?.name,
+      },
+    }).catch(() => undefined);
+  };
+
+  const handleScreenBreakTrigger = async (trigger: {
+    appName: string;
+    appCategory: string;
+    usageMinutes: number;
+    continuousMinutes: number;
+  }) => {
+    if (isLoading) return;
+    setLoading(true);
+    try {
+      const res = await triggerRecommendation(
+        getUserProfile(),
+        {
+          app_name: trigger.appName,
+          app_category: trigger.appCategory,
+          usage_minutes: trigger.usageMinutes,
+          continuous_minutes: trigger.continuousMinutes,
+        },
+        buildContext(),
+      );
+      if (res.recommendations?.[0]) {
+        setFeatured(res.recommendations[0]);
+        setFeaturedSource(res.activity_source);
+        setHistoryRefreshKey((value) => value + 1);
+      }
+      addMessage({
+        role: 'assistant',
+        content: res.agent_message || '我按你刚才的屏幕使用状态，换了一个更适合离屏的小计划。',
+        recommendations: res.recommendations,
+        timestamp: Date.now(),
+      });
+      void recordActivityEvent({
+        userId,
+        activityId: res.recommendations?.[0]?.activity_id || 'screen_break',
+        activityName: res.recommendations?.[0]?.activity_name || '离屏替代推荐',
+        eventType: 'triggered',
+        source: 'screen_break_panel',
+        metadata: {
+          app_name: trigger.appName,
+          app_category: trigger.appCategory,
+          usage_minutes: trigger.usageMinutes,
+          continuous_minutes: trigger.continuousMinutes,
+        },
+      }).catch(() => undefined);
+    } catch {
+      addMessage({
+        role: 'assistant',
+        content: '离屏推荐服务刚才没有连上。我先建议你站起来喝口水，或者到窗边待两分钟，等服务恢复后我再给你具体地点。',
+        timestamp: Date.now(),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
-      {/* 极简头部 */}
-      <View style={[styles.header, { borderBottomColor: 'rgba(255,255,255,0.06)' }]}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerAvatar}>{currentTheme.avatar}</Text>
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.brandRow}>
           <View>
-            <Text style={[styles.headerName, { color: colors.text }]}>
-              {currentTheme.name}
-            </Text>
-            <View style={styles.statusRow}>
-              <View style={styles.statusDot} />
-              <Text style={[styles.headerStatus, { color: colors.subtext }]}>
-                {persona.status}
-              </Text>
+            <Text style={[styles.wordmark, { color: colors.accent }]}>OneDayReco</Text>
+            <Text style={[styles.brandSub, { color: colors.subtext }]}>每一天，都值得被好好安排。</Text>
+          </View>
+          <Pressable
+            style={[styles.settingsPill, { borderColor: hexToRgba(colors.accent, 0.22) }]}
+            onPress={() => setProfileVisible(true)}
+          >
+            <Text style={[styles.settingsText, { color: colors.accent }]}>我的</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.header}>
+          <View style={styles.profile}>
+            <View style={[styles.avatar, { backgroundColor: hexToRgba(colors.accent, 0.14) }]}>
+              <Text style={styles.avatarText}>{currentTheme.avatar}</Text>
+            </View>
+            <View>
+              <Text style={[styles.name, { color: colors.text }]}>早安，{currentTheme.name}</Text>
+              <Text style={[styles.role, { color: colors.subtext }]}>今天想一起做点什么呢？</Text>
             </View>
           </View>
-        </View>
-        <Pressable onPress={resetApp} style={styles.resetBtn}>
-          <Text style={[styles.resetText, { color: colors.subtext }]}>重置</Text>
-        </Pressable>
-      </View>
 
-      {/* 消息列表 */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(_, idx) => `msg-${idx}`}
-        contentContainerStyle={styles.messageList}
-        onContentSizeChange={() =>
-          flatListRef.current?.scrollToEnd({ animated: false })
-        }
-        ListFooterComponent={
-          isLoading ? (
+          <View style={styles.contextBlock}>
+            <View style={styles.timeRow}>
+              <Text style={[styles.time, { color: colors.text }]}>9:41</Text>
+              <View style={styles.divider} />
+              <Text style={[styles.weather, { color: colors.text }]}>☀ {weather}</Text>
+            </View>
+            <Text style={[styles.location, { color: colors.subtext }]}>⌖ {location || '当前位置'}</Text>
+          </View>
+        </View>
+
+        <ContextEditor
+          theme={currentTheme}
+          location={location}
+          weather={weather}
+          expanded={contextExpanded}
+          isWeatherLoading={isWeatherLoading}
+          weatherOptions={WEATHER_OPTIONS}
+          onToggle={() => setContextExpanded((value) => !value)}
+          onLocationChange={setLocation}
+          onWeatherChange={setWeather}
+          onRefresh={() => refreshRecommendation()}
+          onFetchWeather={handleFetchWeather}
+        />
+
+        <RecommendationCard
+          recommendation={featured}
+          theme={currentTheme}
+          activitySource={featuredSource}
+          onAction={handleRecommendationAction}
+        />
+
+        <View style={styles.feedbackRow}>
+          <Pressable
+            style={[styles.feedbackBtn, { borderColor: hexToRgba(colors.accent, 0.18) }]}
+            onPress={() => handleFeedback('liked')}
+          >
+            <Text style={[styles.feedbackText, { color: colors.accent }]}>喜欢</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.feedbackBtn, { borderColor: hexToRgba(colors.accent, 0.18) }]}
+            onPress={() => handleFeedback('completed')}
+          >
+            <Text style={[styles.feedbackText, { color: colors.accent }]}>完成</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.feedbackBtn, { borderColor: hexToRgba(colors.accent, 0.18) }]}
+            onPress={() => handleFeedback('skipped')}
+          >
+            <Text style={[styles.feedbackText, { color: colors.accent }]}>换一个</Text>
+          </Pressable>
+        </View>
+
+        {feedbackStatus ? (
+          <Text style={[styles.feedbackStatus, { color: colors.subtext }]}>
+            {feedbackStatus}
+          </Text>
+        ) : null}
+
+        <Pressable
+          style={[
+            styles.moreToggle,
+            {
+              borderColor: hexToRgba(colors.accent, 0.16),
+              backgroundColor: hexToRgba(colors.accent, 0.06),
+            },
+          ]}
+          onPress={() => setToolsExpanded((value) => !value)}
+        >
+          <Text style={[styles.moreToggleText, { color: colors.accent }]}>
+            {toolsExpanded ? '收起更多选项' : '更多选项'}
+          </Text>
+        </Pressable>
+
+        {toolsExpanded ? (
+          <View style={styles.advancedBlock}>
+            <View style={styles.modeBlock}>
+              <Text style={[styles.modeTitle, { color: colors.text }]}>模式</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.modeList}
+              >
+                {MODES.map((item) => {
+                  const selected = mode === item.key;
+                  return (
+                    <Pressable
+                      key={item.key}
+                      style={[
+                        styles.modeChip,
+                        {
+                          backgroundColor: selected ? colors.accent : hexToRgba(colors.accent, 0.08),
+                          borderColor: selected ? colors.accent : hexToRgba(colors.accent, 0.18),
+                        },
+                      ]}
+                      onPress={() => {
+                        setMode(item.key);
+                        setFeedbackStatus('');
+                        void refreshRecommendation(item);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.modeChipText,
+                          { color: selected ? '#fff' : colors.accent },
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            <ScreenBreakPanel
+              theme={currentTheme}
+              isLoading={isLoading}
+              onTrigger={handleScreenBreakTrigger}
+            />
+
+            <LearningMemoryPanel
+              userId={userId}
+              theme={currentTheme}
+              refreshKey={historyRefreshKey}
+              onPrompt={handleSend}
+            />
+
+            <ActivityInspirationPanel theme={currentTheme} location={location} onPrompt={handleSend} />
+          </View>
+        ) : null}
+
+        <View style={styles.chatArea}>
+          {displayMessages.map((message, index) => {
+            const isUser = message.role === 'user';
+            return (
+              <View key={`${message.timestamp || index}-${index}`} style={styles.messageRow}>
+                {!isUser ? (
+                <View style={[styles.miniAvatar, { backgroundColor: hexToRgba(colors.accent, 0.14) }]}>
+                  <Text style={styles.miniAvatarText}>{currentTheme.avatar}</Text>
+                </View>
+              ) : null}
+                <View
+                  style={[
+                    styles.bubble,
+                    { backgroundColor: colors.card, shadowColor: colors.accent },
+                    isUser && { backgroundColor: colors.accent },
+                    isUser && styles.userBubble,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.bubbleText,
+                      { color: isUser ? '#fff' : colors.text },
+                    ]}
+                  >
+                    {message.content}
+                  </Text>
+                  <Text style={[styles.bubbleTime, { color: colors.subtext }, isUser && styles.userBubbleTime]}>9:41 AM</Text>
+                </View>
+              </View>
+            );
+          })}
+
+          {isLoading ? (
             <View style={styles.loaderWrap}>
               <BreathingLoader theme={currentTheme} />
             </View>
-          ) : null
-        }
-      />
-
-      {/* 快捷操作 + 输入栏 */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        {/* 快捷操作 */}
-        <View style={styles.quickRow}>
-          {persona.quickActions.slice(0, 3).map((action, idx) => (
-            <Pressable
-              key={idx}
-              style={[
-                styles.quickPill,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: 'rgba(255,255,255,0.1)',
-                },
-              ]}
-              onPress={() => handleSend(action)}
-              disabled={isLoading}
-            >
-              <Text style={[styles.quickText, { color: colors.text }]}>
-                {action}
-              </Text>
-            </Pressable>
-          ))}
+          ) : null}
         </View>
 
-        {/* 输入栏 */}
-        <View style={[styles.inputBar, { backgroundColor: colors.bg }]}>
+        {toolsExpanded ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.quickList}
+          >
+            {persona.quickActions.slice(0, 3).map((action) => (
+              <Pressable
+                key={action}
+                style={[
+                  styles.quickChip,
+                  {
+                    backgroundColor: hexToRgba(colors.accent, 0.08),
+                    borderColor: hexToRgba(colors.accent, 0.18),
+                  },
+                ]}
+                onPress={() => handleSend(action)}
+              >
+                <Text style={[styles.quickText, { color: colors.accent }]}>{action}</Text>
+              </Pressable>
+            ))}
+            {mode !== 'personal' ? (
+              <Pressable
+                style={[
+                  styles.quickChip,
+                  {
+                    backgroundColor: hexToRgba(colors.accent, 0.12),
+                    borderColor: hexToRgba(colors.accent, 0.28),
+                  },
+                ]}
+                onPress={() => handleSend(activeMode.prompt)}
+              >
+                <Text style={[styles.quickText, { color: colors.accent }]}>
+                  {activeMode.label}模式推荐
+                </Text>
+              </Pressable>
+            ) : null}
+          </ScrollView>
+        ) : null}
+      </ScrollView>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
+        style={[styles.inputDock, { backgroundColor: colors.bg }]}
+      >
+        <View style={[styles.inputBar, { backgroundColor: colors.card, shadowColor: colors.accent }]}>
           <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.card,
-                color: colors.text,
-              },
-            ]}
-            placeholder={persona.placeholder || '跟搭子聊聊…'}
+            style={[styles.input, { color: colors.text }]}
+            placeholder={persona.placeholder || '告诉我你的想法吧…'}
             placeholderTextColor={colors.subtext}
             value={inputText}
             onChangeText={setInputText}
@@ -186,102 +677,322 @@ export function ChatScreen() {
           <Pressable
             style={[
               styles.sendBtn,
-              {
-                backgroundColor: inputText.trim() ? colors.accent : 'rgba(255,255,255,0.08)',
-              },
+              { backgroundColor: colors.accent },
+              (!inputText.trim() || isLoading) && styles.sendBtnDisabled,
             ]}
             onPress={() => handleSend()}
             disabled={!inputText.trim() || isLoading}
           >
-            <Text style={styles.sendText}>↑</Text>
+            <Text style={styles.sendText}>➤</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
+
+      <ProfilePanel
+        visible={profileVisible}
+        theme={currentTheme}
+        mbti={mbti}
+        email={email}
+        hasSkippedAuth={hasSkippedAuth}
+        userId={userId}
+        preferences={preferences}
+        feedbackSummary={feedbackSummary}
+        onClose={() => setProfileVisible(false)}
+        onRedoOnboarding={() => {
+          setProfileVisible(false);
+          redoOnboarding();
+        }}
+        onLogout={() => {
+          setProfileVisible(false);
+          logout();
+        }}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    width: '100%',
+    maxWidth: 430,
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 126,
+  },
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: 20,
   },
-  headerLeft: {
+  wordmark: {
+    fontSize: 35,
+    lineHeight: 42,
+    fontWeight: '800',
+    fontStyle: 'italic',
+    letterSpacing: 0,
+  },
+  brandSub: {
+    fontSize: 15,
+    marginTop: 3,
+  },
+  settingsPill: {
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  settingsText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 22,
+  },
+  profile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#efe5d8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 28,
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  role: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  contextBlock: {
+    alignItems: 'flex-end',
+  },
+  timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  headerAvatar: { fontSize: 28 },
-  headerName: {
-    fontSize: 16,
+  time: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  divider: {
+    width: 1,
+    height: 26,
+    backgroundColor: '#e5ddd4',
+  },
+  weather: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  location: {
+    fontSize: 17,
+    marginTop: 10,
     fontWeight: '600',
   },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
+  modeBlock: {
+    marginBottom: 16,
   },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#4ade80',
-  },
-  headerStatus: { fontSize: 11 },
-  resetBtn: { paddingVertical: 6, paddingHorizontal: 10 },
-  resetText: { fontSize: 13 },
-  messageList: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingBottom: 8,
-  },
-  loaderWrap: { paddingVertical: 4 },
-  quickRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 8,
-    paddingBottom: 8,
-  },
-  quickPill: {
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  quickText: { fontSize: 13, fontWeight: '500' },
-  inputBar: {
+  modeHeader: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: 12,
-    paddingBottom: 12,
-    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
-  input: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 15,
-    maxHeight: 100,
-    minHeight: 42,
+  modeTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  modeSub: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  modeSoon: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  modeList: {
+    gap: 9,
+    paddingBottom: 2,
+  },
+  modeChip: {
+    borderWidth: 1,
     borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
   },
-  sendBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  modeChipText: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  feedbackRow: {
+    flexDirection: 'row',
+    gap: 9,
+    marginTop: 12,
+  },
+  feedbackBtn: {
+    flex: 1,
+    minHeight: 42,
+    borderRadius: 18,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  feedbackText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  feedbackStatus: {
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  moreToggle: {
+    minHeight: 44,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  moreToggleText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  advancedBlock: {
+    marginTop: 4,
+  },
+  chatArea: {
+    marginTop: 18,
+    gap: 10,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  miniAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#efe5d8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  miniAvatarText: {
+    fontSize: 21,
+  },
+  bubble: {
+    maxWidth: '78%',
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 1,
+  },
+  userBubble: {
+    marginLeft: 'auto',
+  },
+  bubbleText: {
+    fontSize: 17,
+    lineHeight: 25,
+  },
+  bubbleTime: {
+    fontSize: 12,
+    marginTop: 9,
+  },
+  userBubbleTime: {
+    color: 'rgba(255,255,255,0.75)',
+  },
+  loaderWrap: {
+    marginLeft: 50,
+    paddingVertical: 6,
+  },
+  quickList: {
+    gap: 10,
+    paddingTop: 20,
+    paddingBottom: 8,
+  },
+  quickChip: {
+    borderWidth: 1,
+    borderColor: '#e8dccd',
+    backgroundColor: '#fffaf3',
+    borderRadius: 22,
+    paddingHorizontal: 17,
+    paddingVertical: 11,
+  },
+  quickText: {
+    color: '#7b6b59',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  inputDock: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 18,
+  },
+  inputBar: {
+    width: '100%',
+    maxWidth: 430,
+    minHeight: 66,
+    borderRadius: 33,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingLeft: 20,
+    paddingRight: 8,
+    paddingVertical: 8,
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 3,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 22,
+    minHeight: 42,
+    maxHeight: 98,
+    paddingVertical: 9,
+  },
+  sendBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendBtnDisabled: {
+    opacity: 0.55,
+  },
   sendText: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: -2,
+    fontSize: 23,
+    lineHeight: 24,
+    fontWeight: '800',
   },
 });

@@ -1,93 +1,92 @@
 /**
- * MBTI 主题色映射（16 种）
- * 从前端 index.html themeMap 迁移
+ * MBTI 浅色主题映射
+ * 背景保持温暖克制，accent 承担每种 MBTI 的性格差异。
  */
 import { MBTIType, MBTITheme } from '@/types';
 
 export const MBTI_THEMES: Record<MBTIType, MBTITheme> = {
   INTJ: {
-    colors: { bg: '#1a1a2e', card: '#16213e', accent: '#e94560', text: '#eee', subtext: '#999' },
-    radius: '4px', avatar: '🦉', name: '小策略',
-    accentGrad: 'linear-gradient(135deg, #e94560, #0f3460)',
+    colors: { bg: '#f6f3ee', card: '#fffaf2', accent: '#415a77', text: '#2f2a24', subtext: '#7d756c' },
+    radius: '8px', avatar: '◈', name: '小策略',
+    accentGrad: 'linear-gradient(135deg, #415a77, #778da9)',
   },
   INTP: {
-    colors: { bg: '#1e1e2e', card: '#2a2a3e', accent: '#89b4fa', text: '#cdd6f4', subtext: '#888' },
-    radius: '6px', avatar: '🤖', name: '小逻辑',
-    accentGrad: 'linear-gradient(135deg, #89b4fa, #b4befe)',
+    colors: { bg: '#f5f7f2', card: '#fffdf8', accent: '#6381a8', text: '#2d2f32', subtext: '#788077' },
+    radius: '10px', avatar: '◇', name: '小逻辑',
+    accentGrad: 'linear-gradient(135deg, #6381a8, #9db4cf)',
   },
   ENTJ: {
-    colors: { bg: '#0f0f1a', card: '#1a1a2e', accent: '#00d9ff', text: '#eee', subtext: '#999' },
-    radius: '0px', avatar: '🐯', name: '小队长',
-    accentGrad: 'linear-gradient(135deg, #00d9ff, #0096c7)',
+    colors: { bg: '#f3f5ef', card: '#fffdf7', accent: '#2f6f73', text: '#282c2b', subtext: '#707b78' },
+    radius: '6px', avatar: '↗', name: '小队长',
+    accentGrad: 'linear-gradient(135deg, #2f6f73, #73a9a7)',
   },
   ENTP: {
-    colors: { bg: '#1a1520', card: '#241e30', accent: '#ff79c6', text: '#eee', subtext: '#999' },
-    radius: '8px', avatar: '🦊', name: '小点子',
-    accentGrad: 'linear-gradient(135deg, #ff79c6, #bd93f9)',
+    colors: { bg: '#fbf4ef', card: '#fffaf5', accent: '#b56576', text: '#322926', subtext: '#84736d' },
+    radius: '12px', avatar: '⌕', name: '小点子',
+    accentGrad: 'linear-gradient(135deg, #b56576, #e6a4b4)',
   },
   INFJ: {
-    colors: { bg: '#1c1726', card: '#2a2339', accent: '#c4a7e7', text: '#e0def4', subtext: '#999' },
-    radius: '16px', avatar: '🦌', name: '小洞察',
-    accentGrad: 'linear-gradient(135deg, #c4a7e7, #e0def4)',
+    colors: { bg: '#f7f3f7', card: '#fffafd', accent: '#8b6f9f', text: '#302a35', subtext: '#7d7283' },
+    radius: '18px', avatar: '✦', name: '小洞察',
+    accentGrad: 'linear-gradient(135deg, #8b6f9f, #c8b6d8)',
   },
   INFP: {
-    colors: { bg: '#2a1f2e', card: '#352840', accent: '#f6c177', text: '#f0e6e6', subtext: '#b0a0a0' },
-    radius: '20px', avatar: '🐰', name: '小暖',
-    accentGrad: 'linear-gradient(135deg, #f6c177, #ea999c)',
+    colors: { bg: '#fbf4ee', card: '#fffaf5', accent: '#d88c6d', text: '#342b26', subtext: '#8a766d' },
+    radius: '22px', avatar: '☾', name: '小暖',
+    accentGrad: 'linear-gradient(135deg, #d88c6d, #f0c3a8)',
   },
   ENFJ: {
-    colors: { bg: '#2a1f1a', card: '#3a2a22', accent: '#ff9e64', text: '#fff5ee', subtext: '#c0a090' },
-    radius: '16px', avatar: '🐶', name: '小暖阳',
-    accentGrad: 'linear-gradient(135deg, #ff9e64, #e6c79c)',
+    colors: { bg: '#faf4ea', card: '#fffaf1', accent: '#c47f39', text: '#302820', subtext: '#837467' },
+    radius: '18px', avatar: '✿', name: '小暖阳',
+    accentGrad: 'linear-gradient(135deg, #c47f39, #e7b777)',
   },
   ENFP: {
-    colors: { bg: '#2a2418', card: '#353020', accent: '#ffe066', text: '#fffbe6', subtext: '#c0b860' },
-    radius: '20px', avatar: '🌻', name: '小太阳',
-    accentGrad: 'linear-gradient(135deg, #ffe066, #ffd43b)',
+    colors: { bg: '#fff7e8', card: '#fffdf5', accent: '#f0a426', text: '#31291c', subtext: '#867761' },
+    radius: '22px', avatar: '☀', name: '小太阳',
+    accentGrad: 'linear-gradient(135deg, #f0a426, #f7cf77)',
   },
   ISTJ: {
-    colors: { bg: '#1a1e2a', card: '#242a3a', accent: '#6cace4', text: '#dde', subtext: '#889' },
-    radius: '4px', avatar: '🦅', name: '小稳',
-    accentGrad: 'linear-gradient(135deg, #6cace4, #4a90d9)',
+    colors: { bg: '#f3f5f0', card: '#fffdf8', accent: '#64748b', text: '#2a2d2f', subtext: '#747b7a' },
+    radius: '8px', avatar: '▣', name: '小稳',
+    accentGrad: 'linear-gradient(135deg, #64748b, #a7b2bd)',
   },
   ISFJ: {
-    colors: { bg: '#241f2a', card: '#2e2839', accent: '#d4a5d4', text: '#f0e6f0', subtext: '#a090a0' },
-    radius: '16px', avatar: '🕊️', name: '小护',
-    accentGrad: 'linear-gradient(135deg, #d4a5d4, #c084c0)',
+    colors: { bg: '#f8f3f1', card: '#fffaf6', accent: '#a8798c', text: '#332b2c', subtext: '#847477' },
+    radius: '18px', avatar: '◌', name: '小护',
+    accentGrad: 'linear-gradient(135deg, #a8798c, #d8b5c1)',
   },
   ESTJ: {
-    colors: { bg: '#1a2a1f', card: '#243a2e', accent: '#5cd685', text: '#e0f0e0', subtext: '#90b090' },
-    radius: '0px', avatar: '🦬', name: '小执行',
-    accentGrad: 'linear-gradient(135deg, #5cd685, #37b24d)',
+    colors: { bg: '#f3f6ef', card: '#fffdf7', accent: '#5f7f44', text: '#2b3027', subtext: '#737b69' },
+    radius: '6px', avatar: '✓', name: '小执行',
+    accentGrad: 'linear-gradient(135deg, #5f7f44, #9eb47d)',
   },
   ESFJ: {
-    colors: { bg: '#2a1f20', card: '#3a282a', accent: '#ff8a80', text: '#fff0ee', subtext: '#c0a0a0' },
-    radius: '16px', avatar: '🐝', name: '小贴心',
-    accentGrad: 'linear-gradient(135deg, #ff8a80, #e57373)',
+    colors: { bg: '#fff3ef', card: '#fffaf6', accent: '#cf7770', text: '#332826', subtext: '#86716c' },
+    radius: '18px', avatar: '♡', name: '小贴心',
+    accentGrad: 'linear-gradient(135deg, #cf7770, #efb1a8)',
   },
   ISTP: {
-    colors: { bg: '#1e282e', card: '#283440', accent: '#73c991', text: '#dde8e0', subtext: '#889' },
-    radius: '6px', avatar: '🐱', name: '小酷',
-    accentGrad: 'linear-gradient(135deg, #73c991, #51cf66)',
+    colors: { bg: '#f1f6f2', card: '#fbfff9', accent: '#4f8a6b', text: '#25302b', subtext: '#6f7c73' },
+    radius: '10px', avatar: '⌘', name: '小酷',
+    accentGrad: 'linear-gradient(135deg, #4f8a6b, #95c2a8)',
   },
   ISFP: {
-    colors: { bg: '#26201e', card: '#332a28', accent: '#ea8f8f', text: '#f0e8e6', subtext: '#a09898' },
-    radius: '20px', avatar: '🦋', name: '小雅',
-    accentGrad: 'linear-gradient(135deg, #ea8f8f, #f06595)',
+    colors: { bg: '#fff4ef', card: '#fffaf6', accent: '#d27d75', text: '#332a26', subtext: '#88746c' },
+    radius: '22px', avatar: '◐', name: '小雅',
+    accentGrad: 'linear-gradient(135deg, #d27d75, #f0b8ad)',
   },
   ESTP: {
-    colors: { bg: '#2a2018', card: '#3a2e22', accent: '#ffb74d', text: '#fff5e6', subtext: '#c0a878' },
-    radius: '8px', avatar: '🐆', name: '小冲',
-    accentGrad: 'linear-gradient(135deg, #ffb74d, #ffa726)',
+    colors: { bg: '#fff6e9', card: '#fffdf7', accent: '#d89032', text: '#30291f', subtext: '#837668' },
+    radius: '12px', avatar: '▶', name: '小冲',
+    accentGrad: 'linear-gradient(135deg, #d89032, #efbf72)',
   },
   ESFP: {
-    colors: { bg: '#2a2518', card: '#353022', accent: '#ffd54f', text: '#fffce6', subtext: '#c0b870' },
-    radius: '20px', avatar: '🦜', name: '小闪耀',
-    accentGrad: 'linear-gradient(135deg, #ffd54f, #ffca28)',
+    colors: { bg: '#fff8e8', card: '#fffdf4', accent: '#e8aa2d', text: '#30291c', subtext: '#857861' },
+    radius: '22px', avatar: '✺', name: '小闪耀',
+    accentGrad: 'linear-gradient(135deg, #e8aa2d, #f5d06f)',
   },
 };
 
-// 所有 MBTI 类型列表
 export const MBTI_TYPES: MBTIType[] = [
   'INTJ', 'INTP', 'ENTJ', 'ENTP',
   'INFJ', 'INFP', 'ENFJ', 'ENFP',

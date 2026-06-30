@@ -1,87 +1,99 @@
-# OneDayReco - 基于 MBTI 的每日活动推荐
+# OneDayReco
 
-> 基于大模型 Agent 能力，结合 MBTI 人格画像，为每个人推荐"适合今天"的活动，并到点提醒。
+OneDayReco 是一个“任何地点、任何时间，帮你直接决定现在做什么”的个性化活动推荐 App。
 
-## 快速开始
+核心原则：
 
-### 1. 安装依赖
+- 推荐必须具体、可执行，不给泛泛建议。
+- 活动、游戏、电影、地点、内容候选优先来自后端 API。
+- 无实时数据时只显示明确兜底或搜索入口，不伪造排片、评分、排队和地点。
+- 默认交互保持简单：一张推荐卡、一个行动按钮、反馈和聊天输入。
+
+## 本地启动
+
+### 1. 后端
 
 ```bash
-pip install fastapi uvicorn pydantic openai pyyaml
+pip install -r requirements.txt
+python3 -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### 2. 启动后端
+使用真实接口时可配置：
 
 ```bash
-cd backend
-python -m uvicorn app.main:app --reload --port 8000
+export AMAP_API_KEY=...
+export TMDB_API_KEY=...
+export ONEDAYRECO_ACTIVITY_API_URL=...
+export ONEDAYRECO_GAME_API_URL=...
 ```
 
-### 3. 打开前端
+### 2. 移动端 / Web 预览
 
-用浏览器打开 `frontend/src/pages/index.html`
-
-### 4. 使用流程
-
-1. 选择你的 MBTI 类型
-2. 填写社交偏好、预算等
-3. 点击"获取今日推荐"
-4. 查看推荐结果，点"喜欢/去完成/跳过"给反馈
-
-## 项目结构
-
-```
-One_Day_Reco/
-├── backend/
-│   ├── agents/
-│   │   └── recommendation_agent.py   # 推荐Agent核心
-│   ├── app/
-│   │   └── main.py                    # FastAPI 后端
-│   └── data/
-│       └── activities.json            # 活动种子数据(40条)
-├── config/
-│   ├── settings.yaml                  # 应用配置
-│   └── mbti_mapping.yaml              # MBTI维度映射
-├── frontend/
-│   └── src/pages/
-│       └── index.html                 # Web前端
-├── docs/
-│   └── PROJECT_GOALS.md               # 项目目标文档
-└── README.md
+```bash
+cd mobile
+npm install
+npx expo start --web --port 8081
 ```
 
-## 技术栈
+浏览器预览：
 
-- **后端**: Python + FastAPI
-- **LLM**: Azure OpenAI (GPT-5.3)
-- **前端**: 原生 HTML/CSS/JS（后续可迁移 React/React Native）
-- **数据**: JSON 文件存储（MVP阶段，后续可迁移数据库）
+```text
+http://localhost:8081
+```
 
-## GPT API 配置
+手机 Expo Go 预览：
 
-配置文件在 `config/settings.yaml`。
+1. 手机和电脑连同一个网络。
+2. 后端必须用 `--host 0.0.0.0` 启动。
+3. 扫 Expo 终端二维码。
 
-- **办公网络**: 使用 `tiktok-row.net` 域名
-- **非办公网络**: 使用 `byteintl.net` 域名
+前端开发环境会自动从 Expo 的 `hostUri` 推导 API 地址，例如：
 
-## 活动数据说明
+```text
+http://<电脑局域网 IP>:8000
+```
 
-当前 40 条种子数据覆盖 8 大类：
-- 文化娱乐（电影、展览、演出、阅读）
-- 户外自然（公园、徒步、骑行、观星）
-- 居家休闲（烹饪、观影、手工、冥想）
-- 社交聚会（桌游、下午茶、密室）
-- 运动健身（瑜伽、游泳、攀岩、跑步）
-- 学习提升（在线课程、写作、读书）
-- 创意手工（陶艺、绘画、摄影）
-- 城市探索（City Walk、老街、市集）
+如需手动指定：
 
-每条活动标注：人群密度、社交强度、能耗、室内外、时长、预算、计划性、MBTI友好度、可调节因素、情绪效果。
+```bash
+cd mobile
+EXPO_PUBLIC_API_BASE=http://192.168.1.10:8000 npx expo start
+```
 
-## 后续迭代
+## 当前 API
 
-- [ ] 接入实时天气 API
-- [ ] 活动库扩展 + 外部数据源（美团/大众点评）
-- [ ] 定时提醒服务
-- [ ] 用户偏好记忆持久化
-- [ ] 迁移 React Native 原生 App
+- `POST /api/recommend`
+- `POST /api/chat`
+- `POST /api/trigger`
+- `POST /api/feedback`
+- `POST /api/activity-events`
+- `GET /api/recommendations/history`
+- `GET /api/activities`
+- `GET /api/activities/games`
+- `GET /api/places/search`
+- `GET /api/movies/nearby`
+- `GET /api/content/search`
+- `GET /api/weather`
+- `GET /api/config/status`
+
+## 验证
+
+```bash
+cd mobile && npx tsc --noEmit
+```
+
+```bash
+PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_chat_endpoint.py
+PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_media_sources.py
+PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_config_status.py
+PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_recommendation_dedupe.py
+```
+
+## 目录
+
+```text
+backend/    FastAPI API、推荐 Agent、外部数据服务、SQLite/PostgreSQL 模型
+mobile/     Expo React Native App
+docs/       架构、外部数据源、屏幕触发、路线图
+scripts/    回归检查脚本
+```

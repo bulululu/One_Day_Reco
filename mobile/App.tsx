@@ -8,10 +8,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
+import { AuthScreen } from '@/screens/AuthScreen';
 import { OnboardingScreen } from '@/screens/OnboardingScreen';
 import { ChatScreen } from '@/screens/ChatScreen';
 
 export type RootStackParamList = {
+  Auth: undefined;
   Onboarding: undefined;
   Chat: undefined;
 };
@@ -19,15 +21,16 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function AppContent() {
-  const { isOnboarding, currentTheme } = useAppStore();
+  const { authToken, hasSkippedAuth, isOnboarding, currentTheme } = useAppStore();
   const colors = currentTheme.colors;
+  const needsAuth = !authToken && !hasSkippedAuth;
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <NavigationContainer
         theme={{
-          dark: true,
+          dark: false,
           colors: {
             primary: colors.accent,
             background: colors.bg,
@@ -35,12 +38,6 @@ function AppContent() {
             text: colors.text,
             border: 'transparent',
             notification: colors.accent,
-          },
-          fonts: {
-            regular: { fontFamily: 'System' },
-            medium: { fontFamily: 'System' },
-            bold: { fontFamily: 'System' },
-            heavy: { fontFamily: 'System' },
           },
         }}
       >
@@ -50,7 +47,9 @@ function AppContent() {
             contentStyle: { backgroundColor: colors.bg },
           }}
         >
-          {isOnboarding ? (
+          {needsAuth ? (
+            <Stack.Screen name="Auth" component={AuthScreen} />
+          ) : isOnboarding ? (
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           ) : (
             <Stack.Screen name="Chat" component={ChatScreen} />

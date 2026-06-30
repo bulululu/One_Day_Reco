@@ -1,118 +1,165 @@
 /**
- * 推荐卡片组件（优化版）
- * 紧凑视觉头 + 推荐语 + 具体信息 + 行动按钮
+ * 推荐卡片组件
+ * 温暖计划卡：强调个人状态和可执行安排，而不是点评平台式商户信息。
  */
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Linking } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Linking, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Recommendation, MBTITheme } from '@/types';
-import { CATEGORY_VISUALS } from '@/data/categoryVisuals';
+import { ActivitySourceMeta, MBTITheme, Recommendation } from '@/types';
+
+const MAIN_VISUAL = require('../assets/main-visual.jpeg');
 
 interface RecommendationCardProps {
   recommendation: Recommendation;
   theme: MBTITheme;
+  activitySource?: ActivitySourceMeta;
+  onAction?: (recommendation: Recommendation) => void;
 }
 
-export function RecommendationCard({ recommendation, theme }: RecommendationCardProps) {
-  const colors = theme.colors;
-  const category = recommendation.category || '城市探索';
-  const visual = CATEGORY_VISUALS[category] || CATEGORY_VISUALS['城市探索'];
+function hexToRgba(hex: string, opacity: number) {
+  const clean = hex.replace('#', '');
+  const value = clean.length === 3
+    ? clean.split('').map((char) => char + char).join('')
+    : clean;
+  const int = parseInt(value, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `rgba(${r},${g},${b},${opacity})`;
+}
+
+function getPlanMeta(recommendation: Recommendation) {
   const info = recommendation.specific_info;
+  return [
+    { label: '准备', value: '10 分钟内' },
+    { label: '时长', value: info?.duration || '约 90 分钟' },
+    { label: '花费', value: info?.price || recommendation.budget || '按需' },
+  ];
+}
+
+function getSceneCopy(recommendation: Recommendation) {
+  const text = `${recommendation.activity_name}${recommendation.recommend_text}`;
+  if (text.includes('咖啡')) return { icon: '☕', label: '安静充电' };
+  if (text.includes('纪录片') || text.includes('电影')) return { icon: '▣', label: '客厅片刻' };
+  if (text.includes('散步') || text.includes('公园')) return { icon: '⌁', label: '慢走透气' };
+  if (text.includes('手工') || text.includes('画')) return { icon: '✿', label: '一起动手' };
+  return { icon: '☀', label: '今日小计划' };
+}
+
+function getSpecificSummary(recommendation: Recommendation) {
+  const info = recommendation.specific_info;
+  if (!info) return '';
+  return [info.name, info.location, info.rating].filter(Boolean).join(' · ');
+}
+
+export function RecommendationCard({
+  recommendation,
+  theme,
+  activitySource,
+  onAction,
+}: RecommendationCardProps) {
+  const colors = theme.colors;
+  const meta = getPlanMeta(recommendation);
+  const scene = getSceneCopy(recommendation);
+  const specificSummary = getSpecificSummary(recommendation);
+  const sourceLabel = activitySource?.is_realtime ? '实时候选' : '精选兜底';
 
   const handleAction = () => {
+    onAction?.(recommendation);
     if (recommendation.action_url) {
       Linking.openURL(recommendation.action_url);
     }
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }]}>
-      {/* 视觉头 */}
-      <LinearGradient
-        colors={visual.gradient as [string, string]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.visual}
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.card,
+          borderColor: hexToRgba(colors.accent, 0.18),
+          shadowColor: colors.accent,
+        },
+      ]}
+    >
+      <ImageBackground
+        source={MAIN_VISUAL}
+        resizeMode="cover"
+        imageStyle={styles.heroImage}
+        style={styles.hero}
       >
-        <Text style={styles.visualEmoji}>{visual.emoji}</Text>
-        {recommendation.budget ? (
-          <View style={styles.budgetTag}>
-            <Text style={styles.budgetText}>{recommendation.budget}</Text>
+        <LinearGradient
+          colors={[
+            hexToRgba(colors.card, 0.94),
+            hexToRgba(colors.card, 0.72),
+            hexToRgba(colors.card, 0.08),
+          ]}
+          start={{ x: 0, y: 0.4 }}
+          end={{ x: 0.82, y: 0.5 }}
+          style={styles.imageOverlay}
+        >
+          <View style={styles.heroContent}>
+            <View style={styles.pillRow}>
+              <View style={[styles.modePill, { backgroundColor: hexToRgba(colors.accent, 0.16) }]}>
+                <Text style={[styles.modeText, { color: colors.accent }]}>
+                  {scene.icon} {scene.label}
+                </Text>
+              </View>
+              <View style={[styles.sourcePill, { backgroundColor: hexToRgba(colors.accent, 0.12) }]}>
+                <Text style={[styles.sourcePillText, { color: colors.accent }]}>
+                  {sourceLabel}
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.title, { color: colors.text }]}>
+              {recommendation.activity_name}
+            </Text>
+            <Text style={[styles.recommendText, { color: colors.text }]} numberOfLines={2}>
+              {recommendation.recommend_text}
+            </Text>
           </View>
-        ) : null}
-      </LinearGradient>
+        </LinearGradient>
+      </ImageBackground>
 
-      {/* 内容 */}
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>
-          {recommendation.activity_name}
-        </Text>
-        <Text style={[styles.recommendText, { color: colors.text }]}>
-          {recommendation.recommend_text}
-        </Text>
+        <View style={styles.metaGrid}>
+          {meta.map((item) => (
+            <View
+              key={item.label}
+              style={[styles.metaItem, { backgroundColor: hexToRgba(colors.accent, 0.08) }]}
+            >
+              <Text style={[styles.metaLabel, { color: colors.subtext }]}>{item.label}</Text>
+              <Text style={[styles.metaValue, { color: colors.text }]} numberOfLines={1}>
+                {item.value}
+              </Text>
+            </View>
+          ))}
+        </View>
 
-        {/* 具体信息 */}
-        {info && (
-          <View style={styles.infoBox}>
-            {info.name ? (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>📍</Text>
-                <Text style={[styles.infoValue, { color: colors.text }]}>
-                  {info.name}
-                  {info.location ? ` · ${info.location}` : ''}
-                </Text>
-              </View>
-            ) : null}
-            {info.duration ? (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>⏱</Text>
-                <Text style={[styles.infoValue, { color: colors.subtext }]}>
-                  {info.duration}
-                </Text>
-              </View>
-            ) : null}
-            {info.price ? (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>💰</Text>
-                <Text style={[styles.infoValue, { color: colors.subtext }]}>
-                  {info.price}
-                </Text>
-              </View>
-            ) : null}
-            {info.rating ? (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>⭐</Text>
-                <Text style={[styles.infoValue, { color: colors.subtext }]}>
-                  {info.rating}
-                </Text>
-              </View>
-            ) : null}
+        {specificSummary ? (
+          <View style={[styles.specificLine, { borderColor: hexToRgba(colors.accent, 0.14) }]}>
+            <Text style={[styles.specificLabel, { color: colors.accent }]}>具体安排</Text>
+            <Text style={[styles.specificValue, { color: colors.text }]} numberOfLines={1}>
+              {specificSummary}
+            </Text>
           </View>
-        )}
-
-        {/* Tips */}
-        {recommendation.tips ? (
-          <Text style={[styles.tips, { color: colors.subtext }]}>
-            💡 {recommendation.tips}
-          </Text>
         ) : null}
 
-        {/* 安全提示 */}
-        {recommendation.safety_note ? (
-          <Text style={[styles.safety, { color: colors.subtext }]}>
-            ⚠️ {recommendation.safety_note}
-          </Text>
-        ) : null}
+        <Pressable
+          style={[
+            styles.actionBtn,
+            {
+              backgroundColor: colors.accent,
+              opacity: recommendation.action_url ? 1 : 0.92,
+            },
+          ]}
+          onPress={handleAction}
+          disabled={!recommendation.action_url}
+        >
+          <Text style={styles.actionLabel}>{recommendation.action_label || '开始这个计划'}</Text>
+          <Text style={styles.actionArrow}>›</Text>
+        </Pressable>
 
-        {/* 行动按钮 */}
-        {recommendation.action_url && recommendation.action_label ? (
-          <Pressable
-            style={[styles.actionBtn, { backgroundColor: colors.accent }]}
-            onPress={handleAction}
-          >
-            <Text style={styles.actionLabel}>{recommendation.action_label}</Text>
-          </Pressable>
-        ) : null}
       </View>
     </View>
   );
@@ -120,84 +167,185 @@ export function RecommendationCard({ recommendation, theme }: RecommendationCard
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    borderRadius: 30,
     overflow: 'hidden',
+    borderWidth: 1,
+    shadowOpacity: 0.12,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 14 },
+    elevation: 3,
   },
-  visual: {
-    height: 80,
-    justifyContent: 'center',
+  hero: {
+    minHeight: 180,
+    backgroundColor: '#f8efe3',
+  },
+  heroImage: {
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+  },
+  imageOverlay: {
+    flex: 1,
+    minHeight: 180,
+    padding: 18,
+    justifyContent: 'flex-end',
+  },
+  heroContent: {
+    maxWidth: '82%',
+  },
+  pillRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    position: 'relative',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginBottom: 10,
   },
-  visualEmoji: {
-    fontSize: 36,
+  modePill: {
+    alignSelf: 'flex-start',
+    borderRadius: 18,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  budgetTag: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  modeText: {
+    fontSize: 13,
+    fontWeight: '800',
   },
-  budgetText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '600',
+  sourcePill: {
+    alignSelf: 'flex-start',
+    borderRadius: 18,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
   },
-  content: {
-    padding: 14,
+  sourcePillText: {
+    fontSize: 12,
+    fontWeight: '900',
   },
   title: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
+    fontSize: 23,
+    lineHeight: 29,
+    fontWeight: '800',
+    letterSpacing: 0,
+    marginBottom: 9,
   },
   recommendText: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 10,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '500',
   },
-  infoBox: {
-    gap: 6,
-    marginBottom: 10,
+  content: {
+    padding: 12,
+    gap: 10,
   },
-  infoRow: {
+  metaGrid: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
+    flexWrap: 'wrap',
+    gap: 9,
   },
-  infoLabel: {
-    fontSize: 13,
-    width: 18,
-    flexShrink: 0,
+  metaItem: {
+    width: '31.5%',
+    borderRadius: 16,
+    paddingHorizontal: 9,
+    paddingVertical: 8,
   },
-  infoValue: {
-    fontSize: 13,
-    flex: 1,
-    lineHeight: 18,
-  },
-  tips: {
-    fontSize: 12,
-    lineHeight: 17,
+  metaLabel: {
+    fontSize: 11,
     marginBottom: 4,
   },
-  safety: {
+  metaValue: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  detailBox: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 10,
+    gap: 7,
+  },
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 2,
+  },
+  detailTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  detailSource: {
     fontSize: 12,
-    lineHeight: 17,
-    marginBottom: 8,
+    fontWeight: '700',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  detailLabel: {
+    width: 36,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  detailValue: {
+    flex: 1,
+    textAlign: 'right',
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+  },
+  specificLine: {
+    minHeight: 42,
+    borderWidth: 1,
+    borderRadius: 15,
+    paddingHorizontal: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  specificLabel: {
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  specificValue: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  noteBox: {
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 13,
+  },
+  noteTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  tips: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  safety: {
+    fontSize: 13,
+    lineHeight: 19,
   },
   actionBtn: {
-    paddingVertical: 11,
-    paddingHorizontal: 16,
-    borderRadius: 14,
+    height: 52,
+    borderRadius: 26,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    justifyContent: 'center',
+    gap: 8,
   },
   actionLabel: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  actionArrow: {
+    color: '#fff',
+    fontSize: 28,
+    lineHeight: 30,
+    fontWeight: '700',
   },
 });
