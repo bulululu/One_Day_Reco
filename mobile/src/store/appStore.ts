@@ -58,6 +58,7 @@ interface AppState {
   // 入职引导
   isOnboarding: boolean;
   isReturningUser: boolean;
+  isHydrated: boolean; // AsyncStorage 加载完成标志
 
   // 用户数据
   mbti: MBTIType | null;
@@ -105,6 +106,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   // 初始状态
   isOnboarding: !initialSavedUser,
   isReturningUser: !!initialSavedUser,
+  isHydrated: false, // 初始未加载完成
   mbti: initialSavedUser?.mbti ?? null,
   preferences: initialSavedUser?.preferences ?? null,
   userId: initialSavedUser ? `user_${initialSavedUser.createdAt}` : generateUserId(),
@@ -135,31 +137,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ isOnboarding: false });
   },
 
-  // 从已保存数据直接进入
+  // 从已保存数据直接进入（保留用于外部调用）
   startAppFromSaved: () => {
-    if (savedUser) {
-      set({
-        mbti: savedUser.mbti,
-        preferences: savedUser.preferences,
-        currentTheme: MBTI_THEMES[savedUser.mbti],
-        isOnboarding: false,
-        isReturningUser: true,
-      });
-    } else {
-      // 异步加载
-      loadSavedUser().then((user) => {
-        if (user) {
-          savedUser = user;
-          set({
-            mbti: user.mbti,
-            preferences: user.preferences,
-            currentTheme: MBTI_THEMES[user.mbti],
-            isOnboarding: false,
-            isReturningUser: true,
-          });
-        }
-      });
-    }
+    loadSavedUser().then((user) => {
+      if (user) {
+        savedUser = user;
+        set({
+          mbti: user.mbti,
+          preferences: user.preferences,
+          currentTheme: MBTI_THEMES[user.mbti],
+          isOnboarding: false,
+          isReturningUser: true,
+          isHydrated: true,
+        });
+      } else {
+        set({ isHydrated: true });
+      }
+    });
   },
 
   // 重置 App，清除数据
@@ -204,10 +198,13 @@ loadSavedUser().then((user) => {
     useAppStore.setState({
       isOnboarding: false,
       isReturningUser: true,
+      isHydrated: true,
       mbti: user.mbti,
       preferences: user.preferences,
       userId: `user_${user.createdAt}`,
       currentTheme: MBTI_THEMES[user.mbti],
     });
+  } else {
+    useAppStore.setState({ isHydrated: true });
   }
 });

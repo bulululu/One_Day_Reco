@@ -100,12 +100,6 @@ export interface MBTIPersona {
   quickActions: string[];
   status: string;
   placeholder: string;
-  step1Title: string;
-  step1Sub: string;
-  step2Title: string;
-  step2Sub: string;
-  step3Title: string;
-  step3Sub: string;
 }
 
 // 活动分类视觉

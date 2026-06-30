@@ -3,16 +3,15 @@
  * 1 步：选 MBTI → 直接进入
  */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, SafeAreaView, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '@/store/appStore';
 import { MBTI_THEMES, MBTI_TYPES } from '@/data/themes';
 import { MBTIType } from '@/types';
 
-const { width } = Dimensions.get('window');
-const CARD_W = (width - 20 * 2 - 10 * 3) / 4; // 4 columns
-
 export function OnboardingScreen() {
+  const { width } = useWindowDimensions();
+  const CARD_W = (width - 20 * 2 - 10 * 3) / 4; // 4 columns
   const { completeOnboarding, setMBTI, setPreferences } = useAppStore();
   const [selected, setSelected] = useState<MBTIType | null>(null);
 

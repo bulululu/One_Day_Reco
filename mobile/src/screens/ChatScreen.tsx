@@ -125,7 +125,7 @@ export function ChatScreen() {
         ref={flatListRef}
         data={messages}
         renderItem={renderMessage}
-        keyExtractor={(_, idx) => `msg-${idx}`}
+        keyExtractor={(item, idx) => `${item.timestamp ?? idx}-${item.role}`}
         contentContainerStyle={styles.messageList}
         onContentSizeChange={() =>
           flatListRef.current?.scrollToEnd({ animated: false })

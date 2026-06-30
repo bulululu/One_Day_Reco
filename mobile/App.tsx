@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -19,8 +20,18 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function AppContent() {
-  const { isOnboarding, currentTheme } = useAppStore();
+  const { isOnboarding, isHydrated, currentTheme } = useAppStore();
   const colors = currentTheme.colors;
+
+  // AsyncStorage 加载完成前显示空白背景，防止 Onboarding 闪烁
+  if (!isHydrated) {
+    return (
+      <>
+        <StatusBar style="light" />
+        <View style={{ flex: 1, backgroundColor: colors.bg }} />
+      </>
+    );
+  }
 
   return (
     <>
