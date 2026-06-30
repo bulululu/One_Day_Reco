@@ -86,11 +86,12 @@ function activityToCard(activity: Activity): AltCard {
 
 function movieToCard(movie: MovieCandidate): AltCard {
   const cinema = movie.cinema_candidates?.[0];
+  const sourceTag = movie.source === 'curated_fallback' ? '精选电影' : '热映电影';
   return {
     image: require('../assets/idea-movie.jpeg'),
     title: movie.title,
     sub: cinema?.name || movie.duration || '猫眼确认场次',
-    tag: movie.source === 'TMDb' ? '热映电影' : '精选电影',
+    tag: sourceTag,
     prompt: `推荐一个看${movie.title}的具体计划，包含影院和场次确认方式`,
   };
 }

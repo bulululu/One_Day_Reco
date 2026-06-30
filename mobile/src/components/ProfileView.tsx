@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getConfigStatus, getRecommendationHistory } from '@/services/api';
+import {
+  disableDailyReminder,
+  formatReminderTime,
+  loadReminderSettings,
+  ReminderSettings,
+  scheduleDailyReminder,
+} from '@/services/reminders';
 import { ConfigStatusResponse, MBTITheme, RecommendationHistoryRecord, UserPreferences } from '@/types';
 import { hexToRgba, UI } from '@/styles/ui';
 
@@ -47,6 +54,8 @@ export function ProfileView({
   const colors = theme.colors;
   const [status, setStatus] = useState<ConfigStatusResponse | null>(null);
   const [history, setHistory] = useState<RecommendationHistoryRecord[]>([]);
+  const [reminder, setReminder] = useState<ReminderSettings | null>(null);
+  const [isSavingReminder, setSavingReminder] = useState(false);
   const accountLabel = email || (hasSkippedAuth ? '游客体验中' : compactUserId(userId));
 
   useEffect(() => {
@@ -69,6 +78,16 @@ export function ProfileView({
       cancelled = true;
     };
   }, [userId, refreshKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadReminderSettings().then((settings) => {
+      if (!cancelled) setReminder(settings);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const services = status?.services
     ? ['llm', 'weather', 'places', 'movies', 'content', 'activities', 'games', 'database']
@@ -102,6 +121,71 @@ export function ProfileView({
         <Pressable style={[styles.primaryBtn, { backgroundColor: colors.accent }]} onPress={onEditPreferences}>
           <Text style={styles.primaryText}>编辑偏好</Text>
         </Pressable>
+      </Section>
+
+      <Section colors={colors} title="每日提醒">
+        <View style={styles.reminderHeader}>
+          <View style={styles.reminderCopy}>
+            <Text style={[styles.reminderTitle, { color: colors.text }]}>
+              {reminder?.enabled ? `${formatReminderTime(reminder.hour, reminder.minute)} 提醒我` : '还没有开启提醒'}
+            </Text>
+            <Text style={[styles.reminderSub, { color: colors.subtext }]}>
+              {reminderStatusText(reminder)}
+            </Text>
+          </View>
+          <Pressable
+            disabled={isSavingReminder}
+            style={[
+              styles.reminderToggle,
+              { backgroundColor: reminder?.enabled ? colors.accent : hexToRgba(colors.accent, 0.1) },
+              isSavingReminder && styles.disabled,
+            ]}
+            onPress={() => {
+              if (isSavingReminder) return;
+              setSavingReminder(true);
+              const task = reminder?.enabled
+                ? disableDailyReminder(reminder)
+                : scheduleDailyReminder(reminder?.hour ?? 20, reminder?.minute ?? 30, reminder || undefined);
+              task.then(setReminder).finally(() => setSavingReminder(false));
+            }}
+          >
+            <Text style={[styles.reminderToggleText, { color: reminder?.enabled ? '#fff' : colors.accent }]}>
+              {reminder?.enabled ? '关闭' : '开启'}
+            </Text>
+          </Pressable>
+        </View>
+        <View style={styles.timeRow}>
+          {[9, 12, 18, 20, 21].map((hour) => {
+            const minute = hour >= 20 ? 30 : 0;
+            const active = reminder?.hour === hour && reminder?.minute === minute;
+            return (
+              <Pressable
+                key={hour}
+                disabled={isSavingReminder}
+                style={[
+                  styles.timeChip,
+                  {
+                    backgroundColor: active ? colors.accent : hexToRgba(colors.accent, 0.08),
+                    borderColor: active ? colors.accent : hexToRgba(colors.accent, 0.12),
+                  },
+                  isSavingReminder && styles.disabled,
+                ]}
+                onPress={() => {
+                  if (isSavingReminder) return;
+                  const current = reminder || { enabled: false, hour: 20, minute: 30, status: 'idle' as const };
+                  setSavingReminder(true);
+                  scheduleDailyReminder(hour, minute, current)
+                    .then(setReminder)
+                    .finally(() => setSavingReminder(false));
+                }}
+              >
+                <Text style={[styles.timeChipText, { color: active ? '#fff' : colors.text }]}>
+                  {formatReminderTime(hour, minute)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </Section>
 
       <Section colors={colors} title="报名 / 推荐记录">
@@ -202,6 +286,15 @@ function InfoRow({
   );
 }
 
+function reminderStatusText(settings: ReminderSettings | null) {
+  if (!settings) return '读取提醒设置中...';
+  if (settings.status === 'scheduled') return '系统会每天到点提醒你打开推荐。';
+  if (settings.status === 'permission_denied') return '系统通知权限未开启，允许通知后再试。';
+  if (settings.status === 'unsupported') return 'Web 预览会保存设置；真机 App 才能发系统通知。';
+  if (settings.status === 'error') return '提醒暂时设置失败，可以稍后再试。';
+  return '开启后每天到点推一条轻提醒。';
+}
+
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: UI.space.pageX,
@@ -300,6 +393,57 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     fontWeight: '800',
+  },
+  reminderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  reminderCopy: {
+    flex: 1,
+  },
+  reminderTitle: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '900',
+  },
+  reminderSub: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  reminderToggle: {
+    minWidth: 62,
+    minHeight: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  reminderToggleText: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  timeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 13,
+  },
+  timeChip: {
+    minHeight: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    paddingHorizontal: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeChipText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  disabled: {
+    opacity: 0.5,
   },
   historyItem: {
     borderBottomWidth: 1,

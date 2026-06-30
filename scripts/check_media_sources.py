@@ -56,8 +56,10 @@ def main():
         assert movies["source"] == "Maoyan unofficial", movies
         assert movies["is_realtime"] is True, movies
         assert movies["showtime_realtime"] is False, movies
+        assert "确认" in movies["showtime_note"], movies
         assert movies["movies"][0]["title"] == "《猫眼测试电影》", movies
         assert movies["movies"][0]["booking_url"], movies
+        assert movies["movies"][0]["showtime_status"] == "requires_ticket_platform_check", movies
         assert movies["movies"][0]["estimated_price"], movies
 
         content_res = client.get("/api/content/search?q=纪录片&limit=1")
