@@ -1,5 +1,5 @@
 /**
- * 主 App：推荐 / 探索 / 陪伴 / 我的。
+ * 主 App：推荐 / 发现 / 收藏 / 我的 + 中央聊天入口。
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -14,8 +14,10 @@ import { useAppStore } from '@/store/appStore';
 import { chat, recommend, recordActivityEvent, submitFeedback, triggerRecommendation, updateProfile } from '@/services/api';
 import { ActivitySourceMeta, ChatMessage, MBTIType, Recommendation, UserPreferences } from '@/types';
 import { ActivityDetailSheet } from '@/components/ActivityDetailSheet';
-import { CompanionView } from '@/components/CompanionView';
+import { ChatPanel } from '@/components/ChatPanel';
+import { DailyIntent, DailyIntentView } from '@/components/DailyIntentView';
 import { ExploreView } from '@/components/ExploreView';
+import { FavoritesView } from '@/components/FavoritesView';
 import { PreferenceEditorSheet } from '@/components/PreferenceEditorSheet';
 import { ProfileView } from '@/components/ProfileView';
 import { RecommendView } from '@/components/RecommendView';
@@ -43,9 +45,10 @@ const DEFAULT_RECOMMENDATION: Recommendation = {
 
 const TABS = [
   { key: 'recommend', label: '推荐', icon: '⌁' },
-  { key: 'explore', label: '探索', icon: '⌕' },
-  { key: 'companion', label: '陪伴', icon: '◌' },
-  { key: 'profile', label: '我的', icon: '♡' },
+  { key: 'explore', label: '发现', icon: '⌖' },
+  { key: 'create', label: '', icon: '+' },
+  { key: 'favorites', label: '收藏', icon: '♡' },
+  { key: 'profile', label: '我的', icon: '◌' },
 ] as const;
 
 type TabKey = typeof TABS[number]['key'];
@@ -73,13 +76,16 @@ export function MainAppScreen() {
   } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<TabKey>('recommend');
+  const [intentReady, setIntentReady] = useState(false);
+  const [currentIntent, setCurrentIntent] = useState<DailyIntent | null>(null);
+  const [chatVisible, setChatVisible] = useState(false);
   const [inputText, setInputText] = useState('');
   const [location] = useState('上海 · 徐汇区');
   const [weather] = useState('晴');
   const [recommendations, setRecommendations] = useState<Recommendation[]>([DEFAULT_RECOMMENDATION]);
   const [source, setSource] = useState<ActivitySourceMeta | undefined>(undefined);
   const [detail, setDetail] = useState<Recommendation | null>(null);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<Recommendation[]>([]);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [preferenceVisible, setPreferenceVisible] = useState(false);
   const [recommendationNotice, setRecommendationNotice] = useState('当前使用本地灵感，实时地点稍后刷新');
@@ -94,8 +100,8 @@ export function MainAppScreen() {
     weather,
     location,
     mode: '个人',
-    mode_note: '按当前地点、天气和你的偏好推荐',
-  }), [location, weather]);
+    mode_note: currentIntent?.prompt || '按当前地点、天气和你的偏好推荐',
+  }), [currentIntent?.prompt, location, weather]);
 
   const displayMessages = useMemo<ChatMessage[]>(() => {
     if (messages.length) return messages;
@@ -103,8 +109,8 @@ export function MainAppScreen() {
   }, [messages]);
 
   useEffect(() => {
-    void refreshRecommendation(false);
-  }, []);
+    if (intentReady) void refreshRecommendation(false);
+  }, [intentReady, currentIntent?.key]);
 
   const refreshRecommendation = async (appendMessage = true) => {
     if (isLoading) return;
@@ -118,7 +124,7 @@ export function MainAppScreen() {
         setHistoryRefreshKey((value) => value + 1);
         setRecommendationNotice(res.activity_source?.is_realtime ? '已根据实时数据更新推荐' : '当前使用精选灵感，实时地点稍后刷新');
       }
-      if (appendMessage && activeTab === 'companion') {
+      if (appendMessage && chatVisible) {
         addMessage({
           role: 'assistant',
           content: res.agent_message || '我换了一批更贴合当前状态的推荐。',
@@ -128,7 +134,7 @@ export function MainAppScreen() {
       }
     } catch {
       setRecommendationNotice('当前使用本地灵感，实时地点稍后刷新');
-      if (appendMessage && activeTab === 'companion') {
+      if (appendMessage && chatVisible) {
         addMessage({
           role: 'assistant',
           content: '我先用本地灵感陪你想一个能开始的小计划。实时地点恢复后，我再把路线和场次补上。',
@@ -143,7 +149,7 @@ export function MainAppScreen() {
   const handleSend = async (text?: string) => {
     const content = (text || inputText).trim();
     if (!content || isLoading) return;
-    setActiveTab('companion');
+    setChatVisible(true);
     addMessage({ role: 'user', content, timestamp: Date.now() });
     setInputText('');
     Keyboard.dismiss();
@@ -181,7 +187,7 @@ export function MainAppScreen() {
     const target = detail || featured;
     addActivityFeedback(target.activity_name, feedback);
     if (feedback === 'liked') {
-      setFavorites((current) => current.includes(target.activity_id) ? current : [target.activity_id, ...current]);
+      setFavorites((current) => current.some((item) => item.activity_id === target.activity_id) ? current : [target, ...current]);
     }
     void recordActivityEvent({
       userId,
@@ -253,14 +259,14 @@ export function MainAppScreen() {
         recommendations: res.recommendations,
         timestamp: Date.now(),
       });
-      setActiveTab('companion');
+      setChatVisible(true);
     } catch {
       addMessage({
         role: 'assistant',
         content: '离屏推荐服务暂时不可用。我先建议你换到窗边或楼下走 10 分钟，等服务恢复后再给你具体地点。',
         timestamp: Date.now(),
       });
-      setActiveTab('companion');
+      setChatVisible(true);
     } finally {
       setLoading(false);
     }
@@ -278,6 +284,13 @@ export function MainAppScreen() {
     void refreshRecommendation(true);
   };
 
+  const openChat = () => setChatVisible(true);
+
+  const handleIntentSelect = (intent: DailyIntent) => {
+    setCurrentIntent(intent);
+    setIntentReady(true);
+  };
+
   const renderContent = () => {
     if (activeTab === 'recommend') {
       return (
@@ -289,8 +302,8 @@ export function MainAppScreen() {
           onRefresh={() => void refreshRecommendation(true)}
           onOpenDetail={setDetail}
           onPrompt={handleSend}
-          onOpenProfile={() => setActiveTab('profile')}
           onCompleteToday={() => void handleFeedback('completed')}
+          onChat={openChat}
         />
       );
     }
@@ -308,18 +321,13 @@ export function MainAppScreen() {
         />
       );
     }
-    if (activeTab === 'companion') {
+    if (activeTab === 'favorites') {
       return (
-        <CompanionView
+        <FavoritesView
           theme={theme}
-          location={location}
-          isLoading={isLoading}
-          messages={displayMessages}
-          inputText={inputText}
-          onPrompt={handleSend}
-          onInputChange={setInputText}
-          onSend={() => void handleSend()}
-          onTrigger={handleScreenBreak}
+          favorites={favorites}
+          onOpenDetail={setDetail}
+          onExplore={() => setActiveTab('explore')}
         />
       );
     }
@@ -333,7 +341,7 @@ export function MainAppScreen() {
           userId={userId}
           preferences={preferences}
           feedbackSummary={feedbackSummary}
-          favorites={favorites}
+          favorites={favorites.map((item) => item.activity_id)}
           refreshKey={historyRefreshKey}
           onEditPreferences={() => setPreferenceVisible(true)}
           onRedoOnboarding={redoOnboarding}
@@ -346,23 +354,65 @@ export function MainAppScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
-      <View style={styles.shell}>
-        {renderContent()}
-      </View>
+      {!intentReady ? (
+        <DailyIntentView
+          theme={theme}
+          companionName={theme.name}
+          onSelect={handleIntentSelect}
+          onSkip={() => {
+            setCurrentIntent(null);
+            setIntentReady(true);
+          }}
+          onChat={openChat}
+        />
+      ) : (
+        <>
+          <View style={styles.shell}>
+            {renderContent()}
+          </View>
 
-      <View style={[styles.navWrap, { backgroundColor: hexToRgba(colors.bg, 0.94) }]}>
-        <View style={[styles.nav, { backgroundColor: colors.card }, softShadow(colors.accent, 0.08)]}>
-          {TABS.map((tab) => {
-            const active = activeTab === tab.key;
-            return (
-              <Pressable key={tab.key} style={styles.navItem} onPress={() => setActiveTab(tab.key)}>
-                <Text style={[styles.navIcon, { color: active ? colors.accent : colors.subtext }]}>{tab.icon}</Text>
-                <Text style={[styles.navText, { color: active ? colors.accent : colors.subtext }]}>{tab.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+          <View style={[styles.navWrap, { backgroundColor: hexToRgba(colors.bg, 0.94) }]}>
+            <View style={[styles.nav, { backgroundColor: colors.card }, softShadow(colors.accent, 0.08)]}>
+              {TABS.map((tab) => {
+                const active = activeTab === tab.key;
+                return (
+                  <Pressable
+                    key={tab.key}
+                    style={styles.navItem}
+                    onPress={() => {
+                      if (tab.key === 'create') {
+                        openChat();
+                        return;
+                      }
+                      setActiveTab(tab.key);
+                    }}
+                  >
+                    <View style={tab.key === 'create' ? [styles.createBtn, { backgroundColor: colors.accent }] : undefined}>
+                      <Text style={[
+                        tab.key === 'create' ? styles.createIcon : styles.navIcon,
+                        { color: tab.key === 'create' ? '#fff' : active ? colors.accent : colors.subtext },
+                      ]}>{tab.icon}</Text>
+                    </View>
+                    {tab.label ? <Text style={[styles.navText, { color: active ? colors.accent : colors.subtext }]}>{tab.label}</Text> : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        </>
+      )}
+
+      <ChatPanel
+        visible={chatVisible}
+        theme={theme}
+        messages={displayMessages}
+        inputText={inputText}
+        isLoading={isLoading}
+        onClose={() => setChatVisible(false)}
+        onInputChange={setInputText}
+        onSend={() => void handleSend()}
+        onPrompt={(prompt) => void handleSend(prompt)}
+      />
 
       <ActivityDetailSheet
         visible={Boolean(detail)}
@@ -418,6 +468,19 @@ const styles = StyleSheet.create({
     minHeight: 54,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  createBtn: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -18,
+  },
+  createIcon: {
+    fontSize: 34,
+    lineHeight: 38,
+    fontWeight: '500',
   },
   navIcon: {
     fontSize: 19,

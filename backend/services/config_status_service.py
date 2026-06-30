@@ -1,6 +1,10 @@
 import os
 
 from backend.services.database import DATABASE_URL
+from backend.services.env import load_env_file
+
+
+load_env_file()
 
 
 def _configured(name: str) -> bool:
@@ -47,10 +51,10 @@ def get_config_status(llm_available: bool) -> dict:
             },
             "movies": {
                 "label": "电影候选",
-                "configured": _configured("TMDB_API_KEY"),
-                "is_realtime": _configured("TMDB_API_KEY"),
-                "source": "TMDb" if _configured("TMDB_API_KEY") else "curated_fallback",
-                "detail": "配置 TMDB_API_KEY 后获取实时热映电影；影院通过高德候选，场次仍跳转票务平台确认。",
+                "configured": True,
+                "is_realtime": True,
+                "source": "Maoyan unofficial + TMDb fallback",
+                "detail": "优先尝试猫眼 M 站热映片单；失败后使用 TMDb 或精选兜底，场次和票价仍跳转票务平台确认。",
             },
             "content": {
                 "label": "视频内容",

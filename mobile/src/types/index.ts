@@ -144,16 +144,19 @@ export interface MovieCandidate {
   source: string;
   overview: string;
   release_date?: string;
+  actors?: string;
   booking_url: string;
   booking_label: string;
   showtime_status: string;
+  estimated_price?: string;
+  recommended_cinema?: PlaceCandidate | null;
   cinema_candidates: PlaceCandidate[];
   cinema_search_url?: string;
 }
 
 export interface MovieCatalogResponse {
   count: number;
-  source: 'TMDb' | 'curated_fallback';
+  source: 'Maoyan unofficial' | 'TMDb' | 'curated_fallback';
   is_realtime: boolean;
   showtime_realtime: boolean;
   showtime_note: string;

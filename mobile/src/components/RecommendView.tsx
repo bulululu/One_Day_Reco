@@ -2,7 +2,7 @@ import React from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MBTITheme, MBTIType, Recommendation } from '@/types';
-import { HOME_ASSETS, HOME_IDEAS, getLifestyleProfile } from '@/data/lifestyleDesign';
+import { HOME_ASSETS, HOME_IDEAS, getLifestyleHero } from '@/data/lifestyleDesign';
 import { hexToRgba, softShadow, UI } from '@/styles/ui';
 
 type RecommendViewProps = {
@@ -13,8 +13,8 @@ type RecommendViewProps = {
   onRefresh: () => void;
   onOpenDetail: (recommendation: Recommendation) => void;
   onPrompt: (prompt: string) => void;
-  onOpenProfile: () => void;
   onCompleteToday: () => void;
+  onChat: () => void;
 };
 
 export function RecommendView({
@@ -25,11 +25,11 @@ export function RecommendView({
   onRefresh,
   onOpenDetail,
   onPrompt,
-  onOpenProfile,
   onCompleteToday,
+  onChat,
 }: RecommendViewProps) {
   const colors = theme.colors;
-  const lifestyle = getLifestyleProfile(mbti);
+  const hero = getLifestyleHero(mbti);
   const featureTitle = featured.specific_info?.name || featured.activity_name;
   const featureCopy = featured.recommend_text.split('。')[0] || '慢下来，照顾好自己。';
 
@@ -42,15 +42,15 @@ export function RecommendView({
         </View>
         <Pressable
           style={[styles.profileButton, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.14) }]}
-          onPress={onOpenProfile}
+          onPress={onChat}
         >
-          <Text style={[styles.profileIcon, { color: colors.accent }]}>⚙</Text>
-          <Text style={[styles.profileText, { color: colors.text }]}>我的</Text>
+          <Text style={[styles.profileIcon, { color: colors.accent }]}>{theme.avatar}</Text>
+          <Text style={[styles.profileText, { color: colors.text }]}>和{theme.name}聊聊</Text>
         </Pressable>
       </View>
 
       <ImageBackground
-        source={HOME_ASSETS.hero}
+        source={hero}
         resizeMode="cover"
         imageStyle={styles.greetingImage}
         style={[styles.greetingCard, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }, softShadow(colors.accent, 0.05)]}
@@ -63,7 +63,9 @@ export function RecommendView({
         >
           <Text style={[styles.greetingTitle, { color: colors.text }]}>早安，{theme.name}</Text>
           <Text style={[styles.greetingSub, { color: colors.text }]}>今天想一起做点什么呢？</Text>
-          <Text style={[styles.greetingMeta, { color: colors.accent }]}>{mbti} · {lifestyle.styleName}</Text>
+          <Pressable style={[styles.greetingButton, { backgroundColor: colors.accent }]} onPress={onRefresh}>
+            <Text style={styles.greetingButtonText}>随便看看</Text>
+          </Pressable>
         </LinearGradient>
       </ImageBackground>
 
@@ -104,7 +106,7 @@ export function RecommendView({
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <Text style={[styles.sectionIcon, { color: colors.accent }]}>⌁</Text>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>今日灵感卡片</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>轻松推荐</Text>
           </View>
           <Pressable style={styles.refreshInline} onPress={onRefresh} disabled={isLoading}>
             <Text style={[styles.refreshText, { color: colors.subtext }]}>{isLoading ? '刷新中' : '换一批'}</Text>
@@ -135,27 +137,34 @@ export function RecommendView({
         </View>
       </View>
 
+      <View style={[styles.chatBanner, { backgroundColor: hexToRgba(colors.accent, 0.12), borderColor: hexToRgba(colors.accent, 0.12) }]}>
+        <View style={[styles.chatMascot, { borderColor: colors.accent }]}>
+          <Text style={[styles.chatFace, { color: colors.accent }]}>•ᴗ•</Text>
+        </View>
+        <View style={styles.chatCopy}>
+          <Text style={[styles.chatTitle, { color: colors.text }]}>想找点灵感，还是想聊聊天？</Text>
+          <Text style={[styles.chatSub, { color: colors.subtext }]}>{theme.name}在这里陪你～</Text>
+        </View>
+        <Pressable style={[styles.chatAction, { backgroundColor: colors.accent }]} onPress={onChat}>
+          <Text style={styles.chatActionText}>找{theme.name}聊聊</Text>
+        </Pressable>
+      </View>
+
       <View style={[styles.section, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.1) }]}>
         <View style={styles.sectionTitleRow}>
-          <Text style={[styles.sectionIcon, { color: colors.accent }]}>☑</Text>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>今日日程</Text>
+          <Text style={[styles.sectionIcon, { color: colors.accent }]}>♬</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>轻松一下</Text>
         </View>
         <View style={[styles.scheduleCard, { borderColor: hexToRgba(colors.accent, 0.12) }]}>
-          <View style={styles.dateBlock}>
-            <Text style={[styles.weekText, { color: colors.subtext }]}>今天</Text>
-            <Text style={[styles.dateText, { color: colors.text }]}>现在</Text>
-          </View>
           <View style={[styles.checkCircle, { backgroundColor: hexToRgba(colors.accent, 0.12) }]}>
-            <Text style={[styles.checkText, { color: colors.accent }]}>✓</Text>
+            <Text style={[styles.checkText, { color: colors.accent }]}>▶</Text>
           </View>
           <View style={styles.scheduleCopy}>
-            <Text style={[styles.scheduleTitle, { color: colors.text }]} numberOfLines={1}>给自己留一段轻时间</Text>
-            <Text style={[styles.scheduleTime, { color: colors.subtext }]} numberOfLines={1}>
-              {featured.specific_info?.duration || '约 60-90 分钟'}
-            </Text>
+            <Text style={[styles.scheduleTitle, { color: colors.text }]} numberOfLines={1}>给自己放首歌，放松一下吧～</Text>
+            <Text style={[styles.scheduleTime, { color: colors.subtext }]} numberOfLines={1}>现在 · 3 分钟也可以开始</Text>
           </View>
-          <Pressable style={[styles.doneButton, { borderColor: hexToRgba(colors.accent, 0.18) }]} onPress={onCompleteToday}>
-            <Text style={[styles.doneText, { color: colors.accent }]}>完成</Text>
+          <Pressable style={[styles.doneButton, { backgroundColor: colors.accent, borderColor: colors.accent }]} onPress={onCompleteToday}>
+            <Text style={styles.doneTextFilled}>完成</Text>
           </Pressable>
         </View>
       </View>
@@ -165,11 +174,11 @@ export function RecommendView({
           <Text style={[styles.memoryFace, { color: colors.accent }]}>•ᴗ•</Text>
         </View>
         <View style={styles.memoryCopy}>
-          <Text style={styles.memoryTitle}>记录我们的美好瞬间</Text>
-          <Text style={styles.memorySub}>珍藏每一个值得回忆的时刻</Text>
+          <Text style={styles.memoryTitle}>记录美好瞬间</Text>
+          <Text style={styles.memorySub}>留下今天的小美好，回头看会很治愈</Text>
         </View>
-        <Pressable style={styles.memoryButton} onPress={() => onPrompt('帮我记录今天这个活动的感受')}>
-          <Text style={[styles.memoryButtonText, { color: colors.accent }]}>去记录</Text>
+        <Pressable style={styles.memoryButton} onPress={onChat}>
+          <Text style={[styles.memoryButtonText, { color: colors.accent }]}>去聊天</Text>
         </Pressable>
       </View>
     </ScrollView>
@@ -239,6 +248,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     marginTop: 6,
+  },
+  greetingButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 21,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    marginTop: 18,
+  },
+  greetingButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '900',
   },
   greetingMeta: {
     fontSize: 12,
@@ -391,6 +412,52 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     fontSize: 11,
   },
+  chatBanner: {
+    minHeight: 88,
+    borderRadius: UI.radius.xl,
+    borderWidth: 1,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  chatMascot: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fffaf2',
+  },
+  chatFace: {
+    fontSize: 21,
+    fontWeight: '900',
+  },
+  chatCopy: {
+    flex: 1,
+  },
+  chatTitle: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '900',
+  },
+  chatSub: {
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 3,
+  },
+  chatAction: {
+    borderRadius: 22,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  chatActionText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '900',
+  },
   scheduleCard: {
     minHeight: 72,
     borderRadius: UI.radius.lg,
@@ -445,6 +512,11 @@ const styles = StyleSheet.create({
   doneText: {
     fontSize: 13,
     fontWeight: '800',
+  },
+  doneTextFilled: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '900',
   },
   memoryBanner: {
     minHeight: 72,

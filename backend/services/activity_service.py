@@ -4,6 +4,11 @@ from typing import Optional
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+from backend.services.env import load_env_file
+
+
+load_env_file()
+
 
 DEFAULT_ACTIVITY_FIELDS = {
     "category": "外部活动",

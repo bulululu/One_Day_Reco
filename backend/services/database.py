@@ -5,6 +5,10 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
+from backend.services.env import load_env_file
+
+
+load_env_file()
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DEFAULT_DB_PATH = os.path.join(PROJECT_ROOT, "backend", "data", "onedayreco_dev.db")

@@ -5,6 +5,10 @@ from urllib.error import URLError
 from urllib.parse import urlencode, quote
 from urllib.request import urlopen
 
+from backend.services.env import load_env_file
+
+
+load_env_file()
 
 AMAP_TEXT_URL = "https://restapi.amap.com/v3/place/text"
 
@@ -98,7 +102,9 @@ def search_places(
         with urlopen(url, timeout=4) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except (OSError, URLError, TimeoutError, json.JSONDecodeError):
-        return _fallback_response(clean_query, location, "amap_request_failed")
+        fallback = _fallback_response(clean_query, location, "amap_request_failed")
+        fallback["configured"] = True
+        return fallback
 
     if payload.get("status") != "1":
         fallback = _fallback_response(clean_query, location, payload.get("info") or "amap_error")
