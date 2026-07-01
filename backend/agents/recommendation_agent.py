@@ -552,10 +552,9 @@ class RecommendationAgent:
             "https://maoyan.com",
             "https://m.maoyan.com",
             "https://www.damai.cn",
-            "https://www.dianping.com",
             "https://search.bilibili.com",
             "https://www.bilibili.com",
-            "https://map.baidu.com",
+            "https://ditu.amap.com",
             "https://store.steampowered.com",
         }
 
@@ -579,8 +578,6 @@ class RecommendationAgent:
             return f"https://m.maoyan.com/search?keyword={local_query}"
         if "大麦" in source or act.get("subcategory") in {"演出", "赛事"}:
             return f"https://search.damai.cn/search.html?keyword={query}"
-        if "大众点评" in source:
-            return f"https://www.dianping.com/search/keyword/2/0_{query}"
         return f"https://ditu.amap.com/search?query={local_query}"
 
     def _is_time_in_window(self, current_hour: int, time_window: str) -> bool:
@@ -705,7 +702,7 @@ class RecommendationAgent:
         "duration": "预计时长",
         "price": "价格/预算",
         "rating": "评分（如有）",
-        "source": "信息来源/获取路径（如猫眼、大众点评、B站搜索词）"
+        "source": "信息来源/获取路径（如猫眼、高德地图、B站搜索词）"
       }}
     }}
   ],

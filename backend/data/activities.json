@@ -30,7 +30,7 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "09:00-24:00",
     "convenience": "高",
     "min_prep_time": "10分钟",
@@ -70,13 +70,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "09:00-17:00",
     "convenience": "高",
     "min_prep_time": "15分钟",
     "safety_note": "无特殊安全要求",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_美术馆",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E5%B1%95%E8%A7%88",
+    "action_label": "高德地图",
     "image_query": "美术馆展厅安静氛围"
   },
   {
@@ -110,7 +110,7 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大麦",
+    "source_platform": "大麦/高德地图",
     "time_window": "19:00-22:00",
     "convenience": "中",
     "min_prep_time": "30分钟",
@@ -150,13 +150,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "大众点评",
+    "source_platform": "高德地图",
     "time_window": "10:00-22:00",
     "convenience": "高",
     "min_prep_time": "10分钟",
     "safety_note": "无特殊安全要求",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_独立书店",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E9%98%85%E8%AF%BB",
+    "action_label": "高德地图",
     "image_query": "独立书店咖啡阅读氛围"
   },
   {
@@ -190,7 +190,7 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大麦",
+    "source_platform": "大麦/高德地图",
     "time_window": "20:00-23:00",
     "convenience": "中",
     "min_prep_time": "30分钟",
@@ -233,8 +233,8 @@
     "convenience": "高",
     "min_prep_time": "5分钟",
     "safety_note": "夜间避免去偏僻区域",
-    "action_url": "https://map.baidu.com",
-    "action_label": "百度地图",
+    "action_url": "https://ditu.amap.com/search?query=%E5%85%AC%E5%9B%AD",
+    "action_label": "高德地图",
     "image_query": "城市公园绿树小路"
   },
   {
@@ -271,8 +271,8 @@
     "convenience": "低",
     "min_prep_time": "60分钟",
     "safety_note": "需要合适装备，结伴同行更安全",
-    "action_url": "https://map.baidu.com",
-    "action_label": "百度地图路线",
+    "action_url": "https://ditu.amap.com/search?query=%E5%BE%92%E6%AD%A5",
+    "action_label": "高德地图路线",
     "image_query": "郊外徒步山间小路"
   },
   {
@@ -309,8 +309,8 @@
     "convenience": "中",
     "min_prep_time": "20分钟",
     "safety_note": "戴好头盔，遵守交通规则",
-    "action_url": "https://map.baidu.com",
-    "action_label": "百度地图路线",
+    "action_url": "https://ditu.amap.com/search?query=%E9%AA%91%E8%A1%8C",
+    "action_label": "高德地图路线",
     "image_query": "城市绿道骑行"
   },
   {
@@ -346,8 +346,8 @@
     "convenience": "中",
     "min_prep_time": "20分钟",
     "safety_note": "日出时段注意保暖，日落时段注意天黑路滑",
-    "action_url": "https://map.baidu.com",
-    "action_label": "百度地图",
+    "action_url": "https://ditu.amap.com/search?query=%E8%87%AA%E7%84%B6%E8%A7%82%E8%B5%8F",
+    "action_label": "高德地图",
     "image_query": "日落天空剪影"
   },
   {
@@ -383,8 +383,8 @@
     "convenience": "中",
     "min_prep_time": "30分钟",
     "safety_note": "注意食物保鲜和防虫",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_公园",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E5%85%AC%E5%9B%AD",
+    "action_label": "高德地图",
     "image_query": "公园野餐草地阳光"
   },
   {
@@ -578,13 +578,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "14:00-22:00",
     "convenience": "中",
     "min_prep_time": "30分钟",
     "safety_note": "无特殊安全要求",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_桌游",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E6%A1%8C%E6%B8%B8",
+    "action_label": "高德地图",
     "image_query": "桌游聚会朋友欢乐"
   },
   {
@@ -618,13 +618,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "14:00-17:00",
     "convenience": "中",
     "min_prep_time": "20分钟",
     "safety_note": "无特殊安全要求",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_下午茶",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E9%A4%90%E9%A5%AE",
+    "action_label": "高德地图",
     "image_query": "下午茶甜点精致"
   },
   {
@@ -658,25 +658,25 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "10:00-22:00",
     "convenience": "中",
     "min_prep_time": "20分钟",
     "safety_note": "有幽闭恐惧症者不宜参加",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_密室逃脱",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E5%AF%86%E5%AE%A4%E9%80%83%E8%84%B1%20/%20%E5%89%A7%E6%9C%AC%E8%A7%A3%E8%B0%9C",
+    "action_label": "高德地图",
     "image_query": "密室逃脱悬疑氛围",
     "specific_info": {
       "name": "密室逃脱 / 剧本解谜",
-      "location": "附近密室门店，地图或美团搜索",
+      "location": "附近密室门店，高德地图搜索",
       "duration": "90-150分钟",
       "price": "人均约80-180元",
-      "rating": "以美团/大众点评实时评分为准",
-      "source": "美团/大众点评搜索：密室逃脱",
+      "rating": "以高德地图实时信息为准",
+      "source": "高德地图搜索：密室逃脱",
       "platform": "线下门店",
       "game_type": "线下解谜 / 角色协作",
       "player_mode": "3-6人多人",
-      "setup": "约好人数后，在美团/大众点评按距离、评分、恐怖程度筛选并预约"
+      "setup": "约好人数后，在高德地图按距离、评分、恐怖程度筛选并预约"
     }
   },
   {
@@ -710,13 +710,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "09:00-21:00",
     "convenience": "中",
     "min_prep_time": "20分钟",
     "safety_note": "注意身体极限，量力而行",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_瑜伽",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E7%91%9C%E4%BC%BD",
+    "action_label": "高德地图",
     "image_query": "瑜伽课宁静专注"
   },
   {
@@ -750,13 +750,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "06:00-21:00",
     "convenience": "中",
     "min_prep_time": "20分钟",
     "safety_note": "饭后不宜立即游泳，注意热身",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_游泳馆",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E6%B8%B8%E6%B3%B3",
+    "action_label": "高德地图",
     "image_query": "游泳池清澈水面"
   },
   {
@@ -790,13 +790,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "10:00-22:00",
     "convenience": "中",
     "min_prep_time": "20分钟",
     "safety_note": "初学者需教练指导，注意安全绳索",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_攀岩",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E6%94%80%E5%B2%A9",
+    "action_label": "高德地图",
     "image_query": "攀岩馆岩壁向上"
   },
   {
@@ -833,8 +833,8 @@
     "convenience": "高",
     "min_prep_time": "10分钟",
     "safety_note": "夜跑穿反光衣物，选择照明好的路线",
-    "action_url": "https://map.baidu.com",
-    "action_label": "百度地图路线",
+    "action_url": "https://ditu.amap.com/search?query=%E8%B7%91%E6%AD%A5",
+    "action_label": "高德地图路线",
     "image_query": "夜跑城市街道"
   },
   {
@@ -988,13 +988,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "10:00-20:00",
     "convenience": "中",
     "min_prep_time": "20分钟",
     "safety_note": "注意工具使用安全",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_陶艺",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E9%99%B6%E8%89%BA",
+    "action_label": "高德地图",
     "image_query": "陶艺制作手工温暖"
   },
   {
@@ -1106,13 +1106,13 @@
       "晴",
       "阴"
     ],
-    "source_platform": "大众点评",
+    "source_platform": "高德地图",
     "time_window": "10:00-20:00",
     "convenience": "高",
     "min_prep_time": "10分钟",
     "safety_note": "注意交通安全",
-    "action_url": "https://map.baidu.com",
-    "action_label": "百度地图路线",
+    "action_url": "https://ditu.amap.com/search?query=%E6%BC%AB%E6%AD%A5",
+    "action_label": "高德地图路线",
     "image_query": "城市漫步街景"
   },
   {
@@ -1144,13 +1144,13 @@
       "晴",
       "阴"
     ],
-    "source_platform": "大众点评",
+    "source_platform": "高德地图",
     "time_window": "10:00-20:00",
     "convenience": "高",
     "min_prep_time": "15分钟",
     "safety_note": "注意交通安全，保护个人财物",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_老街",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E6%96%87%E5%8C%96%E6%8E%A2%E7%B4%A2",
+    "action_label": "高德地图",
     "image_query": "老街历史建筑街景"
   },
   {
@@ -1181,13 +1181,13 @@
     "weather_suitable": [
       "晴"
     ],
-    "source_platform": "大众点评",
+    "source_platform": "高德地图",
     "time_window": "10:00-20:00",
     "convenience": "中",
     "min_prep_time": "20分钟",
     "safety_note": "人多拥挤注意财物安全",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_市集",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E5%B8%82%E9%9B%86",
+    "action_label": "高德地图",
     "image_query": "创意市集热闹摊位"
   },
   {
@@ -1223,8 +1223,8 @@
     "convenience": "低",
     "min_prep_time": "60分钟",
     "safety_note": "必须结伴前往，选择安全观测点，带好照明设备",
-    "action_url": "https://map.baidu.com",
-    "action_label": "百度地图",
+    "action_url": "https://ditu.amap.com/search?query=%E8%87%AA%E7%84%B6%E8%A7%82%E8%B5%8F",
+    "action_label": "高德地图",
     "image_query": "星空银河夜空"
   },
   {
@@ -1258,13 +1258,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "10:00-21:00",
     "convenience": "高",
     "min_prep_time": "15分钟",
     "safety_note": "注意动物过敏",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_宠物咖啡馆",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E4%BC%91%E9%97%B2%E9%A4%90%E9%A5%AE",
+    "action_label": "高德地图",
     "image_query": "宠物咖啡馆猫咪温暖"
   },
   {
@@ -1303,8 +1303,8 @@
     "convenience": "高",
     "min_prep_time": "10分钟",
     "safety_note": "无特殊安全要求",
-    "action_url": "https://map.baidu.com",
-    "action_label": "百度地图",
+    "action_url": "https://ditu.amap.com/search?query=%E9%98%85%E8%AF%BB",
+    "action_label": "高德地图",
     "image_query": "图书馆书架安静"
   },
   {
@@ -1336,13 +1336,13 @@
       "晴",
       "阴"
     ],
-    "source_platform": "大众点评",
+    "source_platform": "高德地图",
     "time_window": "08:00-18:00",
     "convenience": "高",
     "min_prep_time": "15分钟",
     "safety_note": "注意花粉过敏",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_花鸟市场",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E5%B8%82%E9%9B%86",
+    "action_label": "高德地图",
     "image_query": "花鸟市场绿植鲜花"
   },
   {
@@ -1416,13 +1416,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "10:00-21:00",
     "convenience": "中",
     "min_prep_time": "20分钟",
     "safety_note": "注意身体极限，量力而行",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_蹦床馆",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E8%B6%A3%E5%91%B3%E8%BF%90%E5%8A%A8",
+    "action_label": "高德地图",
     "image_query": "蹦床馆活力运动"
   },
   {
@@ -1456,13 +1456,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "大众点评",
+    "source_platform": "高德地图",
     "time_window": "11:00-20:00",
     "convenience": "中",
     "min_prep_time": "15分钟",
     "safety_note": "注意试穿卫生",
-    "action_url": "https://www.dianping.com/search/keyword/2/0_古着店",
-    "action_label": "大众点评",
+    "action_url": "https://ditu.amap.com/search?query=%E8%B4%AD%E7%89%A9",
+    "action_label": "高德地图",
     "image_query": "古着店复古服饰"
   },
   {
@@ -1536,7 +1536,7 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大麦",
+    "source_platform": "大麦/高德地图",
     "time_window": "全天",
     "convenience": "高",
     "min_prep_time": "5分钟",
@@ -1579,8 +1579,8 @@
     "convenience": "高",
     "min_prep_time": "10分钟",
     "safety_note": "注意交通安全，避开危险区域",
-    "action_url": "https://map.baidu.com",
-    "action_label": "百度地图路线",
+    "action_url": "https://ditu.amap.com/search?query=%E6%91%84%E5%BD%B1",
+    "action_label": "高德地图路线",
     "image_query": "摄影漫步城市街景"
   },
   {
@@ -1666,13 +1666,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "大众点评/美团",
+    "source_platform": "高德地图",
     "time_window": "07:00-22:00",
     "convenience": "高",
     "min_prep_time": "10分钟",
     "safety_note": "无特殊安全要求",
-    "action_url": "https://www.dianping.com",
-    "action_label": "大众点评搜索",
+    "action_url": "https://ditu.amap.com/search?query=%E7%BE%8E%E9%A3%9F",
+    "action_label": "高德地图搜索",
     "image_query": "美食餐厅氛围"
   },
   {
@@ -1746,13 +1746,13 @@
       "雨",
       "雪"
     ],
-    "source_platform": "大众点评",
+    "source_platform": "高德地图",
     "time_window": "08:00-22:00",
     "convenience": "高",
     "min_prep_time": "10分钟",
     "safety_note": "无特殊安全要求",
-    "action_url": "https://www.dianping.com",
-    "action_label": "大众点评找咖啡馆",
+    "action_url": "https://ditu.amap.com/search?query=%E5%92%96%E5%95%A1%E9%A6%86",
+    "action_label": "高德地图找咖啡馆",
     "image_query": "安静咖啡馆氛围"
   },
   {
@@ -1786,12 +1786,12 @@
       "雨",
       "雪"
     ],
-    "source_platform": "美团/大众点评",
+    "source_platform": "高德地图",
     "time_window": "09:00-17:00",
     "convenience": "中",
     "min_prep_time": "15分钟",
     "safety_note": "无特殊安全要求",
-    "action_url": "https://www.dianping.com",
+    "action_url": "https://ditu.amap.com/search?query=%E5%B1%95%E8%A7%88",
     "action_label": "查看展览信息",
     "image_query": "博物馆展览氛围"
   },

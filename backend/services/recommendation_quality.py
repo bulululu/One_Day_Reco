@@ -98,7 +98,7 @@ def quality_issues(rec: dict) -> list[str]:
 
     if ("美食" in combined or "餐厅" in combined or "吃饭" in combined) and not _has_any(
         combined,
-        ["人均", "评分", "营业", "排队", "菜系", "地图", "点评", "美团"],
+        ["人均", "评分", "营业", "排队", "菜系", "地图", "高德"],
     ):
         issues.append("restaurant.missing_price_or_reputation")
 
