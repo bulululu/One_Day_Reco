@@ -10,9 +10,10 @@ type ExploreViewProps = {
   source?: ActivitySourceMeta;
   isLoading: boolean;
   notice?: string;
+  activeFilter?: string | null;
   onRefresh: () => void;
   onOpenDetail: (recommendation: Recommendation) => void;
-  onPrompt: (prompt: string) => void;
+  onPrompt: (label: string, prompt: string) => void;
 };
 
 const FILTERS = [
@@ -29,6 +30,7 @@ export function ExploreView({
   source,
   isLoading,
   notice,
+  activeFilter,
   onRefresh,
   onOpenDetail,
   onPrompt,
@@ -65,10 +67,16 @@ export function ExploreView({
         {FILTERS.map((item) => (
           <Pressable
             key={item.label}
-            style={[styles.filterChip, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.13) }]}
-            onPress={() => onPrompt(item.prompt)}
+            style={[
+              styles.filterChip,
+              {
+                backgroundColor: activeFilter === item.label ? colors.accent : colors.card,
+                borderColor: activeFilter === item.label ? colors.accent : hexToRgba(colors.accent, 0.13),
+              },
+            ]}
+            onPress={() => onPrompt(item.label, item.prompt)}
           >
-            <Text style={[styles.filterText, { color: colors.text }]}>{item.label}</Text>
+            <Text style={[styles.filterText, { color: activeFilter === item.label ? '#fff' : colors.text }]}>{item.label}</Text>
           </Pressable>
         ))}
       </ScrollView>

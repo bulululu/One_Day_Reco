@@ -108,6 +108,7 @@ export function MainAppScreen() {
   const [favorites, setFavorites] = useState<Recommendation[]>([]);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [preferenceVisible, setPreferenceVisible] = useState(false);
+  const [activeExploreFilter, setActiveExploreFilter] = useState<string | null>(null);
   const [recommendationNotice, setRecommendationNotice] = useState('当前使用本地灵感，实时地点稍后刷新');
   const [feedbackNotice, setFeedbackNotice] = useState('');
   const favoritesHydrated = useRef(false);
@@ -353,7 +354,8 @@ export function MainAppScreen() {
     void refreshRecommendation(true);
   };
 
-  const handleExploreFilter = (prompt: string) => {
+  const handleExploreFilter = (label: string | null, prompt: string) => {
+    setActiveExploreFilter(label);
     void refreshRecommendation(false, {
       ...context,
       mode_note: prompt,
@@ -362,7 +364,7 @@ export function MainAppScreen() {
 
   const handleHomeIdea = (prompt: string) => {
     setActiveTab('explore');
-    handleExploreFilter(prompt);
+    handleExploreFilter(null, prompt);
   };
 
   const openChat = () => setChatVisible(true);
@@ -396,7 +398,11 @@ export function MainAppScreen() {
           source={source}
           isLoading={isLoading}
           notice={feedbackNotice || recommendationNotice}
-          onRefresh={() => void refreshRecommendation(true)}
+          activeFilter={activeExploreFilter}
+          onRefresh={() => {
+            setActiveExploreFilter(null);
+            void refreshRecommendation(true);
+          }}
           onOpenDetail={setDetail}
           onPrompt={handleExploreFilter}
         />
