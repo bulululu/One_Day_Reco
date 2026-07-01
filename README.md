@@ -91,6 +91,7 @@ PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_chat_e
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_real_chat_endpoint.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_media_sources.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_config_status.py
+PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_weather_endpoint.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_recommendation_dedupe.py
 ```
 
