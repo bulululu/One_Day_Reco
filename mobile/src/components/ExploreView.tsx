@@ -98,8 +98,8 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   title: {
-    fontSize: 24,
-    lineHeight: 31,
+    fontSize: 21,
+    lineHeight: 28,
     fontWeight: '800',
   },
   subtitle: {

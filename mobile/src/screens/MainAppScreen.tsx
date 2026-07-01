@@ -353,6 +353,18 @@ export function MainAppScreen() {
     void refreshRecommendation(true);
   };
 
+  const handleExploreFilter = (prompt: string) => {
+    void refreshRecommendation(false, {
+      ...context,
+      mode_note: prompt,
+    });
+  };
+
+  const handleHomeIdea = (prompt: string) => {
+    setActiveTab('explore');
+    handleExploreFilter(prompt);
+  };
+
   const openChat = () => setChatVisible(true);
 
   const handleIntentSelect = (intent: DailyIntent) => {
@@ -370,7 +382,7 @@ export function MainAppScreen() {
           isLoading={isLoading}
           onRefresh={() => void refreshRecommendation(true)}
           onOpenDetail={setDetail}
-          onPrompt={handleSend}
+          onPrompt={handleHomeIdea}
           onCompleteToday={() => void handleFeedback('completed')}
           onChat={openChat}
         />
@@ -386,7 +398,7 @@ export function MainAppScreen() {
           notice={feedbackNotice || recommendationNotice}
           onRefresh={() => void refreshRecommendation(true)}
           onOpenDetail={setDetail}
-          onPrompt={handleSend}
+          onPrompt={handleExploreFilter}
         />
       );
     }
