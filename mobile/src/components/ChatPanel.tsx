@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ChatMessage, MBTITheme } from '@/types';
 import { hexToRgba, UI } from '@/styles/ui';
 
@@ -35,8 +35,11 @@ export function ChatPanel({
   const colors = theme.colors;
   const visibleMessages = messages.slice(-12);
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={[styles.container, { backgroundColor: colors.bg }]}>
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={[styles.container, { backgroundColor: colors.bg }]}
+      >
         <View style={styles.shell}>
           <View style={styles.header}>
             <View>
@@ -107,7 +110,7 @@ export function ChatPanel({
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -154,7 +157,7 @@ const styles = StyleSheet.create({
   },
   messageList: {
     flexGrow: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     gap: 10,
     paddingVertical: 18,
   },
@@ -174,6 +177,7 @@ const styles = StyleSheet.create({
     borderRadius: UI.radius.xl,
     borderWidth: 1,
     padding: 18,
+    marginTop: 48,
   },
   emptyTitle: {
     fontSize: 20,

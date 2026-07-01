@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { getConfigStatus, getRecommendationHistory } from '@/services/api';
+import { getRecommendationHistory } from '@/services/api';
 import {
   disableDailyReminder,
   formatReminderTime,
@@ -8,7 +8,7 @@ import {
   ReminderSettings,
   scheduleDailyReminder,
 } from '@/services/reminders';
-import { ConfigStatusResponse, MBTITheme, RecommendationHistoryRecord, UserPreferences } from '@/types';
+import { MBTITheme, RecommendationHistoryRecord, UserPreferences } from '@/types';
 import { hexToRgba, UI } from '@/styles/ui';
 
 type ProfileViewProps = {
@@ -52,7 +52,6 @@ export function ProfileView({
   onLogout,
 }: ProfileViewProps) {
   const colors = theme.colors;
-  const [status, setStatus] = useState<ConfigStatusResponse | null>(null);
   const [history, setHistory] = useState<RecommendationHistoryRecord[]>([]);
   const [reminder, setReminder] = useState<ReminderSettings | null>(null);
   const [isSavingReminder, setSavingReminder] = useState(false);
@@ -60,13 +59,6 @@ export function ProfileView({
 
   useEffect(() => {
     let cancelled = false;
-    getConfigStatus()
-      .then((result) => {
-        if (!cancelled) setStatus(result);
-      })
-      .catch(() => {
-        if (!cancelled) setStatus(null);
-      });
     getRecommendationHistory(userId, 8)
       .then((result) => {
         if (!cancelled) setHistory(result.history);
@@ -88,12 +80,6 @@ export function ProfileView({
       cancelled = true;
     };
   }, []);
-
-  const services = status?.services
-    ? ['llm', 'weather', 'places', 'movies', 'content', 'activities', 'games', 'database']
-      .map((key) => status.services[key])
-      .filter(Boolean)
-    : [];
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -205,24 +191,6 @@ export function ProfileView({
         <Text style={[styles.emptyText, { color: colors.subtext }]}>
           {favorites.length ? `已收藏 ${favorites.length} 个方向。` : '点推荐卡里的喜欢后，会先记录为本地收藏。'}
         </Text>
-      </Section>
-
-      <Section colors={colors} title="数据状态">
-        {services.length ? services.map((service) => (
-          <View key={service.label} style={styles.serviceRow}>
-            <View style={styles.serviceCopy}>
-              <Text style={[styles.serviceTitle, { color: colors.text }]}>{service.label}</Text>
-              <Text style={[styles.serviceDetail, { color: colors.subtext }]} numberOfLines={2}>{service.detail}</Text>
-            </View>
-            <View style={[styles.statusPill, { backgroundColor: service.is_realtime ? hexToRgba(colors.accent, 0.12) : 'rgba(130,122,112,0.12)' }]}>
-              <Text style={[styles.statusText, { color: service.is_realtime ? colors.accent : colors.subtext }]}>
-                {service.is_realtime ? '实时' : service.configured ? '可用' : '兜底'}
-              </Text>
-            </View>
-          </View>
-        )) : (
-          <Text style={[styles.emptyText, { color: colors.subtext }]}>服务状态暂时不可用。推荐会明确标记实时或兜底来源。</Text>
-        )}
       </Section>
 
       <Pressable style={[styles.secondaryBtn, { borderColor: hexToRgba(colors.accent, 0.18) }]} onPress={onRedoOnboarding}>
@@ -460,34 +428,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     lineHeight: 21,
-  },
-  serviceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingVertical: 9,
-  },
-  serviceCopy: {
-    flex: 1,
-  },
-  serviceTitle: {
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  serviceDetail: {
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
-  },
-  statusPill: {
-    borderRadius: 14,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '900',
   },
   secondaryBtn: {
     minHeight: 48,

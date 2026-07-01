@@ -103,7 +103,7 @@ export function RecommendationCard({
             <Text style={[styles.title, { color: colors.text }]}>
               {recommendation.activity_name}
             </Text>
-            <Text style={[styles.recommendText, { color: colors.text }]} numberOfLines={2}>
+            <Text style={[styles.recommendText, { color: colors.text }]} numberOfLines={1}>
               {recommendation.recommend_text}
             </Text>
           </View>
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   hero: {
-    minHeight: 152,
+    minHeight: 128,
     backgroundColor: '#f8efe3',
   },
   heroImage: {
@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
   },
   imageOverlay: {
     flex: 1,
-    minHeight: 152,
-    padding: 16,
+    minHeight: 128,
+    padding: 14,
     justifyContent: 'flex-end',
   },
   heroContent: {
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     flexWrap: 'wrap',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   modePill: {
     alignSelf: 'flex-start',
@@ -205,8 +205,8 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   title: {
-    fontSize: 21,
-    lineHeight: 27,
+    fontSize: 19,
+    lineHeight: 25,
     fontWeight: '800',
     letterSpacing: 0,
     marginBottom: 7,
@@ -217,8 +217,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   content: {
-    padding: 12,
-    gap: 10,
+    padding: 10,
+    gap: 8,
   },
   metaGrid: {
     flexDirection: 'row',
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   specificLine: {
-    minHeight: 42,
+    minHeight: 38,
     borderWidth: 1,
     borderRadius: UI.radius.sm,
     paddingHorizontal: 11,
@@ -315,8 +315,8 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   actionBtn: {
-    height: 48,
-    borderRadius: 24,
+    height: 44,
+    borderRadius: 22,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
