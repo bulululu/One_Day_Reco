@@ -14,6 +14,7 @@ from backend.services.database import init_db
 
 
 def main():
+    require_llm = "--require-llm" in sys.argv
     assert agent.client is not None, "LLM client is not configured"
     init_db()
     client = TestClient(app)
@@ -40,9 +41,12 @@ def main():
     data = res.json()
     assert data.get("reply"), data
     assert isinstance(data.get("recommendations"), list), data
+    if require_llm:
+        assert data.get("reply_source") == "llm", data
     print(
         {
             "reply_len": len(data["reply"]),
+            "reply_source": data.get("reply_source"),
             "recommendation_count": len(data["recommendations"]),
             "activity_source": data.get("activity_source", {}).get("source"),
         }

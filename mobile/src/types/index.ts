@@ -239,6 +239,7 @@ export interface ChatMessage {
 // 聊天响应
 export interface ChatResponse {
   reply: string;
+  reply_source?: 'llm' | 'fallback';
   recommendations: Recommendation[];
   companion: { avatar: string; name: string };
   theme: MBTITheme;

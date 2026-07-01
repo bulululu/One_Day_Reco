@@ -1201,6 +1201,7 @@ class RecommendationAgent:
                 result = json.loads(result_text)
 
                 result = self._finalize_result(result, activity_map, theme, activity_source, context, place_hints)
+                result["reply_source"] = "llm"
 
                 return result
 
@@ -1237,6 +1238,7 @@ class RecommendationAgent:
                 act = random.choice(candidates[:10])
                 return {
                     "reply": "行，那看看这个？",
+                    "reply_source": "fallback",
                     "recommendations": [
                         self._attach_activity_metadata(
                             {
@@ -1258,6 +1260,7 @@ class RecommendationAgent:
                 act = candidates[0]
                 return {
                     "reply": "我先给你一个现在就能开始的选择。你不用想太多，看看这个合不合适；不喜欢我再换。",
+                    "reply_source": "fallback",
                     "recommendations": [
                         self._attach_activity_metadata(
                             {
@@ -1277,6 +1280,7 @@ class RecommendationAgent:
         # 默认闲聊
         return {
             "reply": "嗯嗯，我在呢～有什么想聊的或者想找活动，随时跟我说。",
+            "reply_source": "fallback",
             "recommendations": [],
             "companion": {"avatar": theme["avatar"], "name": theme["name"]},
             "theme": theme,
