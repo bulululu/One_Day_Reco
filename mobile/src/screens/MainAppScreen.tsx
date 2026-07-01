@@ -502,6 +502,10 @@ export function MainAppScreen() {
         onInputChange={setInputText}
         onSend={() => void handleSend()}
         onPrompt={(prompt) => void handleSend(prompt)}
+        onOpenRecommendation={(recommendation) => {
+          setChatVisible(false);
+          setDetail(recommendation);
+        }}
       />
 
       <ActivityDetailSheet

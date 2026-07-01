@@ -1,6 +1,6 @@
 import React from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { ChatMessage, MBTITheme } from '@/types';
+import { ChatMessage, MBTITheme, Recommendation } from '@/types';
 import { hexToRgba, UI } from '@/styles/ui';
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
   onInputChange: (text: string) => void;
   onSend: () => void;
   onPrompt: (prompt: string) => void;
+  onOpenRecommendation: (recommendation: Recommendation) => void;
 };
 
 const QUICK_PROMPTS = [
@@ -31,6 +32,7 @@ export function ChatPanel({
   onInputChange,
   onSend,
   onPrompt,
+  onOpenRecommendation,
 }: Props) {
   const colors = theme.colors;
   const visibleMessages = messages.slice(-12);
@@ -54,6 +56,7 @@ export function ChatPanel({
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.messageList}>
             {visibleMessages.length ? visibleMessages.map((message, index) => {
               const isUser = message.role === 'user';
+              const firstRecommendation = !isUser ? message.recommendations?.[0] : undefined;
               return (
                 <View
                   key={`${message.timestamp || index}-${index}`}
@@ -69,6 +72,22 @@ export function ChatPanel({
                   <Text style={[styles.bubbleText, { color: isUser ? '#fff' : colors.text }]}>
                     {message.content}
                   </Text>
+                  {firstRecommendation ? (
+                    <Pressable
+                      style={[styles.recoCard, { backgroundColor: hexToRgba(colors.accent, 0.08), borderColor: hexToRgba(colors.accent, 0.16) }]}
+                      onPress={() => onOpenRecommendation(firstRecommendation)}
+                    >
+                      <Text style={[styles.recoTitle, { color: colors.text }]} numberOfLines={1}>
+                        {firstRecommendation.specific_info?.name || firstRecommendation.activity_name}
+                      </Text>
+                      <Text style={[styles.recoMeta, { color: colors.subtext }]} numberOfLines={1}>
+                        {[firstRecommendation.specific_info?.location, firstRecommendation.specific_info?.duration, firstRecommendation.specific_info?.price]
+                          .filter(Boolean)
+                          .join(' · ') || '查看具体安排'}
+                      </Text>
+                      <Text style={[styles.recoAction, { color: colors.accent }]}>查看详情 ›</Text>
+                    </Pressable>
+                  ) : null}
                 </View>
               );
             }) : (
@@ -172,6 +191,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '600',
+  },
+  recoCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 10,
+    marginTop: 10,
+    gap: 4,
+  },
+  recoTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  recoMeta: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  recoAction: {
+    fontSize: 12,
+    fontWeight: '900',
+    marginTop: 2,
   },
   empty: {
     borderRadius: UI.radius.xl,
