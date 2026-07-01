@@ -811,6 +811,7 @@ class RecommendationAgent:
                 result = json.loads(result_text)
 
                 result = self._finalize_result(result, activity_map, theme, activity_source, context, place_hints)
+                result["agent_source"] = "llm"
 
                 print(f"[Agent] LLM 推荐生成成功，推荐了 {len(result.get('recommendations', []))} 个活动")
                 return result
@@ -1052,6 +1053,7 @@ class RecommendationAgent:
         agent_message = fallback_messages.get(mbti, f"找了几个适合现在的活动，你看看？")
 
         return {
+            "agent_source": "fallback",
             "recommendations": [
                 self._attach_activity_metadata(
                     {

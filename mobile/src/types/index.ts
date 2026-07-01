@@ -223,6 +223,7 @@ export interface ConfigStatusResponse {
 export interface RecommendResponse {
   recommendations: Recommendation[];
   agent_message: string;
+  agent_source?: 'llm' | 'fallback';
   companion: { avatar: string; name: string };
   theme: MBTITheme;
   activity_source?: ActivitySourceMeta;

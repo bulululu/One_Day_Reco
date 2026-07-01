@@ -90,6 +90,7 @@ cd mobile && npx tsc --noEmit
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_chat_endpoint.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_real_chat_endpoint.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_real_chat_endpoint.py --require-llm
+PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_real_recommend_endpoint.py --require-llm
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_media_sources.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_config_status.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_weather_endpoint.py
