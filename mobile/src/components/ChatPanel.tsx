@@ -72,6 +72,9 @@ export function ChatPanel({
                   <Text style={[styles.bubbleText, { color: isUser ? '#fff' : colors.text }]}>
                     {message.content}
                   </Text>
+                  {!isUser && message.reply_source === 'fallback' ? (
+                    <Text style={[styles.sourceBadge, { color: colors.subtext }]}>本地灵感</Text>
+                  ) : null}
                   {messageRecommendations.map((recommendation) => (
                     <Pressable
                       key={recommendation.activity_id}
@@ -192,6 +195,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '600',
+  },
+  sourceBadge: {
+    alignSelf: 'flex-start',
+    fontSize: 10,
+    lineHeight: 14,
+    fontWeight: '800',
+    marginTop: 7,
   },
   recoCard: {
     borderWidth: 1,

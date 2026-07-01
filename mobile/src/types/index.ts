@@ -232,6 +232,7 @@ export interface RecommendResponse {
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  reply_source?: 'llm' | 'fallback';
   recommendations?: Recommendation[];
   timestamp?: number;
 }

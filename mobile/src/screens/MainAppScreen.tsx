@@ -239,6 +239,7 @@ export function MainAppScreen() {
       addMessage({
         role: 'assistant',
         content: res.reply,
+        reply_source: res.reply_source,
         recommendations: res.recommendations,
         timestamp: Date.now(),
       });
@@ -246,6 +247,7 @@ export function MainAppScreen() {
       addMessage({
         role: 'assistant',
         content: '我这边暂时没连上实时聊天。先把你的状态记下来了，你也可以点“发现”看一批本地灵感。',
+        reply_source: 'fallback',
         recommendations: [featured],
         timestamp: Date.now(),
       });
