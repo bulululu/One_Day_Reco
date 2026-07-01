@@ -194,14 +194,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontSize: 24,
-    lineHeight: 31,
+    fontSize: 21,
+    lineHeight: 28,
     fontWeight: '900',
   },
   body: {
-    fontSize: 16,
-    lineHeight: 25,
-    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '600',
     marginBottom: 16,
   },
   metaGrid: {
@@ -211,17 +211,17 @@ const styles = StyleSheet.create({
   },
   metaItem: {
     width: '48.5%',
-    minHeight: 78,
-    borderRadius: 18,
-    padding: 12,
+    minHeight: 68,
+    borderRadius: 16,
+    padding: 11,
   },
   metaLabel: {
     fontSize: 12,
     marginBottom: 7,
   },
   metaValue: {
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: '900',
   },
   note: {
@@ -235,12 +235,12 @@ const styles = StyleSheet.create({
     marginBottom: 7,
   },
   noteText: {
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: 14,
+    lineHeight: 21,
   },
   primaryBtn: {
-    height: 54,
-    borderRadius: 25,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 18,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: '#fff',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '900',
   },
   feedbackRow: {
