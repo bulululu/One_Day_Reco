@@ -60,6 +60,14 @@ function favoritesKey(userId: string) {
   return `${FAVORITES_KEY_PREFIX}:${userId || 'guest'}`;
 }
 
+function recommendationNoticeText(agentSource?: 'llm' | 'fallback', activitySource?: ActivitySourceMeta) {
+  if (agentSource === 'llm') {
+    return activitySource?.is_realtime ? 'AI 已结合实时数据生成推荐' : 'AI 已生成推荐，地点数据为精选兜底';
+  }
+  if (activitySource?.is_realtime) return '已根据实时数据更新推荐';
+  return '当前使用本地灵感，实时地点稍后刷新';
+}
+
 function parseFavorites(raw: string | null): Recommendation[] {
   if (!raw) return [];
   try {
@@ -192,7 +200,7 @@ export function MainAppScreen() {
         setRecommendations(res.recommendations);
         setSource(res.activity_source);
         setHistoryRefreshKey((value) => value + 1);
-        setRecommendationNotice(res.activity_source?.is_realtime ? '已根据实时数据更新推荐' : '当前使用精选灵感，实时地点稍后刷新');
+        setRecommendationNotice(recommendationNoticeText(res.agent_source, res.activity_source));
       }
       if (appendMessage && chatVisible) {
         addMessage({
@@ -235,6 +243,7 @@ export function MainAppScreen() {
         setRecommendations(res.recommendations);
         setSource(res.activity_source);
         setHistoryRefreshKey((value) => value + 1);
+        setRecommendationNotice(recommendationNoticeText(res.reply_source === 'llm' ? 'llm' : 'fallback', res.activity_source));
       }
       addMessage({
         role: 'assistant',
