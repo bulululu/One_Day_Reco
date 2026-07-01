@@ -12,7 +12,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
-import { chat, getApiBase, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation, updateProfile } from '@/services/api';
+import { chat, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation, updateProfile } from '@/services/api';
 import { ActivitySourceMeta, ChatMessage, MBTIType, Recommendation, UserPreferences } from '@/types';
 import { ActivityDetailSheet } from '@/components/ActivityDetailSheet';
 import { ChatPanel } from '@/components/ChatPanel';
@@ -245,7 +245,8 @@ export function MainAppScreen() {
     } catch {
       addMessage({
         role: 'assistant',
-        content: `我没连上聊天服务。先确认后端已启动，并且手机能访问 ${getApiBase()}。`,
+        content: '我这边暂时没连上实时聊天。先把你的状态记下来了，你也可以点“发现”看一批本地灵感。',
+        recommendations: [featured],
         timestamp: Date.now(),
       });
     } finally {
@@ -385,7 +386,6 @@ export function MainAppScreen() {
           onRefresh={() => void refreshRecommendation(true)}
           onOpenDetail={setDetail}
           onPrompt={handleHomeIdea}
-          onCompleteToday={() => void handleFeedback('completed')}
           onChat={openChat}
         />
       );

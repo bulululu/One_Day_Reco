@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -18,6 +18,9 @@ export type RootStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+(Text as any).defaultProps = { ...(Text as any).defaultProps, maxFontSizeMultiplier: 1.08 };
+(TextInput as any).defaultProps = { ...(TextInput as any).defaultProps, maxFontSizeMultiplier: 1.08 };
 
 function AppContent() {
   const { isOnboarding, isHydratingUser, currentTheme } = useAppStore();

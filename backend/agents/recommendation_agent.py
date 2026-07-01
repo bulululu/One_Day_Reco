@@ -363,6 +363,33 @@ class RecommendationAgent:
             )
         return "\n".join(lines)
 
+    def _message_candidate_score(self, act: dict, message: str) -> int:
+        text = f"{act.get('name', '')} {act.get('category', '')} {act.get('subcategory', '')} {act.get('description', '')}"
+        info = act.get("specific_info") or {}
+        info_text = " ".join(str(info.get(key, "")) for key in ["platform", "game_type", "player_mode", "source", "setup"])
+        score = 0
+        pairs = [
+            (("电影", "影院"), ("电影",)),
+            (("吃", "饭", "咖啡"), ("美食", "咖啡", "餐厅")),
+            (("走走", "散步", "公园"), ("散步", "公园", "户外")),
+            (("纪录片", "不出门", "在家", "居家"), ("纪录片", "居家", "室内")),
+        ]
+        if any(any(word in message for word in wants) and any(word in text for word in targets) for wants, targets in pairs):
+            score -= 10
+        if "游戏" in message:
+            if any(word in info_text for word in ["Steam", "Switch", "App Store", "手机", "PC", "主机"]):
+                score -= 12
+            elif "游戏" in text:
+                score -= 4
+            if any(word in message for word in ["一个人", "单人", "自己"]):
+                if "单人" in info_text:
+                    score -= 3
+                elif any(word in info_text for word in ["多人", "双人", "联机", "合作", "朋友", "2-4"]):
+                    score += 10
+            if any(word in info_text for word in ["线下", "门店"]):
+                score += 6
+        return score
+
     def _get_activity_catalog(self) -> dict:
         return get_activity_catalog(self.activities)
 
@@ -1198,6 +1225,7 @@ class RecommendationAgent:
             catalog = self._get_activity_catalog()
         if candidates is None:
             candidates = self._pre_filter_activities({"mbti": mbti}, context, catalog.get("activities", []))
+        candidates = sorted(candidates, key=lambda act: self._message_candidate_score(act, message))
         if place_hints is None:
             place_hints = self._lookup_places_for_candidates(candidates, context)
         activity_source = self._activity_source(catalog, candidates)
@@ -1225,11 +1253,11 @@ class RecommendationAgent:
                     "activity_source": activity_source,
                 }
 
-        if any(kw in message for kw in ["推荐", "好玩", "做什么", "干嘛", "无聊"]):
+        if any(kw in message for kw in ["推荐", "好玩", "做什么", "干嘛", "无聊", "放松", "人少", "安静", "电影", "游戏", "吃", "走走", "灵感"]):
             if candidates:
                 act = candidates[0]
                 return {
-                    "reply": "给你找了个活动，看看？",
+                    "reply": "我先给你一个现在就能开始的选择。你不用想太多，看看这个合不合适；不喜欢我再换。",
                     "recommendations": [
                         self._attach_activity_metadata(
                             {

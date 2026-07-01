@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { updateProfile } from '@/services/api';
@@ -103,13 +104,18 @@ export function OnboardingScreen() {
         </View>
 
         <ImageBackground source={hero} resizeMode="cover" imageStyle={{ borderRadius: UI.radius.xl }} style={[styles.hero, softShadow(colors.accent, 0.05)]}>
-          <View style={[styles.heroOverlay, { backgroundColor: hexToRgba(colors.card, 0.74) }]}>
+          <LinearGradient
+            colors={[hexToRgba(colors.card, 0.92), hexToRgba(colors.card, 0.64), hexToRgba(colors.card, 0.04)]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 0.86, y: 0.5 }}
+            style={styles.heroOverlay}
+          >
             <Text style={[styles.heroTitle, { color: colors.text }]}>先认识一下你</Text>
             <Text style={[styles.heroSub, { color: colors.subtext }]}>MBTI 会决定首页风格、推荐语气和活动筛选，不确定也可以先测一测。</Text>
             <View style={[styles.styleBadge, { backgroundColor: hexToRgba(colors.accent, 0.12) }]}>
               <Text style={[styles.styleText, { color: colors.accent }]}>{preview} · {profile.styleName}</Text>
             </View>
-          </View>
+          </LinearGradient>
         </ImageBackground>
 
         <View style={styles.switchRow}>
@@ -197,9 +203,11 @@ export function OnboardingScreen() {
                     setMBTI(type);
                   }}
                 >
-                  <Text style={[styles.mbtiAvatar, { color: optionTheme.colors.accent }]}>{optionTheme.avatar}</Text>
+                  <View style={[styles.mbtiDot, { backgroundColor: hexToRgba(optionTheme.colors.accent, active ? 1 : 0.18) }]}>
+                    <Text style={[styles.mbtiAvatar, { color: active ? '#fff' : optionTheme.colors.accent }]}>{optionTheme.avatar}</Text>
+                  </View>
                   <Text style={[styles.mbtiCode, { color: active ? optionTheme.colors.accent : colors.text }]}>{type}</Text>
-                  <Text style={[styles.mbtiName, { color: colors.subtext }]} numberOfLines={1}>{optionProfile.styleName}</Text>
+                  <Text style={[styles.mbtiName, { color: colors.subtext }]} numberOfLines={1}>{optionTheme.name}</Text>
                 </Pressable>
               );
             })}
@@ -236,8 +244,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   wordmark: {
-    fontSize: 31,
-    lineHeight: 36,
+    fontSize: 28,
+    lineHeight: 33,
     fontWeight: '700',
     fontStyle: 'italic',
   },
@@ -256,7 +264,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   hero: {
-    height: 190,
+    height: 154,
     borderRadius: UI.radius.xl,
     overflow: 'hidden',
     marginTop: 18,
@@ -267,13 +275,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroTitle: {
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '900',
+    fontSize: 24,
+    lineHeight: 31,
+    fontWeight: '800',
   },
   heroSub: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 13,
+    lineHeight: 20,
     marginTop: 9,
     maxWidth: '76%',
   },
@@ -308,29 +316,38 @@ const styles = StyleSheet.create({
   mbtiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    justifyContent: 'space-between',
+    rowGap: 8,
   },
   mbtiCard: {
-    width: '23.3%',
-    minHeight: 92,
+    width: '23%',
+    minHeight: 78,
     borderRadius: UI.radius.md,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
   },
-  mbtiAvatar: {
-    fontSize: 18,
-    fontWeight: '900',
+  mbtiDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 6,
   },
+  mbtiAvatar: {
+    fontSize: 12,
+    fontWeight: '900',
+  },
   mbtiCode: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '900',
   },
   mbtiName: {
     fontSize: 9,
-    marginTop: 5,
+    fontWeight: '800',
+    marginTop: 4,
   },
   testPanel: {
     borderRadius: UI.radius.xl,

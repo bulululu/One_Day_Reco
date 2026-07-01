@@ -13,9 +13,31 @@ type RecommendViewProps = {
   onRefresh: () => void;
   onOpenDetail: (recommendation: Recommendation) => void;
   onPrompt: (prompt: string) => void;
-  onCompleteToday: () => void;
   onChat: () => void;
 };
+
+function cleanFeatureCopy(text: string) {
+  const firstSentence = text.split('。')[0] || '慢下来，照顾好自己';
+  let decoded = firstSentence;
+  try {
+    decoded = decodeURIComponent(firstSentence);
+  } catch {
+    decoded = firstSentence;
+  }
+  return decoded
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/入口[:：]\s*\S+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function cleanFeatureTitle(text: string) {
+  return text
+    .replace(/（搜索选择一家）/g, '')
+    .replace(/\(搜索选择一家\)/g, '')
+    .replace(/搜索选择一家/g, '')
+    .trim() || '给自己一段舒服时光';
+}
 
 export function RecommendView({
   mbti,
@@ -25,13 +47,12 @@ export function RecommendView({
   onRefresh,
   onOpenDetail,
   onPrompt,
-  onCompleteToday,
   onChat,
 }: RecommendViewProps) {
   const colors = theme.colors;
-  const hero = getLifestyleHero(mbti);
-  const featureTitle = featured.specific_info?.name || featured.activity_name;
-  const featureCopy = featured.recommend_text.split('。')[0] || '慢下来，照顾好自己。';
+  const featureImage = getLifestyleHero(mbti);
+  const featureTitle = cleanFeatureTitle(featured.specific_info?.name || featured.activity_name);
+  const featureCopy = cleanFeatureCopy(featured.recommend_text) || '不用把今天安排得很满，先从一个容易开始的小计划出发';
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -50,13 +71,13 @@ export function RecommendView({
       </View>
 
       <ImageBackground
-        source={hero}
+        source={HOME_ASSETS.hero}
         resizeMode="cover"
         imageStyle={styles.greetingImage}
         style={[styles.greetingCard, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }, softShadow(colors.accent, 0.05)]}
       >
         <LinearGradient
-          colors={[hexToRgba(colors.card, 0.98), hexToRgba(colors.card, 0.76), hexToRgba(colors.card, 0.08)]}
+          colors={[hexToRgba(colors.card, 0.94), hexToRgba(colors.card, 0.58), hexToRgba(colors.card, 0.02)]}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 0.72, y: 0.5 }}
           style={styles.greetingOverlay}
@@ -71,7 +92,7 @@ export function RecommendView({
 
       <Pressable onPress={() => onOpenDetail(featured)}>
         <ImageBackground
-          source={HOME_ASSETS.feature}
+          source={featureImage}
           resizeMode="cover"
           imageStyle={styles.featureImage}
           style={[styles.featureCard, softShadow(colors.accent, 0.06)]}
@@ -89,7 +110,7 @@ export function RecommendView({
               {featureTitle}
             </Text>
             <Text style={[styles.featureSub, { color: colors.text }]} numberOfLines={2}>
-              {featureCopy}。
+              {featureCopy}
             </Text>
             <Pressable
               style={[styles.featureButton, { backgroundColor: colors.accent }]}
@@ -150,37 +171,6 @@ export function RecommendView({
         </Pressable>
       </View>
 
-      <View style={[styles.section, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.1) }]}>
-        <View style={styles.sectionTitleRow}>
-          <Text style={[styles.sectionIcon, { color: colors.accent }]}>♬</Text>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>轻松一下</Text>
-        </View>
-        <View style={[styles.scheduleCard, { borderColor: hexToRgba(colors.accent, 0.12) }]}>
-          <View style={[styles.checkCircle, { backgroundColor: hexToRgba(colors.accent, 0.12) }]}>
-            <Text style={[styles.checkText, { color: colors.accent }]}>▶</Text>
-          </View>
-          <View style={styles.scheduleCopy}>
-            <Text style={[styles.scheduleTitle, { color: colors.text }]} numberOfLines={1}>给自己放首歌，放松一下吧～</Text>
-            <Text style={[styles.scheduleTime, { color: colors.subtext }]} numberOfLines={1}>现在 · 3 分钟也可以开始</Text>
-          </View>
-          <Pressable style={[styles.doneButton, { backgroundColor: colors.accent, borderColor: colors.accent }]} onPress={onCompleteToday}>
-            <Text style={styles.doneTextFilled}>完成</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={[styles.memoryBanner, { backgroundColor: colors.accent }]}>
-        <View style={styles.memoryAvatar}>
-          <Text style={[styles.memoryFace, { color: colors.accent }]}>•ᴗ•</Text>
-        </View>
-        <View style={styles.memoryCopy}>
-          <Text style={styles.memoryTitle}>记录美好瞬间</Text>
-          <Text style={styles.memorySub}>留下今天的小美好，回头看会很治愈</Text>
-        </View>
-        <Pressable style={styles.memoryButton} onPress={onChat}>
-          <Text style={[styles.memoryButtonText, { color: colors.accent }]}>去聊天</Text>
-        </Pressable>
-      </View>
     </ScrollView>
   );
 }
@@ -260,11 +250,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     fontWeight: '900',
-  },
-  greetingMeta: {
-    fontSize: 12,
-    fontWeight: '800',
-    marginTop: 16,
   },
   featureCard: {
     height: 184,
@@ -383,11 +368,11 @@ const styles = StyleSheet.create({
     padding: 9,
   },
   ideaTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
   },
   ideaSub: {
-    fontSize: 11,
+    fontSize: 10,
     lineHeight: 16,
     marginTop: 4,
   },
@@ -413,7 +398,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   chatBanner: {
-    minHeight: 88,
+    minHeight: 78,
     borderRadius: UI.radius.xl,
     borderWidth: 1,
     padding: 14,
@@ -423,23 +408,23 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   chatMascot: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fffaf2',
   },
   chatFace: {
-    fontSize: 21,
+    fontSize: 18,
     fontWeight: '900',
   },
   chatCopy: {
     flex: 1,
   },
   chatTitle: {
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 20,
     fontWeight: '900',
   },
@@ -455,112 +440,7 @@ const styles = StyleSheet.create({
   },
   chatActionText: {
     color: '#fff',
-    fontSize: 13,
-    fontWeight: '900',
-  },
-  scheduleCard: {
-    minHeight: 72,
-    borderRadius: UI.radius.lg,
-    borderWidth: 1,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 14,
-  },
-  dateBlock: {
-    width: 48,
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(130,122,112,0.16)',
-  },
-  weekText: {
     fontSize: 12,
-  },
-  dateText: {
-    fontSize: 17,
-    fontWeight: '800',
-    marginTop: 4,
-  },
-  checkCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkText: {
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  scheduleCopy: {
-    flex: 1,
-  },
-  scheduleTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  scheduleTime: {
-    fontSize: 13,
-    marginTop: 4,
-  },
-  doneButton: {
-    borderWidth: 1,
-    borderRadius: 17,
-    paddingHorizontal: 13,
-    paddingVertical: 7,
-  },
-  doneText: {
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  doneTextFilled: {
-    color: '#fff',
-    fontSize: 13,
     fontWeight: '900',
-  },
-  memoryBanner: {
-    minHeight: 72,
-    borderRadius: UI.radius.xl,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
-  },
-  memoryAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: 'rgba(255,250,242,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  memoryFace: {
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  memoryCopy: {
-    flex: 1,
-  },
-  memoryTitle: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  memorySub: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  memoryButton: {
-    minHeight: 38,
-    borderRadius: 19,
-    paddingHorizontal: 15,
-    backgroundColor: 'rgba(255,250,242,0.92)',
-    justifyContent: 'center',
-  },
-  memoryButtonText: {
-    fontSize: 14,
-    fontWeight: '800',
   },
 });
