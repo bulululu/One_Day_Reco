@@ -47,6 +47,20 @@ def _names(items: list[dict], limit: int = 5) -> str:
     return "、".join(item["activity_name"] or item["activity_id"] for item in items[:limit])
 
 
+def _preference_labels(items: list[dict], limit: int = 6) -> str:
+    labels = []
+    seen = set()
+    for item in items:
+        label = item.get("label") or item.get("constraint") or ""
+        if not label or label in seen:
+            continue
+        labels.append(label)
+        seen.add(label)
+        if len(labels) >= limit:
+            break
+    return "、".join(labels)
+
+
 def record_recommendation(
     db: Session,
     user_id: str,
@@ -161,6 +175,7 @@ def build_behavior_memory(db: Session, user_id: str) -> dict:
     liked_or_completed: list[dict] = []
     clicked: list[dict] = []
     skipped: list[dict] = []
+    preferences: list[dict] = []
     recent_recommended: list[dict] = []
 
     for event in events:
@@ -170,6 +185,13 @@ def build_behavior_memory(db: Session, user_id: str) -> dict:
             _append_unique(clicked, event.activity_id, event.activity_name)
         elif event.event_type in {"skipped", "disliked"}:
             _append_unique(skipped, event.activity_id, event.activity_name)
+        elif event.event_type == "preference":
+            metadata = _json_loads(event.metadata_json, {})
+            if isinstance(metadata, dict):
+                preferences.append({
+                    "constraint": metadata.get("constraint", event.activity_id),
+                    "label": metadata.get("label", event.activity_name),
+                })
 
     for record in records:
         recommendations = _json_loads(record.recommendations_json, [])
@@ -191,11 +213,22 @@ def build_behavior_memory(db: Session, user_id: str) -> dict:
         summary_parts.append(f"近期点开过：{_names(clicked)}")
     if skipped:
         summary_parts.append(f"近期跳过：{_names(skipped)}")
+    if preferences:
+        summary_parts.append(f"对话里表达过：{_preference_labels(preferences)}")
     if recent_recommended:
         summary_parts.append(f"最近已推荐：{_names(recent_recommended)}，短期内优先换新选择")
 
     if not summary_parts:
         return {}
+
+    preference_constraints = []
+    seen_constraints = set()
+    for item in preferences:
+        constraint = item.get("constraint")
+        if not constraint or constraint in seen_constraints:
+            continue
+        preference_constraints.append(constraint)
+        seen_constraints.add(constraint)
 
     return {
         "summary": "；".join(summary_parts),
@@ -203,6 +236,7 @@ def build_behavior_memory(db: Session, user_id: str) -> dict:
         "clicked_activity_ids": [item["activity_id"] for item in clicked],
         "negative_activity_ids": [item["activity_id"] for item in skipped],
         "recent_activity_ids": [item["activity_id"] for item in recent_recommended],
+        "preference_constraints": preference_constraints,
     }
 
 

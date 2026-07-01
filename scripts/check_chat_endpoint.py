@@ -18,12 +18,13 @@ def main():
     client = TestClient(app)
     original_client = agent.client
     agent.client = None
+    user_id = f"chat_{uuid.uuid4()}"
     try:
         res = client.post(
             "/api/chat",
             json={
                 "user_profile": {
-                    "user_id": f"chat_{uuid.uuid4()}",
+                    "user_id": user_id,
                     "mbti": "INFP",
                     "preferences": {
                         "social_frequency": "独处",
@@ -33,7 +34,7 @@ def main():
                     },
                     "feedback_summary": "",
                 },
-                "message": "想看个纪录片",
+                "message": "想看个纪录片，但不想出门，也别太贵，人少安静一点",
                 "context": {"weather": "晴", "location": "上海 徐汇", "mode": "个人"},
             },
         )
@@ -45,6 +46,18 @@ def main():
     assert "reply" in data, data
     assert "recommendations" in data, data
     assert "activity_source" in data, data
+
+    events_res = client.get(f"/api/activity-events?user_id={user_id}&limit=10")
+    assert events_res.status_code == 200, events_res.text
+    events = events_res.json()["events"]
+    preference_constraints = [
+        event.get("metadata", {}).get("constraint")
+        for event in events
+        if event.get("event_type") == "preference"
+    ]
+    assert "indoor_first" in preference_constraints, events
+    assert "low_budget_first" in preference_constraints, events
+    assert "low_crowd_first" in preference_constraints, events
     print("ok chat_endpoint")
 
 

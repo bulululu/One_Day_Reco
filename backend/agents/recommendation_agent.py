@@ -178,6 +178,7 @@ class RecommendationAgent:
 特殊偏好: {preferences.get('notes', '无')}
 历史反馈摘要: {user_profile.get('feedback_summary', '暂无')}
 近期行为记忆: {behavior_memory.get('summary', '暂无')}
+对话偏好约束: {', '.join(behavior_memory.get('preference_constraints') or []) or '暂无'}
 """
         return profile_text.strip()
 
@@ -389,6 +390,7 @@ class RecommendationAgent:
         weather = ctx.get("weather", "")
         trigger_type = ctx.get("trigger_type", "")
         positive_ids, negative_ids, recent_ids = self._behavior_memory_sets(user_profile)
+        constraints = set((user_profile.get("behavior_memory") or {}).get("preference_constraints") or [])
         fresh_candidates = []
         recent_candidates = []
 
@@ -417,6 +419,9 @@ class RecommendationAgent:
                 if not act.get("adjustable_factors"):
                     continue
 
+            if "low_crowd_first" in constraints and act.get("crowd_density") == "高":
+                continue
+
             # 安全过滤：夜间不推荐需要远途或户外的活动
             if current_hour >= 20 and act.get("indoor_outdoor") == "室外":
                 safety = act.get("safety_note", "")
@@ -431,6 +436,30 @@ class RecommendationAgent:
         candidates = fresh_candidates + recent_candidates
         if positive_ids:
             candidates = sorted(candidates, key=lambda act: 0 if act.get("id") in positive_ids else 1)
+
+        if constraints:
+            def constraint_score(act: dict) -> int:
+                score = 0
+                if act.get("id") in recent_ids and act.get("id") not in positive_ids:
+                    score += 5
+                text = f"{act.get('name', '')} {act.get('category', '')} {act.get('subcategory', '')}"
+                if "indoor_first" in constraints and act.get("indoor_outdoor") in {"室内", "室内外"}:
+                    score -= 3
+                if "outdoor_first" in constraints and act.get("indoor_outdoor") in {"室外", "室内外"}:
+                    score -= 3
+                if "low_budget_first" in constraints and str(act.get("budget", "")).startswith(("0", "低")):
+                    score -= 2
+                if "nearby_first" in constraints and act.get("convenience") == "高":
+                    score -= 2
+                if "low_crowd_first" in constraints and act.get("crowd_density") in {"低", "极低"}:
+                    score -= 2
+                if "movie_interest" in constraints and "电影" in text:
+                    score -= 4
+                if "game_interest" in constraints and "游戏" in text:
+                    score -= 4
+                return score
+
+            candidates = sorted(candidates, key=constraint_score)
 
         if trigger_type == "screen_overuse":
             bad_weather = any(word in weather for word in ["雨", "雪", "雷", "大风", "冷"])

@@ -5,6 +5,7 @@ from backend.app.dependencies import agent
 from backend.app.schemas import ActivityEventRequest, ChatRequest, RecommendRequest, TriggerRequest
 from backend.services.database import get_db
 from backend.services.feedback_service import hydrate_profile_feedback
+from backend.services.chat_preference_service import extract_chat_preferences
 from backend.services.recommendation_history_service import (
     hydrate_profile_behavior_memory,
     list_activity_events,
@@ -20,6 +21,21 @@ router = APIRouter(prefix="/api", tags=["recommendations"])
 def _hydrate_user_profile(db: Session, user_profile: dict) -> dict:
     hydrated = hydrate_profile_feedback(db, user_profile)
     return hydrate_profile_behavior_memory(db, hydrated)
+
+
+def _record_chat_preferences(db: Session, user_id: str, message: str) -> None:
+    if not user_id:
+        return
+    for preference in extract_chat_preferences(message):
+        record_activity_event(
+            db,
+            user_id,
+            f"preference_{preference['key']}",
+            "preference",
+            "对话偏好",
+            source="chat",
+            metadata=preference,
+        )
 
 
 @router.post("/recommend")
@@ -44,6 +60,7 @@ async def chat(req: ChatRequest, db: Session = Depends(get_db)):
     )
     if result.get("recommendations"):
         record_recommendation(db, user_profile.get("user_id", ""), result, req.context, "chat")
+    _record_chat_preferences(db, user_profile.get("user_id", ""), req.message)
     return result
 
 

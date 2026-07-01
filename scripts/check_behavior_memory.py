@@ -25,6 +25,32 @@ def main():
     with SessionLocal() as db:
         record_activity_event(db, user_id, "A001", "skipped", "看一场电影", source="test")
         record_activity_event(db, user_id, "A004", "completed", "独立书店看书+咖啡", source="test")
+        record_activity_event(
+            db,
+            user_id,
+            "preference_low_crowd",
+            "preference",
+            "对话偏好",
+            source="chat",
+            metadata={
+                "key": "low_crowd",
+                "label": "偏好人少安静，降低社交和排队压力",
+                "constraint": "low_crowd_first",
+            },
+        )
+        record_activity_event(
+            db,
+            user_id,
+            "preference_indoor",
+            "preference",
+            "对话偏好",
+            source="chat",
+            metadata={
+                "key": "indoor",
+                "label": "偏好室内或居家可做",
+                "constraint": "indoor_first",
+            },
+        )
         record_recommendation(
             db,
             user_id,
@@ -42,10 +68,13 @@ def main():
 
     assert "近期喜欢/完成" in memory["summary"], memory
     assert "近期跳过" in memory["summary"], memory
+    assert "对话里表达过" in memory["summary"], memory
     assert "最近已推荐" in memory["summary"], memory
     assert "A004" in memory["positive_activity_ids"], memory
     assert "A001" in memory["negative_activity_ids"], memory
     assert "A002" in memory["recent_activity_ids"], memory
+    assert "low_crowd_first" in memory["preference_constraints"], memory
+    assert "indoor_first" in memory["preference_constraints"], memory
 
     activities = [
         {
