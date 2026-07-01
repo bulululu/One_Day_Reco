@@ -41,15 +41,26 @@ function getDevApiBase() {
 }
 
 const API_BASE = getDevApiBase();
+const REQUEST_TIMEOUT_MS = 25000;
+
+export function getApiBase() {
+  return API_BASE;
+}
 
 // ===== 请求封装 =====
 async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeout = controller ? setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
   const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
     },
-    ...options,
+    signal: options.signal || controller?.signal,
+  }).finally(() => {
+    if (timeout) clearTimeout(timeout);
   });
 
   if (!response.ok) {

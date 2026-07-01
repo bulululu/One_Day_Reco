@@ -12,7 +12,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
-import { chat, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation, updateProfile } from '@/services/api';
+import { chat, getApiBase, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation, updateProfile } from '@/services/api';
 import { ActivitySourceMeta, ChatMessage, MBTIType, Recommendation, UserPreferences } from '@/types';
 import { ActivityDetailSheet } from '@/components/ActivityDetailSheet';
 import { ChatPanel } from '@/components/ChatPanel';
@@ -244,7 +244,7 @@ export function MainAppScreen() {
     } catch {
       addMessage({
         role: 'assistant',
-        content: '我刚才没连上服务。你可以先看推荐页的兜底卡；等服务恢复后我再给具体地点、场次或平台。',
+        content: `我没连上聊天服务。先确认后端已启动，并且手机能访问 ${getApiBase()}。`,
         timestamp: Date.now(),
       });
     } finally {
