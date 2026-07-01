@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 24,
-    lineHeight: 31,
+    fontSize: 21,
+    lineHeight: 28,
     fontWeight: '900',
   },
   subtitle: {
@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeText: {
-    fontSize: 24,
-    lineHeight: 28,
+    fontSize: 22,
+    lineHeight: 26,
     fontWeight: '600',
   },
   messageList: {
@@ -169,8 +169,8 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   bubbleText: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 21,
     fontWeight: '600',
   },
   empty: {
@@ -180,8 +180,8 @@ const styles = StyleSheet.create({
     marginTop: 48,
   },
   emptyTitle: {
-    fontSize: 20,
-    lineHeight: 28,
+    fontSize: 18,
+    lineHeight: 25,
     fontWeight: '900',
   },
   emptySub: {
@@ -217,8 +217,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     maxHeight: 96,
-    fontSize: 15,
-    lineHeight: 21,
+    fontSize: 14,
+    lineHeight: 20,
     paddingVertical: 9,
   },
   send: {
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   },
   sendText: {
     color: '#fff',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '900',
   },
   disabled: {

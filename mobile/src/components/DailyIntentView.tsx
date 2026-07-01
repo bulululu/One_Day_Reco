@@ -121,8 +121,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   wordmark: {
-    fontSize: 31,
-    lineHeight: 36,
+    fontSize: 28,
+    lineHeight: 34,
     fontWeight: '700',
     fontStyle: 'italic',
   },
@@ -152,8 +152,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroTitle: {
-    fontSize: 28,
-    lineHeight: 36,
+    fontSize: 24,
+    lineHeight: 32,
     fontWeight: '900',
   },
   heroSub: {
@@ -179,8 +179,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   locationInput: {
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 17,
+    lineHeight: 23,
     fontWeight: '900',
     paddingVertical: 8,
   },
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   intentLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
   },
   skip: {
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
   skipText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '900',
   },
 });

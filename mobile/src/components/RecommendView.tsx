@@ -198,8 +198,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   wordmark: {
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 28,
+    lineHeight: 34,
     fontWeight: '700',
     fontStyle: 'italic',
   },
@@ -240,13 +240,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   greetingTitle: {
-    fontSize: 26,
-    lineHeight: 34,
+    fontSize: 23,
+    lineHeight: 31,
     fontWeight: '800',
   },
   greetingSub: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 21,
     marginTop: 6,
   },
   greetingButton: {
@@ -294,8 +294,8 @@ const styles = StyleSheet.create({
   },
   featureTitle: {
     maxWidth: '58%',
-    fontSize: 22,
-    lineHeight: 30,
+    fontSize: 19,
+    lineHeight: 26,
     fontWeight: '800',
   },
   featureSub: {
@@ -346,8 +346,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   sectionTitle: {
-    fontSize: 19,
-    lineHeight: 25,
+    fontSize: 17,
+    lineHeight: 23,
     fontWeight: '800',
   },
   refreshInline: {
@@ -439,8 +439,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chatTitle: {
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: '900',
   },
   chatSub: {
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scheduleTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
   },
   scheduleTime: {
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
   },
   memoryTitle: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
   },
   memorySub: {

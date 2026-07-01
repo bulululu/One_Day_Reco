@@ -97,6 +97,7 @@ export function MainAppScreen() {
   const [intentReady, setIntentReady] = useState(false);
   const [currentIntent, setCurrentIntent] = useState<DailyIntent | null>(null);
   const [chatVisible, setChatVisible] = useState(false);
+  const [isChatSending, setChatSending] = useState(false);
   const [inputText, setInputText] = useState('');
   const [location, setLocation] = useState('上海 徐汇');
   const [weather, setWeather] = useState('天气获取中');
@@ -216,12 +217,12 @@ export function MainAppScreen() {
 
   const handleSend = async (text?: string) => {
     const content = (text || inputText).trim();
-    if (!content || isLoading) return;
+    if (!content || isChatSending) return;
     setChatVisible(true);
     addMessage({ role: 'user', content, timestamp: Date.now() });
     setInputText('');
     Keyboard.dismiss();
-    setLoading(true);
+    setChatSending(true);
     try {
       const res = await chat(
         getUserProfile(),
@@ -247,7 +248,7 @@ export function MainAppScreen() {
         timestamp: Date.now(),
       });
     } finally {
-      setLoading(false);
+      setChatSending(false);
     }
   };
 
@@ -478,7 +479,7 @@ export function MainAppScreen() {
         theme={theme}
         messages={displayMessages}
         inputText={inputText}
-        isLoading={isLoading}
+        isLoading={isChatSending}
         onClose={() => setChatVisible(false)}
         onInputChange={setInputText}
         onSend={() => void handleSend()}
@@ -541,20 +542,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   createBtn: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -18,
   },
   createIcon: {
-    fontSize: 34,
-    lineHeight: 38,
+    fontSize: 30,
+    lineHeight: 34,
     fontWeight: '500',
   },
   navIcon: {
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: '800',
     marginBottom: 3,
   },
