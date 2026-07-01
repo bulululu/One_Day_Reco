@@ -68,24 +68,9 @@ export function DailyIntentView({
           >
             <Text style={[styles.heroKicker, { color: colors.accent }]}>今天的入口</Text>
             <Text style={[styles.heroTitle, { color: colors.text }]}>现在想做点什么？</Text>
-            <Text style={[styles.heroSub, { color: colors.subtext }]}>选一个就开始；不想选也可以直接推荐。</Text>
+            <Text style={[styles.heroSub, { color: colors.subtext }]}>选一个，或直接跳过。</Text>
           </LinearGradient>
         </ImageBackground>
-
-        <View style={[styles.locationCard, { backgroundColor: hexToRgba(colors.card, 0.74), borderColor: hexToRgba(colors.accent, 0.12) }]}>
-          <Text style={[styles.locationLabel, { color: colors.subtext }]}>当前位置</Text>
-          <TextInput
-            style={[styles.locationInput, { color: colors.text }]}
-            placeholder="输入城市、商圈或附近位置"
-            placeholderTextColor={colors.subtext}
-            value={location}
-            onChangeText={onLocationChange}
-            maxLength={40}
-          />
-          <Text style={[styles.locationHint, { color: colors.subtext }]}>
-            {isResolvingContext ? '正在获取天气...' : '用于附近活动、影院和路线'}
-          </Text>
-        </View>
 
         <View style={styles.grid}>
           {INTENTS.map((intent) => (
@@ -98,6 +83,21 @@ export function DailyIntentView({
               <Text style={[styles.intentLabel, { color: colors.text }]}>{intent.label}</Text>
             </Pressable>
           ))}
+        </View>
+
+        <View style={[styles.locationCard, { backgroundColor: hexToRgba(colors.card, 0.72), borderColor: hexToRgba(colors.accent, 0.12) }]}>
+          <Text style={[styles.locationLabel, { color: colors.subtext }]}>位置</Text>
+          <TextInput
+            style={[styles.locationInput, { color: colors.text }]}
+            placeholder="城市 / 商圈"
+            placeholderTextColor={colors.subtext}
+            value={location}
+            onChangeText={onLocationChange}
+            maxLength={40}
+          />
+          <Text style={[styles.locationHint, { color: colors.subtext }]}>
+            {isResolvingContext ? '天气中' : '可改'}
+          </Text>
         </View>
 
         <Pressable style={[styles.skip, { backgroundColor: colors.accent }]} onPress={onSkip}>
@@ -148,14 +148,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   hero: {
-    height: 188,
+    height: 142,
     borderRadius: UI.radius.xl,
     overflow: 'hidden',
     marginTop: 18,
   },
   heroOverlay: {
     flex: 1,
-    padding: 22,
+    padding: 18,
     justifyContent: 'center',
   },
   heroKicker: {
@@ -165,58 +165,62 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   heroTitle: {
-    fontSize: 24,
-    lineHeight: 32,
+    fontSize: 22,
+    lineHeight: 29,
     fontWeight: '800',
   },
   heroSub: {
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 10,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 8,
     maxWidth: '68%',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
     marginTop: 14,
   },
   locationCard: {
-    borderRadius: UI.radius.xl,
+    borderRadius: 22,
     borderWidth: 1,
-    padding: 14,
+    minHeight: 46,
+    paddingHorizontal: 14,
     marginTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   locationLabel: {
     fontSize: 12,
     fontWeight: '800',
   },
   locationInput: {
-    fontSize: 17,
-    lineHeight: 23,
-    fontWeight: '900',
-    paddingVertical: 8,
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '800',
+    paddingVertical: 6,
   },
   locationHint: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 16,
   },
   intentCard: {
-    width: '48.5%',
-    minHeight: 62,
+    width: '31.8%',
+    minHeight: 58,
     borderRadius: UI.radius.lg,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
+    gap: 5,
   },
   intentIcon: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '900',
   },
   intentLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '800',
   },
   skip: {

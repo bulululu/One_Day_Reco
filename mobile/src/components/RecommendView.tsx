@@ -1,14 +1,13 @@
 import React from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MBTITheme, MBTIType, Recommendation } from '@/types';
-import { HOME_ASSETS, HOME_IDEAS, getLifestyleHero } from '@/data/lifestyleDesign';
+import { MBTITheme, Recommendation } from '@/types';
+import { HOME_ASSETS, HOME_IDEAS } from '@/data/lifestyleDesign';
 import { hexToRgba, softShadow, UI } from '@/styles/ui';
 
 type RecommendViewProps = {
-  mbti: MBTIType;
   theme: MBTITheme;
-  featured: Recommendation;
+  recommendations: Recommendation[];
   isLoading: boolean;
   onRefresh: () => void;
   onOpenDetail: (recommendation: Recommendation) => void;
@@ -40,9 +39,8 @@ function cleanFeatureTitle(text: string) {
 }
 
 export function RecommendView({
-  mbti,
   theme,
-  featured,
+  recommendations,
   isLoading,
   onRefresh,
   onOpenDetail,
@@ -50,9 +48,29 @@ export function RecommendView({
   onChat,
 }: RecommendViewProps) {
   const colors = theme.colors;
-  const featureImage = getLifestyleHero(mbti);
-  const featureTitle = cleanFeatureTitle(featured.specific_info?.name || featured.activity_name);
-  const featureCopy = cleanFeatureCopy(featured.recommend_text) || '不用把今天安排得很满，先从一个容易开始的小计划出发';
+  const cards = HOME_IDEAS.slice(0, 3).map((idea, index) => {
+    const recommendation = recommendations[index];
+    if (!recommendation) {
+      return {
+        key: idea.key,
+        title: idea.title,
+        subtitle: idea.subtitle,
+        tag: idea.tag,
+        meta: idea.distance,
+        image: idea.image,
+        onPress: () => onPrompt(idea.prompt),
+      };
+    }
+    return {
+      key: recommendation.activity_id,
+      title: cleanFeatureTitle(recommendation.specific_info?.name || recommendation.activity_name),
+      subtitle: cleanFeatureCopy(recommendation.recommend_text) || recommendation.category || idea.subtitle,
+      tag: recommendation.category || idea.tag,
+      meta: recommendation.specific_info?.duration || recommendation.budget || idea.distance,
+      image: idea.image,
+      onPress: () => onOpenDetail(recommendation),
+    };
+  });
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -90,39 +108,6 @@ export function RecommendView({
         </LinearGradient>
       </ImageBackground>
 
-      <Pressable onPress={() => onOpenDetail(featured)}>
-        <ImageBackground
-          source={featureImage}
-          resizeMode="cover"
-          imageStyle={styles.featureImage}
-          style={[styles.featureCard, softShadow(colors.accent, 0.06)]}
-        >
-          <LinearGradient
-            colors={[hexToRgba('#fffaf2', 0.5), hexToRgba('#fffaf2', 0.16), 'rgba(255,255,255,0)']}
-            start={{ x: 0, y: 0.2 }}
-            end={{ x: 1, y: 0.78 }}
-            style={styles.featureOverlay}
-          >
-            <View style={[styles.featureTag, { backgroundColor: colors.accent }]}>
-              <Text style={styles.featureTagText}>今日灵感</Text>
-            </View>
-            <Text style={[styles.featureTitle, { color: colors.text }]} numberOfLines={2}>
-              {featureTitle}
-            </Text>
-            <Text style={[styles.featureSub, { color: colors.text }]} numberOfLines={2}>
-              {featureCopy}
-            </Text>
-            <Pressable
-              style={[styles.featureButton, { backgroundColor: colors.accent }]}
-              onPress={() => onOpenDetail(featured)}
-            >
-              <Text style={styles.featureButtonText}>开始今日计划</Text>
-              <Text style={styles.featureArrow}>→</Text>
-            </Pressable>
-          </LinearGradient>
-        </ImageBackground>
-      </Pressable>
-
       <View style={[styles.section, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.1) }]}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
@@ -136,21 +121,21 @@ export function RecommendView({
         </View>
 
         <View style={styles.ideaGrid}>
-          {HOME_IDEAS.slice(0, 3).map((idea) => (
+          {cards.map((card) => (
             <Pressable
-              key={idea.key}
+              key={card.key}
               style={[styles.ideaCard, { borderColor: hexToRgba(colors.accent, 0.1) }]}
-              onPress={() => onPrompt(idea.prompt)}
+              onPress={card.onPress}
             >
-              <ImageBackground source={idea.image} resizeMode="cover" imageStyle={styles.ideaImage} style={styles.ideaVisual} />
+              <ImageBackground source={card.image} resizeMode="cover" imageStyle={styles.ideaImage} style={styles.ideaVisual} />
               <View style={styles.ideaCopy}>
-                <Text style={[styles.ideaTitle, { color: colors.text }]} numberOfLines={1}>{idea.title}</Text>
-                <Text style={[styles.ideaSub, { color: colors.subtext }]} numberOfLines={1}>{idea.subtitle}</Text>
+                <Text style={[styles.ideaTitle, { color: colors.text }]} numberOfLines={1}>{card.title}</Text>
+                <Text style={[styles.ideaSub, { color: colors.subtext }]} numberOfLines={1}>{card.subtitle}</Text>
                 <View style={styles.ideaFooter}>
                   <Text style={[styles.ideaTag, { color: colors.accent, backgroundColor: hexToRgba(colors.accent, 0.1) }]} numberOfLines={1}>
-                    {idea.tag}
+                    {card.tag}
                   </Text>
-                  <Text style={[styles.ideaDistance, { color: colors.subtext }]} numberOfLines={1}>{idea.distance}</Text>
+                  <Text style={[styles.ideaDistance, { color: colors.subtext }]} numberOfLines={1}>{card.meta}</Text>
                 </View>
               </View>
             </Pressable>
@@ -250,64 +235,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     fontWeight: '900',
-  },
-  featureCard: {
-    height: 184,
-    borderRadius: UI.radius.xl,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  featureImage: {
-    borderRadius: UI.radius.xl,
-  },
-  featureOverlay: {
-    flex: 1,
-    padding: 18,
-    justifyContent: 'center',
-  },
-  featureTag: {
-    alignSelf: 'flex-start',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginBottom: 16,
-  },
-  featureTagText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  featureTitle: {
-    maxWidth: '58%',
-    fontSize: 19,
-    lineHeight: 26,
-    fontWeight: '800',
-  },
-  featureSub: {
-    maxWidth: '60%',
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 7,
-  },
-  featureButton: {
-    alignSelf: 'flex-start',
-    minHeight: 42,
-    borderRadius: 21,
-    paddingHorizontal: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 17,
-  },
-  featureButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  featureArrow: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '800',
   },
   section: {
     borderRadius: UI.radius.xl,

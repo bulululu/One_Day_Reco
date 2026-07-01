@@ -203,9 +203,7 @@ export function OnboardingScreen() {
                     setMBTI(type);
                   }}
                 >
-                  <View style={[styles.mbtiDot, { backgroundColor: hexToRgba(optionTheme.colors.accent, active ? 1 : 0.18) }]}>
-                    <Text style={[styles.mbtiAvatar, { color: active ? '#fff' : optionTheme.colors.accent }]}>{optionTheme.avatar}</Text>
-                  </View>
+                  <View style={[styles.mbtiTone, { backgroundColor: optionTheme.colors.accent }]} />
                   <Text style={[styles.mbtiCode, { color: active ? optionTheme.colors.accent : colors.text }]}>{type}</Text>
                   <Text style={[styles.mbtiName, { color: colors.subtext }]} numberOfLines={1}>{optionTheme.name}</Text>
                 </Pressable>
@@ -264,24 +262,24 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   hero: {
-    height: 154,
+    height: 140,
     borderRadius: UI.radius.xl,
     overflow: 'hidden',
     marginTop: 18,
   },
   heroOverlay: {
     flex: 1,
-    padding: 20,
+    padding: 18,
     justifyContent: 'center',
   },
   heroTitle: {
-    fontSize: 24,
-    lineHeight: 31,
+    fontSize: 22,
+    lineHeight: 29,
     fontWeight: '800',
   },
   heroSub: {
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 18,
     marginTop: 9,
     maxWidth: '76%',
   },
@@ -321,33 +319,30 @@ const styles = StyleSheet.create({
   },
   mbtiCard: {
     width: '23%',
-    minHeight: 78,
+    minHeight: 62,
     borderRadius: UI.radius.md,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
+    overflow: 'hidden',
   },
-  mbtiDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  mbtiAvatar: {
-    fontSize: 12,
-    fontWeight: '900',
+  mbtiTone: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: 4,
   },
   mbtiCode: {
     fontSize: 12,
     fontWeight: '900',
+    marginTop: 4,
   },
   mbtiName: {
     fontSize: 9,
     fontWeight: '800',
-    marginTop: 4,
+    marginTop: 3,
   },
   testPanel: {
     borderRadius: UI.radius.xl,

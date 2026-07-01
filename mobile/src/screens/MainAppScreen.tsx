@@ -379,9 +379,8 @@ export function MainAppScreen() {
     if (activeTab === 'recommend') {
       return (
         <RecommendView
-          mbti={activeMbti}
           theme={theme}
-          featured={featured}
+          recommendations={recommendations}
           isLoading={isLoading}
           onRefresh={() => void refreshRecommendation(true)}
           onOpenDetail={setDetail}
