@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
+from typing import Optional
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
-def load_env_file(path: Path | None = None) -> None:
+def load_env_file(path: Optional[Path] = None) -> None:
     env_path = path or PROJECT_ROOT / ".env"
     if not env_path.exists():
         return
