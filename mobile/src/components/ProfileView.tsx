@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { getRecommendationHistory } from '@/services/api';
+import { getConfigStatus, getRecommendationHistory } from '@/services/api';
 import {
   disableDailyReminder,
   formatReminderTime,
@@ -8,7 +8,7 @@ import {
   ReminderSettings,
   scheduleDailyReminder,
 } from '@/services/reminders';
-import { MBTITheme, RecommendationHistoryRecord, UserPreferences } from '@/types';
+import { ConfigStatusResponse, MBTITheme, RecommendationHistoryRecord, ServiceStatus, UserPreferences } from '@/types';
 import { hexToRgba, UI } from '@/styles/ui';
 
 type ProfileViewProps = {
@@ -53,6 +53,7 @@ export function ProfileView({
 }: ProfileViewProps) {
   const colors = theme.colors;
   const [history, setHistory] = useState<RecommendationHistoryRecord[]>([]);
+  const [configStatus, setConfigStatus] = useState<ConfigStatusResponse | null>(null);
   const [reminder, setReminder] = useState<ReminderSettings | null>(null);
   const [isSavingReminder, setSavingReminder] = useState(false);
   const accountLabel = email || (hasSkippedAuth ? '游客体验中' : compactUserId(userId));
@@ -76,10 +77,21 @@ export function ProfileView({
     loadReminderSettings().then((settings) => {
       if (!cancelled) setReminder(settings);
     });
+    getConfigStatus()
+      .then((result) => {
+        if (!cancelled) setConfigStatus(result);
+      })
+      .catch(() => {
+        if (!cancelled) setConfigStatus(null);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const services = ['llm', 'places', 'weather', 'movies']
+    .map((key) => configStatus?.services[key])
+    .filter((service): service is ServiceStatus => Boolean(service));
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -193,6 +205,26 @@ export function ProfileView({
         </Text>
       </Section>
 
+      <Section colors={colors} title="数据状态">
+        {services.length ? services.map((service) => (
+          <View key={service.label} style={styles.serviceRow}>
+            <View style={styles.serviceCopy}>
+              <Text style={[styles.serviceName, { color: colors.text }]}>{service.label}</Text>
+              <Text style={[styles.serviceDetail, { color: colors.subtext }]} numberOfLines={1}>
+                {service.source}
+              </Text>
+            </View>
+            <View style={[styles.servicePill, { backgroundColor: hexToRgba(service.configured ? colors.accent : colors.subtext, 0.12) }]}>
+              <Text style={[styles.servicePillText, { color: service.configured ? colors.accent : colors.subtext }]}>
+                {serviceLabel(service)}
+              </Text>
+            </View>
+          </View>
+        )) : (
+          <Text style={[styles.emptyText, { color: colors.subtext }]}>正在读取服务状态。</Text>
+        )}
+      </Section>
+
       <Pressable style={[styles.secondaryBtn, { borderColor: hexToRgba(colors.accent, 0.18) }]} onPress={onRedoOnboarding}>
         <Text style={[styles.secondaryText, { color: colors.accent }]}>重新设置 MBTI</Text>
       </Pressable>
@@ -261,6 +293,11 @@ function reminderStatusText(settings: ReminderSettings | null) {
   if (settings.status === 'unsupported') return 'Web 预览会保存设置；真机 App 才能发系统通知。';
   if (settings.status === 'error') return '提醒暂时设置失败，可以稍后再试。';
   return '开启后每天到点推一条轻提醒。';
+}
+
+function serviceLabel(service: ServiceStatus) {
+  if (service.is_realtime) return '实时';
+  return service.configured ? '可用' : '兜底';
 }
 
 const styles = StyleSheet.create({
@@ -428,6 +465,36 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     lineHeight: 21,
+  },
+  serviceRow: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  serviceCopy: {
+    flex: 1,
+  },
+  serviceName: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  serviceDetail: {
+    fontSize: 11,
+    marginTop: 3,
+  },
+  servicePill: {
+    minWidth: 48,
+    minHeight: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 9,
+  },
+  servicePillText: {
+    fontSize: 11,
+    fontWeight: '900',
   },
   secondaryBtn: {
     minHeight: 48,
