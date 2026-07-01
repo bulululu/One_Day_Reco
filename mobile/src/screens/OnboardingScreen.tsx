@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { updateProfile } from '@/services/api';
@@ -23,6 +23,23 @@ function inferMbti(answers: Answers): MBTIType | null {
   return result.length === 4 ? result as MBTIType : null;
 }
 
+function scoreText(text: string, positive: string[], negative: string[]) {
+  const source = text.toLowerCase();
+  const positiveScore = positive.reduce((score, word) => score + (source.includes(word.toLowerCase()) ? 1 : 0), 0);
+  const negativeScore = negative.reduce((score, word) => score + (source.includes(word.toLowerCase()) ? 1 : 0), 0);
+  return positiveScore - negativeScore;
+}
+
+function inferMbtiFromText(text: string): MBTIType | null {
+  const clean = text.trim();
+  if (clean.length < 6) return null;
+  const energy = scoreText(clean, ['独处', '一个人', '人少', '安静', '宅', '充电'], ['朋友', '一起', '热闹', '聚会', '社交', '见人']) >= 0 ? 'I' : 'E';
+  const input = scoreText(clean, ['灵感', '故事', '想象', '新鲜', '意义', '可能'], ['具体', '现实', '细节', '确定', '附近', '实用']) >= 0 ? 'N' : 'S';
+  const decision = scoreText(clean, ['感受', '舒服', '温暖', '治愈', '情绪', '喜欢'], ['理由', '效率', '逻辑', '清楚', '性价比', '省事']) >= 0 ? 'F' : 'T';
+  const pace = scoreText(clean, ['随便', '自由', '看心情', '临时', '不想计划', '松弛'], ['计划', '安排', '确定', '提前', '准时', '清单']) >= 0 ? 'P' : 'J';
+  return `${energy}${input}${decision}${pace}` as MBTIType;
+}
+
 export function OnboardingScreen() {
   const {
     mbti,
@@ -37,9 +54,11 @@ export function OnboardingScreen() {
   const [selected, setSelected] = useState<MBTIType | null>(mbti || 'INFP');
   const [testing, setTesting] = useState(false);
   const [answers, setAnswers] = useState<Answers>({});
+  const [freeform, setFreeform] = useState('');
 
   const inferred = inferMbti(answers);
-  const finalMbti = testing ? inferred : selected;
+  const textInferred = inferMbtiFromText(freeform);
+  const finalMbti = testing ? (inferred || textInferred) : selected;
   const preview = finalMbti || selected || 'INFP';
   const theme = MBTI_THEMES[preview];
   const colors = theme.colors;
@@ -51,8 +70,8 @@ export function OnboardingScreen() {
     social_frequency: preview.startsWith('I') ? '偏独处，低社交压力' : '愿意适度社交',
     budget: '50-150元',
     commute_tolerance: preview.startsWith('I') ? '30分钟以内，人少优先' : '45分钟以内',
-    notes: `onboarding_mbti=${preview}; style=${profile.styleName}; first_run=mbti_only`,
-  }), [preview, profile.styleName]);
+    notes: `onboarding_mbti=${preview}; style=${profile.styleName}; first_run=${testing && textInferred ? 'mbti_chat_guess' : 'mbti_select'}`,
+  }), [preview, profile.styleName, testing, textInferred]);
 
   const finish = async () => {
     if (!finalMbti) return;
@@ -110,6 +129,23 @@ export function OnboardingScreen() {
 
         {testing ? (
           <View style={[styles.testPanel, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }]}>
+            <View style={[styles.chatGuessBox, { backgroundColor: hexToRgba(colors.accent, 0.07), borderColor: hexToRgba(colors.accent, 0.12) }]}>
+              <Text style={[styles.chatGuessTitle, { color: colors.text }]}>也可以直接说说你平时的状态</Text>
+              <TextInput
+                value={freeform}
+                onChangeText={(text) => {
+                  setFreeform(text);
+                  if (text.trim().length >= 6) setSelected(null);
+                }}
+                multiline
+                placeholder="比如：我比较宅，周末可以去人少的影院，但不想去太热闹的地方。"
+                placeholderTextColor={colors.subtext}
+                style={[styles.freeformInput, { color: colors.text }]}
+              />
+              <Text style={[styles.chatGuessHint, { color: colors.subtext }]}>
+                {textInferred ? `暂定 ${textInferred} · ${getLifestyleProfile(textInferred).styleName}` : '写一句就行；不确定时再选下面 4 个小问题。'}
+              </Text>
+            </View>
             {TEST_QUESTIONS.map((question) => (
               <View key={question.key} style={styles.questionBlock}>
                 <Text style={[styles.questionTitle, { color: colors.text }]}>{question.title}</Text>
@@ -301,6 +337,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 14,
     gap: 14,
+  },
+  chatGuessBox: {
+    borderRadius: UI.radius.lg,
+    borderWidth: 1,
+    padding: 13,
+  },
+  chatGuessTitle: {
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: '900',
+  },
+  freeformInput: {
+    minHeight: 74,
+    fontSize: 14,
+    lineHeight: 21,
+    padding: 0,
+    marginTop: 9,
+    textAlignVertical: 'top',
+  },
+  chatGuessHint: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 8,
   },
   questionBlock: {
     gap: 9,
