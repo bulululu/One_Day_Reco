@@ -56,7 +56,7 @@ export function ChatPanel({
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.messageList}>
             {visibleMessages.length ? visibleMessages.map((message, index) => {
               const isUser = message.role === 'user';
-              const firstRecommendation = !isUser ? message.recommendations?.[0] : undefined;
+              const messageRecommendations = !isUser ? message.recommendations?.slice(0, 3) || [] : [];
               return (
                 <View
                   key={`${message.timestamp || index}-${index}`}
@@ -72,22 +72,23 @@ export function ChatPanel({
                   <Text style={[styles.bubbleText, { color: isUser ? '#fff' : colors.text }]}>
                     {message.content}
                   </Text>
-                  {firstRecommendation ? (
+                  {messageRecommendations.map((recommendation) => (
                     <Pressable
+                      key={recommendation.activity_id}
                       style={[styles.recoCard, { backgroundColor: hexToRgba(colors.accent, 0.08), borderColor: hexToRgba(colors.accent, 0.16) }]}
-                      onPress={() => onOpenRecommendation(firstRecommendation)}
+                      onPress={() => onOpenRecommendation(recommendation)}
                     >
                       <Text style={[styles.recoTitle, { color: colors.text }]} numberOfLines={1}>
-                        {firstRecommendation.specific_info?.name || firstRecommendation.activity_name}
+                        {recommendation.specific_info?.name || recommendation.activity_name}
                       </Text>
                       <Text style={[styles.recoMeta, { color: colors.subtext }]} numberOfLines={1}>
-                        {[firstRecommendation.specific_info?.location, firstRecommendation.specific_info?.duration, firstRecommendation.specific_info?.price]
+                        {[recommendation.specific_info?.location, recommendation.specific_info?.duration, recommendation.specific_info?.price]
                           .filter(Boolean)
                           .join(' · ') || '查看具体安排'}
                       </Text>
                       <Text style={[styles.recoAction, { color: colors.accent }]}>查看详情 ›</Text>
                     </Pressable>
-                  ) : null}
+                  ))}
                 </View>
               );
             }) : (
