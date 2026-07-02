@@ -29,6 +29,7 @@ type Props = {
   location: string;
   isResolvingContext: boolean;
   onLocationChange: (location: string) => void;
+  onUseCurrentLocation: () => void;
   onSelect: (intent: DailyIntent) => void;
   onSkip: () => void;
   onChat: () => void;
@@ -40,6 +41,7 @@ export function DailyIntentView({
   location,
   isResolvingContext,
   onLocationChange,
+  onUseCurrentLocation,
   onSelect,
   onSkip,
   onChat,
@@ -103,6 +105,15 @@ export function DailyIntentView({
             {isResolvingContext ? '天气中' : '可选'}
           </Text>
         </View>
+        <Pressable
+          style={[styles.currentLocationBtn, { backgroundColor: hexToRgba(colors.accent, 0.1), borderColor: hexToRgba(colors.accent, 0.16) }]}
+          onPress={onUseCurrentLocation}
+          disabled={isResolvingContext}
+        >
+          <Text style={[styles.currentLocationText, { color: colors.accent }]}>
+            {isResolvingContext ? '正在定位...' : '使用当前位置'}
+          </Text>
+        </Pressable>
         <View style={styles.locationPresets}>
           {LOCATION_PRESETS.map((preset) => {
             const selected = location.trim() === preset;
@@ -231,6 +242,18 @@ const styles = StyleSheet.create({
   locationHint: {
     fontSize: 11,
     lineHeight: 16,
+  },
+  currentLocationBtn: {
+    minHeight: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  currentLocationText: {
+    fontSize: 13,
+    fontWeight: '900',
   },
   locationPresets: {
     flexDirection: 'row',

@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/store/appStore';
 import { chat, getWeather, recommend, recordActivityEvent, submitFeedback, triggerRecommendation, updateProfile } from '@/services/api';
+import { getCurrentLocation } from '@/services/location';
 import { ActivitySourceMeta, ChatMessage, MBTIType, Recommendation, UserPreferences } from '@/types';
 import { ActivityDetailSheet } from '@/components/ActivityDetailSheet';
 import { ChatPanel } from '@/components/ChatPanel';
@@ -109,6 +110,7 @@ export function MainAppScreen() {
   const [isChatSending, setChatSending] = useState(false);
   const [inputText, setInputText] = useState('');
   const [location, setLocation] = useState('');
+  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
   const [weather, setWeather] = useState('天气获取中');
   const [isResolvingContext, setResolvingContext] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([DEFAULT_RECOMMENDATION]);
@@ -131,9 +133,11 @@ export function MainAppScreen() {
   const context = useMemo(() => ({
     weather,
     location,
+    latitude: coordinates?.latitude,
+    longitude: coordinates?.longitude,
     mode: '个人',
     mode_note: currentIntent?.prompt || '按当前地点、天气和你的偏好推荐',
-  }), [currentIntent?.prompt, location, weather]);
+  }), [coordinates?.latitude, coordinates?.longitude, currentIntent?.prompt, location, weather]);
 
   const displayMessages = useMemo<ChatMessage[]>(() => {
     if (messages.length) return messages;
@@ -187,7 +191,7 @@ export function MainAppScreen() {
       setResolvingContext(true);
       try {
         const currentLocation = location.trim();
-        if (!currentLocation) {
+        if (!currentLocation && !coordinates) {
           const nextWeather = '未设置位置';
           if (!ignore) {
             setWeather(nextWeather);
@@ -419,6 +423,24 @@ export function MainAppScreen() {
     setIntentReady(true);
   };
 
+  const handleUseCurrentLocation = async () => {
+    if (isResolvingContext) return;
+    setResolvingContext(true);
+    try {
+      const current = await getCurrentLocation();
+      if (!current) return;
+      setCoordinates({ latitude: current.latitude, longitude: current.longitude });
+      setLocation(current.label);
+    } finally {
+      setResolvingContext(false);
+    }
+  };
+
+  const handleLocationChange = (nextLocation: string) => {
+    setCoordinates(null);
+    setLocation(nextLocation);
+  };
+
   const renderContent = () => {
     if (activeTab === 'recommend') {
       return (
@@ -492,7 +514,8 @@ export function MainAppScreen() {
           mbti={activeMbti}
           location={location}
           isResolvingContext={isResolvingContext}
-          onLocationChange={setLocation}
+          onLocationChange={handleLocationChange}
+          onUseCurrentLocation={() => void handleUseCurrentLocation()}
           onSelect={handleIntentSelect}
           onSkip={() => {
             setCurrentIntent(null);

@@ -42,6 +42,8 @@ export interface AuthResponse {
 export interface RecommendContext {
   weather?: string;
   location?: string;
+  latitude?: number;
+  longitude?: number;
   mode?: string;
   mode_note?: string;
 }

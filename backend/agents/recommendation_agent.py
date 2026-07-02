@@ -13,7 +13,13 @@ from openai import AzureOpenAI
 from backend.services.activity_service import get_activity_catalog
 from backend.services.content_service import search_content
 from backend.services.movie_service import get_movie_candidates
-from backend.services.place_service import search_places_around_location
+from backend.services.place_service import (
+    _format_distance,
+    _format_duration_seconds,
+    get_route,
+    search_nearby_places,
+    search_places_around_location,
+)
 from backend.services.recommendation_quality import quality_issues
 
 # 项目根目录
@@ -269,7 +275,10 @@ class RecommendationAgent:
         return mapping.get(subcategory, name)
 
     def _lookup_places_for_candidates(self, candidates: list, context: Optional[dict] = None) -> dict:
-        location = (context or {}).get("location", "")
+        context = context or {}
+        location = context.get("location", "")
+        latitude = context.get("latitude")
+        longitude = context.get("longitude")
         place_hints = {}
         route_attached = False
         for act in candidates[:8]:
@@ -286,13 +295,23 @@ class RecommendationAgent:
             query = self._place_query_for_activity(act)
             if not query:
                 continue
-            result = search_places_around_location(
-                query,
-                location=location,
-                radius=5000,
-                limit=3,
-                include_route=not route_attached,
-            )
+            if latitude is not None and longitude is not None:
+                result = search_nearby_places(query, longitude=float(longitude), latitude=float(latitude), radius=5000, limit=3)
+                first = (result.get("places") or [{}])[0]
+                if not route_attached and first.get("location"):
+                    route = get_route(f"{longitude},{latitude}", first["location"], mode="walking")
+                    if route.get("is_realtime"):
+                        first["route_distance"] = _format_distance(route.get("distance_meters"))
+                        first["route_duration"] = _format_duration_seconds(route.get("duration_seconds"))
+                        first["route_mode"] = "步行"
+            else:
+                result = search_places_around_location(
+                    query,
+                    location=location,
+                    radius=5000,
+                    limit=3,
+                    include_route=not route_attached,
+                )
             place_hints[act["id"]] = result
             if result.get("places") and result["places"][0].get("route_duration"):
                 route_attached = True
@@ -323,7 +342,13 @@ class RecommendationAgent:
     def _lookup_movie_hints_for_candidates(self, candidates: list, context: Optional[dict] = None) -> dict:
         if not any(act.get("subcategory") == "电影" for act in candidates):
             return {}
-        return get_movie_candidates(location=(context or {}).get("location", ""), limit=3)
+        context = context or {}
+        return get_movie_candidates(
+            location=context.get("location", ""),
+            limit=3,
+            longitude=context.get("longitude"),
+            latitude=context.get("latitude"),
+        )
 
     def _build_movie_hints_text(self, movie_hints: dict) -> str:
         if not movie_hints:

@@ -126,6 +126,9 @@ def main():
         assert copy["specific_info"]["name"] == "真实感测试咖啡馆", copy
         assert copy["specific_info"]["source"] == "高德地图实时地点", copy
         assert copy["specific_info"]["route"] == "步行约 9 分钟", copy
+        coordinate_hints = agent._lookup_places_for_candidates([activity], {"latitude": 31.0, "longitude": 121.0})
+        coordinate_place = coordinate_hints[activity["id"]]["places"][0]
+        assert coordinate_place["route_duration"] == "9 分钟", coordinate_hints
         rec = agent._attach_activity_metadata(
             {
                 "activity_id": activity["id"],
