@@ -8,10 +8,29 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.services import place_service
 from backend.agents.recommendation_agent import RecommendationAgent
-from backend.services.place_service import get_amap_weather, get_route, search_nearby_places, search_places
+from backend.services.place_service import (
+    geocode_location,
+    get_amap_weather,
+    get_route,
+    search_nearby_places,
+    search_places,
+    search_places_around_location,
+)
 
 
 def fake_amap_get(url, params, timeout=4):
+    if "geocode" in url:
+        return {
+            "status": "1",
+            "geocodes": [
+                {
+                    "formatted_address": "上海市徐汇区",
+                    "location": "121.436760,31.188310",
+                    "adcode": "310104",
+                    "city": "上海市",
+                }
+            ],
+        }
     if "weather" in url:
         return {
             "status": "1",
@@ -69,6 +88,15 @@ def main():
         nearby = search_nearby_places("咖啡馆", longitude=121.0, latitude=31.0, limit=3)
         assert nearby["source"] == "AMap", nearby
         assert nearby["places"][0]["name"] == "真实感测试咖啡馆", nearby
+
+        geo = geocode_location("上海 徐汇")
+        assert geo["is_realtime"] is True, geo
+        assert geo["adcode"] == "310104", geo
+
+        around_location = search_places_around_location("咖啡馆", location="上海 徐汇", limit=3)
+        assert around_location["source"] == "AMap", around_location
+        assert around_location["places"][0]["distance"] == "650 m", around_location
+        assert around_location["geocoded_location"]["adcode"] == "310104", around_location
 
         weather = get_amap_weather("上海 徐汇")
         assert weather["source"] == "AMap", weather

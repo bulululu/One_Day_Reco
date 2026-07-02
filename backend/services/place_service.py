@@ -13,6 +13,7 @@ load_env_file()
 AMAP_TEXT_URL = "https://restapi.amap.com/v3/place/text"
 AMAP_AROUND_URL = "https://restapi.amap.com/v3/place/around"
 AMAP_WEATHER_URL = "https://restapi.amap.com/v3/weather/weatherInfo"
+AMAP_GEOCODE_URL = "https://restapi.amap.com/v3/geocode/geo"
 AMAP_ROUTE_URLS = {
     "walking": "https://restapi.amap.com/v3/direction/walking",
     "driving": "https://restapi.amap.com/v3/direction/driving",
@@ -184,6 +185,57 @@ def search_nearby_places(
     }
 
 
+def geocode_location(location: str, city: str = "") -> dict:
+    key = _amap_key()
+    clean_location = _normalize_location(location)
+    if not key or not clean_location:
+        return {"source": "geocode_fallback", "configured": bool(key), "is_realtime": False}
+
+    params = {"key": key, "address": clean_location, "output": "json"}
+    if city:
+        params["city"] = city
+    try:
+        payload = _amap_get(AMAP_GEOCODE_URL, params)
+    except (OSError, URLError, TimeoutError, json.JSONDecodeError):
+        return {"source": "AMap", "configured": True, "is_realtime": False, "reason": "amap_request_failed"}
+
+    geocodes = payload.get("geocodes") or []
+    if payload.get("status") != "1" or not geocodes:
+        return {"source": "AMap", "configured": True, "is_realtime": False, "reason": payload.get("info") or "amap_error"}
+
+    first = geocodes[0]
+    parts = (first.get("location") or "").split(",", 1)
+    if len(parts) != 2:
+        return {"source": "AMap", "configured": True, "is_realtime": False, "reason": "missing_geocode_location"}
+    lon, lat = parts
+    return {
+        "source": "AMap",
+        "configured": True,
+        "is_realtime": True,
+        "longitude": float(lon),
+        "latitude": float(lat),
+        "formatted_address": first.get("formatted_address") or clean_location,
+        "adcode": first.get("adcode", ""),
+        "city": first.get("city", city),
+    }
+
+
+def search_places_around_location(query: str, location: str = "", radius: int = 3000, limit: int = 5, types: Optional[str] = None) -> dict:
+    geo = geocode_location(location)
+    if geo.get("is_realtime"):
+        result = search_nearby_places(
+            query,
+            longitude=geo["longitude"],
+            latitude=geo["latitude"],
+            radius=radius,
+            limit=limit,
+            types=types,
+        )
+        result["geocoded_location"] = geo
+        return result
+    return search_places(query, location=location, limit=limit, types=types)
+
+
 def get_amap_weather(city: str) -> dict:
     key = _amap_key()
     clean_city = _normalize_location(city) or "上海"
@@ -233,7 +285,7 @@ def get_route(origin: str, destination: str, mode: str = "walking", city: str = 
         params["city"] = city or "上海"
 
     try:
-        payload = _amap_get(AMAP_ROUTE_URLS[clean_mode], params)
+        payload = _amap_get(AMAP_ROUTE_URLS[clean_mode], params, timeout=8)
     except (OSError, URLError, TimeoutError, json.JSONDecodeError):
         return {"source": "AMap", "configured": True, "is_realtime": False, "reason": "amap_request_failed"}
 

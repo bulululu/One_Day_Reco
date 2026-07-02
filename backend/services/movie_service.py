@@ -6,7 +6,7 @@ from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 from backend.services.env import load_env_file
-from backend.services.place_service import search_nearby_places, search_places
+from backend.services.place_service import search_nearby_places, search_places, search_places_around_location
 
 
 load_env_file()
@@ -228,6 +228,8 @@ def get_movie_candidates(
 
     if longitude is not None and latitude is not None:
         cinema_result = search_nearby_places("电影院", longitude=longitude, latitude=latitude, radius=5000, limit=3)
+    elif location:
+        cinema_result = search_places_around_location("电影院", location=location, radius=5000, limit=3)
     else:
         cinema_result = search_places("电影院", location=location, limit=3)
     return {

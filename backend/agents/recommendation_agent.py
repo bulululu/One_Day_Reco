@@ -13,7 +13,7 @@ from openai import AzureOpenAI
 from backend.services.activity_service import get_activity_catalog
 from backend.services.content_service import search_content
 from backend.services.movie_service import get_movie_candidates
-from backend.services.place_service import search_places
+from backend.services.place_service import search_places_around_location
 from backend.services.recommendation_quality import quality_issues
 
 # 项目根目录
@@ -285,7 +285,7 @@ class RecommendationAgent:
             query = self._place_query_for_activity(act)
             if not query:
                 continue
-            result = search_places(query, location=location, limit=3)
+            result = search_places_around_location(query, location=location, radius=5000, limit=3)
             place_hints[act["id"]] = result
         return place_hints
 
