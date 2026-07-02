@@ -1,12 +1,13 @@
 import React from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MBTITheme, Recommendation } from '@/types';
-import { HOME_ASSETS, HOME_IDEAS } from '@/data/lifestyleDesign';
+import { MBTITheme, MBTIType, Recommendation } from '@/types';
+import { HOME_IDEAS, getLifestyleHero, getLifestyleProfile } from '@/data/lifestyleDesign';
 import { hexToRgba, softShadow, UI } from '@/styles/ui';
 
 type RecommendViewProps = {
   theme: MBTITheme;
+  mbti: MBTIType;
   recommendations: Recommendation[];
   isLoading: boolean;
   onRefresh: () => void;
@@ -48,6 +49,7 @@ function timeGreeting() {
 
 export function RecommendView({
   theme,
+  mbti,
   recommendations,
   isLoading,
   onRefresh,
@@ -57,6 +59,8 @@ export function RecommendView({
 }: RecommendViewProps) {
   const colors = theme.colors;
   const greeting = timeGreeting();
+  const profile = getLifestyleProfile(mbti);
+  const hero = getLifestyleHero(mbti);
   const cards = HOME_IDEAS.slice(0, 3).map((idea, index) => {
     const recommendation = recommendations[index];
     if (!recommendation) {
@@ -98,7 +102,7 @@ export function RecommendView({
       </View>
 
       <ImageBackground
-        source={HOME_ASSETS.hero}
+        source={hero}
         resizeMode="cover"
         imageStyle={styles.greetingImage}
         style={[styles.greetingCard, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }, softShadow(colors.accent, 0.05)]}
@@ -109,8 +113,11 @@ export function RecommendView({
           end={{ x: 0.72, y: 0.5 }}
           style={styles.greetingOverlay}
         >
+          <View style={[styles.styleBadge, { backgroundColor: hexToRgba(colors.accent, 0.12) }]}>
+            <Text style={[styles.styleBadgeText, { color: colors.accent }]}>{mbti} · {profile.styleName}</Text>
+          </View>
           <Text style={[styles.greetingTitle, { color: colors.text }]}>{greeting}，{theme.name}</Text>
-          <Text style={[styles.greetingSub, { color: colors.text }]}>今天想一起做点什么呢？</Text>
+          <Text style={[styles.greetingSub, { color: colors.text }]}>{profile.subtitle}</Text>
           <Pressable style={[styles.greetingButton, { backgroundColor: colors.accent }]} onPress={onRefresh}>
             <Text style={styles.greetingButtonText}>随便看看</Text>
           </Pressable>
@@ -222,6 +229,18 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 22,
     justifyContent: 'center',
+  },
+  styleBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 14,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    marginBottom: 9,
+  },
+  styleBadgeText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '900',
   },
   greetingTitle: {
     fontSize: 23,

@@ -1,8 +1,8 @@
 import React from 'react';
 import { ImageBackground, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MBTITheme } from '@/types';
-import { HOME_ASSETS } from '@/data/lifestyleDesign';
+import { MBTITheme, MBTIType } from '@/types';
+import { getLifestyleHero, getLifestyleProfile } from '@/data/lifestyleDesign';
 import { hexToRgba, softShadow, UI } from '@/styles/ui';
 
 export type DailyIntent = {
@@ -25,6 +25,7 @@ const LOCATION_PRESETS = ['上海 徐汇', '上海 静安', '上海 黄浦', '�
 
 type Props = {
   theme: MBTITheme;
+  mbti: MBTIType;
   companionName: string;
   location: string;
   isResolvingContext: boolean;
@@ -36,6 +37,7 @@ type Props = {
 
 export function DailyIntentView({
   theme,
+  mbti,
   companionName,
   location,
   isResolvingContext,
@@ -45,6 +47,8 @@ export function DailyIntentView({
   onChat,
 }: Props) {
   const colors = theme.colors;
+  const profile = getLifestyleProfile(mbti);
+  const hero = getLifestyleHero(mbti);
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.content}>
@@ -61,16 +65,16 @@ export function DailyIntentView({
           </Pressable>
         </View>
 
-        <ImageBackground source={HOME_ASSETS.hero} resizeMode="cover" imageStyle={{ borderRadius: UI.radius.xl }} style={[styles.hero, softShadow(colors.accent, 0.05)]}>
+        <ImageBackground source={hero} resizeMode="cover" imageStyle={{ borderRadius: UI.radius.xl }} style={[styles.hero, softShadow(colors.accent, 0.05)]}>
           <LinearGradient
             colors={[hexToRgba(colors.card, 0.94), hexToRgba(colors.card, 0.55), hexToRgba(colors.card, 0.02)]}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 0.82, y: 0.5 }}
             style={styles.heroOverlay}
           >
-            <Text style={[styles.heroKicker, { color: colors.accent }]}>今天的入口</Text>
+            <Text style={[styles.heroKicker, { color: colors.accent }]}>{mbti} · {profile.styleName}</Text>
             <Text style={[styles.heroTitle, { color: colors.text }]}>现在想做点什么？</Text>
-            <Text style={[styles.heroSub, { color: colors.subtext }]}>选一个，或直接跳过。</Text>
+            <Text style={[styles.heroSub, { color: colors.subtext }]}>{profile.subtitle}</Text>
           </LinearGradient>
         </ImageBackground>
 

@@ -423,6 +423,7 @@ export function MainAppScreen() {
       return (
         <RecommendView
           theme={theme}
+          mbti={activeMbti}
           recommendations={recommendations}
           isLoading={isLoading}
           onRefresh={() => void refreshRecommendation(true)}
@@ -486,6 +487,7 @@ export function MainAppScreen() {
       {!intentReady ? (
         <DailyIntentView
           theme={theme}
+          mbti={activeMbti}
           companionName={theme.name}
           location={location}
           isResolvingContext={isResolvingContext}
