@@ -13,6 +13,7 @@ type ExploreViewProps = {
   activeFilter?: string | null;
   onRefresh: () => void;
   onOpenDetail: (recommendation: Recommendation) => void;
+  onAction: (recommendation: Recommendation) => void;
   onPrompt: (label: string, prompt: string) => void;
 };
 
@@ -33,6 +34,7 @@ export function ExploreView({
   activeFilter,
   onRefresh,
   onOpenDetail,
+  onAction,
   onPrompt,
 }: ExploreViewProps) {
   const colors = theme.colors;
@@ -85,7 +87,7 @@ export function ExploreView({
       <View style={styles.cardList}>
         {recommendations.slice(0, 5).map((item) => (
           <Pressable key={item.activity_id} onPress={() => onOpenDetail(item)} style={styles.cardHit}>
-            <RecommendationCard recommendation={item} theme={theme} activitySource={source} />
+            <RecommendationCard recommendation={item} theme={theme} activitySource={source} onAction={onAction} />
           </Pressable>
         ))}
       </View>

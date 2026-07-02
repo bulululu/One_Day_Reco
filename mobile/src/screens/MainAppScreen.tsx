@@ -448,6 +448,7 @@ export function MainAppScreen() {
             void refreshRecommendation(true);
           }}
           onOpenDetail={setDetail}
+          onAction={handleRecordAction}
           onPrompt={handleExploreFilter}
         />
       );

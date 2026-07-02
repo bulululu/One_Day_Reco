@@ -57,7 +57,7 @@ export function RecommendationCard({
   const handleAction = () => {
     onAction?.(recommendation);
     if (recommendation.action_url) {
-      Linking.openURL(recommendation.action_url);
+      void Linking.openURL(recommendation.action_url).catch(() => undefined);
     }
   };
 
