@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from backend.app.dependencies import agent
 from backend.app.main import app
 from backend.services.database import init_db
+from backend.services.recommendation_quality import is_executable_recommendation
 
 
 def main():
@@ -40,14 +41,30 @@ def main():
     assert res.status_code == 200, res.text
     data = res.json()
     assert data.get("reply"), data
-    assert isinstance(data.get("recommendations"), list), data
+    recommendations = data.get("recommendations") or []
+    assert isinstance(recommendations, list), data
+    assert recommendations, data
+    assert all(is_executable_recommendation(item) for item in recommendations), recommendations
+    combined = " ".join(
+        " ".join(str(value or "") for value in [
+            item.get("activity_name"),
+            item.get("recommend_text"),
+            item.get("tips"),
+            (item.get("specific_info") or {}).get("name"),
+            (item.get("specific_info") or {}).get("location"),
+            (item.get("specific_info") or {}).get("source"),
+        ])
+        for item in recommendations
+    )
+    assert any(term in combined for term in ["电影", "影院", "猫眼", "豆瓣", "片长", "场次"]), data
     if require_llm:
         assert data.get("reply_source") == "llm", data
     print(
         {
             "reply_len": len(data["reply"]),
             "reply_source": data.get("reply_source"),
-            "recommendation_count": len(data["recommendations"]),
+            "recommendation_count": len(recommendations),
+            "first": recommendations[0].get("specific_info", {}).get("name") or recommendations[0].get("activity_name"),
             "activity_source": data.get("activity_source", {}).get("source"),
         }
     )

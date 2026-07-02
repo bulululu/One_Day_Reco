@@ -43,12 +43,29 @@ def main() -> int:
             "source": "Steam搜索：Stardew Valley",
         },
     }
+    placeholder_movie = {
+        "activity_id": "bad_movie",
+        "activity_name": "上海影城SHO 早场电影（示例：《你想活出怎样的人生》）",
+        "category": "室内娱乐",
+        "recommend_text": "你可以周末去上海影城SHO看一场早场电影，示例：《你想活出怎样的人生》，人会少一点。",
+        "tips": "打开猫眼后自行选择一场。",
+        "specific_info": {
+            "name": "上海影城SHO 早场电影（示例：《你想活出怎样的人生》）",
+            "location": "上海影城SHO",
+            "duration": "约120分钟",
+            "price": "50-150元",
+            "rating": "猫眼",
+            "source": "猫眼搜索",
+        },
+    }
 
     errors = []
     if game_missing:
         errors.append(f"game_missing={game_missing}")
     if is_executable_recommendation(vague):
         errors.append("vague recommendation passed quality gate")
+    if is_executable_recommendation(placeholder_movie):
+        errors.append("placeholder movie passed quality gate")
     if not is_executable_recommendation(concrete_game):
         errors.append(f"concrete game failed: {quality_issues(concrete_game)}")
 

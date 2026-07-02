@@ -18,6 +18,8 @@ GENERIC_PHRASES = [
     "玩会儿游戏",
 ]
 
+PLACEHOLDER_PHRASES = ["示例", "例如", "待确认", "自行选择", "随便选"]
+
 REQUIRED_SPECIFIC_FIELDS = ["name", "location", "duration", "price", "source"]
 
 
@@ -58,6 +60,9 @@ def quality_issues(rec: dict) -> list[str]:
 
     if len(str(rec.get("tips", "")).strip()) < 12:
         issues.append("tips.too_short")
+
+    if _has_any(text, PLACEHOLDER_PHRASES):
+        issues.append("placeholder_text")
 
     if _has_any(text, GENERIC_PHRASES):
         missing_specific_markers = not _has_any(
