@@ -25,15 +25,15 @@ def get_config_status(llm_available: bool) -> dict:
                 "label": "实时天气",
                 "configured": True,
                 "is_realtime": True,
-                "source": "Open-Meteo",
-                "detail": "无需 key，按用户输入地点获取实时天气。",
+                "source": "AMap/Open-Meteo",
+                "detail": "优先使用高德天气；未配置或失败时回退 Open-Meteo。",
             },
             "places": {
                 "label": "真实地点",
                 "configured": _configured("AMAP_API_KEY"),
                 "is_realtime": _configured("AMAP_API_KEY"),
                 "source": "AMap" if _configured("AMAP_API_KEY") else "search_fallback",
-                "detail": "配置 AMAP_API_KEY 后返回真实 POI；未配置时只返回搜索入口。",
+                "detail": "配置 AMAP_API_KEY 后返回 POI、周边地点和路线；未配置时只返回搜索入口。",
             },
             "activities": {
                 "label": "活动聚合",

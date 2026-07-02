@@ -75,10 +75,14 @@ EXPO_PUBLIC_API_BASE=http://192.168.1.10:8000 npx expo start
 - `GET /api/activities`
 - `GET /api/activities/games`
 - `GET /api/places/search`
+- `GET /api/places/nearby`
+- `GET /api/places/route`
 - `GET /api/movies/nearby`
 - `GET /api/content/search`
 - `GET /api/weather`
 - `GET /api/config/status`
+
+电影接口当前返回热映片单、附近影院候选和票务入口；未接正式票务 API 前，不返回伪造的实时场次或票价。
 
 ## 验证
 
@@ -92,6 +96,7 @@ PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_real_c
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_real_chat_endpoint.py --require-llm
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_real_recommend_endpoint.py --require-llm
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_media_sources.py
+PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_amap_services.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_config_status.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_weather_endpoint.py
 PYTHONPYCACHEPREFIX=/private/tmp/onedayreco_pycache python3 scripts/check_recommendation_dedupe.py

@@ -6,7 +6,7 @@ from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 from backend.services.env import load_env_file
-from backend.services.place_service import search_places
+from backend.services.place_service import search_nearby_places, search_places
 
 
 load_env_file()
@@ -209,7 +209,13 @@ def _attach_booking_paths(movies: list[dict], location: str, cinema_result: dict
     return enriched
 
 
-def get_movie_candidates(location: str = "", region: str = "CN", limit: int = 5) -> dict:
+def get_movie_candidates(
+    location: str = "",
+    region: str = "CN",
+    limit: int = 5,
+    longitude: Optional[float] = None,
+    latitude: Optional[float] = None,
+) -> dict:
     movies = _fetch_maoyan_now_playing(location, limit)
     source = "Maoyan unofficial" if movies else "curated_fallback"
     is_realtime = bool(movies)
@@ -220,7 +226,10 @@ def get_movie_candidates(location: str = "", region: str = "CN", limit: int = 5)
     if not movies:
         movies = CURATED_MOVIES[: max(1, min(limit, len(CURATED_MOVIES)))]
 
-    cinema_result = search_places("电影院", location=location, limit=3)
+    if longitude is not None and latitude is not None:
+        cinema_result = search_nearby_places("电影院", longitude=longitude, latitude=latitude, radius=5000, limit=3)
+    else:
+        cinema_result = search_places("电影院", location=location, limit=3)
     return {
         "count": len(movies),
         "source": source,

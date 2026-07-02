@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 from pathlib import Path
@@ -9,38 +8,43 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.services import place_service
 from backend.agents.recommendation_agent import RecommendationAgent
-from backend.services.place_service import search_places
+from backend.services.place_service import get_amap_weather, get_route, search_nearby_places, search_places
 
 
-class FakeResponse:
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        return False
-
-    def read(self):
-        return json.dumps(
+def fake_amap_get(url, params, timeout=4):
+    if "weather" in url:
+        return {
+            "status": "1",
+            "lives": [
+                {
+                    "city": "徐汇区",
+                    "weather": "阴",
+                    "temperature": "28",
+                    "temperature_float": "28.0",
+                    "reporttime": "2026-07-02 10:33:08",
+                }
+            ],
+        }
+    if "direction" in url:
+        return {"status": "1", "route": {"paths": [{"distance": "650", "duration": "520", "steps": []}]}}
+    return {
+        "status": "1",
+        "pois": [
             {
-                "status": "1",
-                "pois": [
-                    {
-                        "id": "B0TEST001",
-                        "name": "真实感测试咖啡馆",
-                        "address": "测试路 100 号",
-                        "type": "餐饮服务;咖啡厅;咖啡厅",
-                        "typecode": "050500",
-                        "location": "121.000000,31.000000",
-                        "distance": "650",
-                        "business_area": "徐汇",
-                        "pname": "上海市",
-                        "cityname": "上海市",
-                        "adname": "徐汇区",
-                    }
-                ],
-            },
-            ensure_ascii=False,
-        ).encode("utf-8")
+                "id": "B0TEST001",
+                "name": "真实感测试咖啡馆",
+                "address": "测试路 100 号",
+                "type": "餐饮服务;咖啡厅;咖啡厅",
+                "typecode": "050500",
+                "location": "121.000000,31.000000",
+                "distance": "650",
+                "business_area": "徐汇",
+                "pname": "上海市",
+                "cityname": "上海市",
+                "adname": "徐汇区",
+            }
+        ],
+    }
 
 
 def main():
@@ -51,9 +55,9 @@ def main():
     assert fallback["is_realtime"] is False, fallback
     assert fallback["search_url"], fallback
 
-    original_urlopen = place_service.urlopen
+    original_amap_get = place_service._amap_get
     os.environ["AMAP_API_KEY"] = "test-key"
-    place_service.urlopen = lambda url, timeout=4: FakeResponse()
+    place_service._amap_get = fake_amap_get
     try:
         result = search_places("咖啡馆", location="上海 徐汇", limit=3)
         assert result["source"] == "AMap", result
@@ -61,6 +65,18 @@ def main():
         assert result["is_realtime"] is True, result
         assert result["places"][0]["name"] == "真实感测试咖啡馆", result
         assert result["places"][0]["distance"] == "650 m", result
+
+        nearby = search_nearby_places("咖啡馆", longitude=121.0, latitude=31.0, limit=3)
+        assert nearby["source"] == "AMap", nearby
+        assert nearby["places"][0]["name"] == "真实感测试咖啡馆", nearby
+
+        weather = get_amap_weather("上海 徐汇")
+        assert weather["source"] == "AMap", weather
+        assert weather["weather"] == "阴", weather
+
+        route = get_route("121.0,31.0", "121.1,31.1")
+        assert route["source"] == "AMap", route
+        assert route["distance_meters"] == "650", route
 
         agent = RecommendationAgent()
         agent.client = None
@@ -91,7 +107,7 @@ def main():
         assert "ditu.amap.com" in rec["action_url"], rec
         assert rec["action_label"] == "高德地图", rec
     finally:
-        place_service.urlopen = original_urlopen
+        place_service._amap_get = original_amap_get
         if old_key is None:
             os.environ.pop("AMAP_API_KEY", None)
         else:

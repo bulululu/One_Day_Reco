@@ -4,6 +4,8 @@ import json
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from backend.services.place_service import get_amap_weather
+
 
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
@@ -49,6 +51,11 @@ def _normalize_location(location: str) -> str:
 
 def get_realtime_weather(location: str) -> dict:
     """Return weather text for an app-entered location."""
+    try:
+        return get_amap_weather(location)
+    except Exception:
+        pass
+
     query = _normalize_location(location)
     if not query:
         query = "上海"
