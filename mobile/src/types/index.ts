@@ -70,6 +70,7 @@ export interface SpecificInfo {
   rating: string;
   source: string;
   platform?: string;
+  route?: string;
   game_type?: string;
   player_mode?: string;
   setup?: string;
@@ -116,6 +117,9 @@ export interface PlaceCandidate {
   typecode: string;
   location: string;
   distance: string;
+  route_distance?: string;
+  route_duration?: string;
+  route_mode?: string;
   tel: string;
   business_area: string;
   pname: string;

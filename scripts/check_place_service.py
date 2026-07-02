@@ -93,9 +93,10 @@ def main():
         assert geo["is_realtime"] is True, geo
         assert geo["adcode"] == "310104", geo
 
-        around_location = search_places_around_location("咖啡馆", location="上海 徐汇", limit=3)
+        around_location = search_places_around_location("咖啡馆", location="上海 徐汇", limit=3, include_route=True)
         assert around_location["source"] == "AMap", around_location
         assert around_location["places"][0]["distance"] == "650 m", around_location
+        assert around_location["places"][0]["route_duration"] == "9 分钟", around_location
         assert around_location["geocoded_location"]["adcode"] == "310104", around_location
 
         weather = get_amap_weather("上海 徐汇")
@@ -123,6 +124,7 @@ def main():
         copy = agent._build_fallback_recommendation_copy(activity, {"location": "上海 徐汇"}, hints)
         assert copy["specific_info"]["name"] == "真实感测试咖啡馆", copy
         assert copy["specific_info"]["source"] == "高德地图实时地点", copy
+        assert copy["specific_info"]["route"] == "步行约 9 分钟", copy
         rec = agent._attach_activity_metadata(
             {
                 "activity_id": activity["id"],

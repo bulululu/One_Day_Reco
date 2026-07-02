@@ -9,15 +9,33 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from backend.services.place_service import geocode_location, get_amap_weather, get_route, search_nearby_places, search_places
 
 
+def retry(fn):
+    last = None
+    for _ in range(2):
+        try:
+            return fn()
+        except Exception as exc:
+            last = exc
+    raise last
+
+
+def get_realtime_route():
+    for _ in range(2):
+        route = get_route("121.43676,31.18831", "121.462437,31.230429")
+        if route.get("is_realtime") and route.get("distance_meters"):
+            return route
+    return route
+
+
 def main():
     if not os.getenv("AMAP_API_KEY", "").strip():
         raise SystemExit("missing AMAP_API_KEY")
 
-    text = search_places("咖啡馆", city="上海", limit=1)
-    geo = geocode_location("上海 徐汇")
-    around = search_nearby_places("电影院", longitude=121.43676, latitude=31.18831, radius=5000, limit=1)
-    weather = get_amap_weather("上海 徐汇")
-    route = get_route("121.43676,31.18831", "121.462437,31.230429")
+    text = retry(lambda: search_places("咖啡馆", city="上海", limit=1))
+    geo = retry(lambda: geocode_location("上海 徐汇"))
+    around = retry(lambda: search_nearby_places("电影院", longitude=121.43676, latitude=31.18831, radius=5000, limit=1))
+    weather = retry(lambda: get_amap_weather("上海 徐汇"))
+    route = get_realtime_route()
 
     assert text["is_realtime"] and text["places"], text
     assert geo["is_realtime"] and geo["longitude"] and geo["latitude"], geo

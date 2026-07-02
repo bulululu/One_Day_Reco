@@ -271,6 +271,7 @@ class RecommendationAgent:
     def _lookup_places_for_candidates(self, candidates: list, context: Optional[dict] = None) -> dict:
         location = (context or {}).get("location", "")
         place_hints = {}
+        route_attached = False
         for act in candidates[:8]:
             if act.get("indoor_outdoor") not in {"室外", "室内外"} and act.get("subcategory") not in {
                 "电影",
@@ -285,8 +286,16 @@ class RecommendationAgent:
             query = self._place_query_for_activity(act)
             if not query:
                 continue
-            result = search_places_around_location(query, location=location, radius=5000, limit=3)
+            result = search_places_around_location(
+                query,
+                location=location,
+                radius=5000,
+                limit=3,
+                include_route=not route_attached,
+            )
             place_hints[act["id"]] = result
+            if result.get("places") and result["places"][0].get("route_duration"):
+                route_attached = True
         return place_hints
 
     def _build_place_hints_text(self, place_hints: dict) -> str:
@@ -301,7 +310,8 @@ class RecommendationAgent:
                     address = place.get("address", "")
                     area = place.get("business_area") or place.get("adname", "")
                     distance = place.get("distance", "")
-                    details.append(f"{label}（{area}，{address}，{distance}）")
+                    route = place.get("route_duration", "")
+                    details.append(f"{label}（{area}，{address}，{distance}{f'，步行约{route}' if route else ''}）")
                 lines.append(f"- 活动 {activity_id}: 高德实时地点候选: {'; '.join(details)}")
             else:
                 lines.append(
@@ -869,12 +879,14 @@ class RecommendationAgent:
             place_address = place.get("address") or location
             place_area = place.get("business_area") or place.get("adname") or location
             place_distance = place.get("distance", "")
+            route_duration = place.get("route_duration", "")
             place_location = f"{place_area} · {place_address}".strip(" ·")
             action_url = place.get("search_url") or f"https://ditu.amap.com/search?query={quote(place_name)}"
             return {
                 "recommend_text": (
                     f"可以直接去 {place_name}。它在{place_location}"
-                    f"{f'，距离约 {place_distance}' if place_distance else ''}，"
+                    f"{f'，距离约 {place_distance}' if place_distance else ''}"
+                    f"{f'，步行约 {route_duration}' if route_duration else ''}，"
                     f"预计{duration}，预算大概{budget}。"
                     f"这个选择和{name}匹配，先把地点定下来，决策成本会低很多。"
                 ),
@@ -889,6 +901,7 @@ class RecommendationAgent:
                     "price": budget,
                     "rating": "以高德/平台实时信息为准",
                     "source": "高德地图实时地点",
+                    "route": f"步行约 {route_duration}" if route_duration else "",
                 },
                 "action_url": action_url,
                 "action_label": "高德地图",

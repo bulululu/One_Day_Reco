@@ -61,6 +61,21 @@ def _format_distance(value: object) -> str:
     return f"{meters} m"
 
 
+def _format_duration_seconds(value: object) -> str:
+    if value in (None, "", []):
+        return ""
+    try:
+        seconds = int(float(value))
+    except (TypeError, ValueError):
+        return str(value)
+    minutes = max(1, round(seconds / 60))
+    if minutes >= 60:
+        hours = minutes // 60
+        rest = minutes % 60
+        return f"{hours} 小时 {rest} 分钟" if rest else f"{hours} 小时"
+    return f"{minutes} 分钟"
+
+
 def _normalize_poi(poi: dict) -> dict:
     return {
         "id": str(poi.get("id") or ""),
@@ -220,7 +235,14 @@ def geocode_location(location: str, city: str = "") -> dict:
     }
 
 
-def search_places_around_location(query: str, location: str = "", radius: int = 3000, limit: int = 5, types: Optional[str] = None) -> dict:
+def search_places_around_location(
+    query: str,
+    location: str = "",
+    radius: int = 3000,
+    limit: int = 5,
+    types: Optional[str] = None,
+    include_route: bool = False,
+) -> dict:
     geo = geocode_location(location)
     if geo.get("is_realtime"):
         result = search_nearby_places(
@@ -232,6 +254,13 @@ def search_places_around_location(query: str, location: str = "", radius: int = 
             types=types,
         )
         result["geocoded_location"] = geo
+        first = (result.get("places") or [{}])[0]
+        if include_route and first.get("location"):
+            route = get_route(f"{geo['longitude']},{geo['latitude']}", first["location"], mode="walking")
+            if route.get("is_realtime"):
+                first["route_distance"] = _format_distance(route.get("distance_meters"))
+                first["route_duration"] = _format_duration_seconds(route.get("duration_seconds"))
+                first["route_mode"] = "步行"
         return result
     return search_places(query, location=location, limit=limit, types=types)
 
@@ -250,6 +279,7 @@ def get_amap_weather(city: str) -> dict:
     payload = _amap_get(
         AMAP_WEATHER_URL,
         {"key": key, "city": query_city, "extensions": "base", "output": "json"},
+        timeout=8,
     )
     lives = payload.get("lives") or []
     if payload.get("status") != "1" or not lives:
