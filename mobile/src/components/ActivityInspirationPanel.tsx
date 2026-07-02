@@ -90,7 +90,7 @@ function movieToCard(movie: MovieCandidate): AltCard {
   return {
     image: require('../assets/idea-movie.jpeg'),
     title: movie.title,
-    sub: cinema?.name || movie.duration || '猫眼确认场次',
+    sub: movie.availability || cinema?.name || movie.duration || '猫眼确认场次',
     tag: sourceTag,
     prompt: `推荐一个看${movie.title}的具体计划，包含影院和场次确认方式`,
   };

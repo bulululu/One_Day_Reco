@@ -142,6 +142,7 @@ export interface MovieCandidate {
   duration: string;
   rating: string;
   source: string;
+  availability?: string;
   overview: string;
   release_date?: string;
   actors?: string;

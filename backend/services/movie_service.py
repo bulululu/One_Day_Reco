@@ -143,6 +143,7 @@ def _normalize_maoyan_movie(movie: dict, detail: Optional[dict] = None) -> dict:
         "duration": _format_maoyan_duration(movie.get("dur") or detail.get("dur")),
         "rating": _format_maoyan_rating(movie.get("sc") or detail.get("sc")),
         "source": "Maoyan unofficial",
+        "availability": movie.get("showInfo") or detail.get("showInfo") or "",
         "overview": " · ".join(overview_parts),
         "release_date": detail.get("rt") or movie.get("rt") or "",
         "actors": movie.get("star") or detail.get("star") or "",

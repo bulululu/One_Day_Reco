@@ -331,7 +331,7 @@ class RecommendationAgent:
                 cinema_text = movie.get("cinema_search_url") or "打开猫眼/高德确认最近影院"
             lines.append(
                 f"- {movie.get('title', '')}: {movie.get('duration', '')}，"
-                f"{movie.get('rating', '')}，影院候选: {cinema_text}，"
+                f"{movie.get('rating', '')}，{movie.get('availability', '')}，影院候选: {cinema_text}，"
                 f"订票入口: {movie.get('booking_url', '')}"
             )
         return "\n".join(lines)

@@ -24,6 +24,7 @@ def main():
             "duration": "约 101 分钟",
             "rating": "猫眼 9.1",
             "source": "Maoyan unofficial",
+            "availability": "今天12家影院放映35场",
             "overview": "喜剧 · 今天放映",
         }
     ]
@@ -59,6 +60,7 @@ def main():
         assert "确认" in movies["showtime_note"], movies
         assert movies["movies"][0]["title"] == "《猫眼测试电影》", movies
         assert movies["movies"][0]["booking_url"], movies
+        assert movies["movies"][0]["availability"] == "今天12家影院放映35场", movies
         assert movies["movies"][0]["showtime_status"] == "requires_ticket_platform_check", movies
         assert movies["movies"][0]["estimated_price"], movies
 
