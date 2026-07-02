@@ -13,12 +13,12 @@ export type DailyIntent = {
 };
 
 const INTENTS: DailyIntent[] = [
-  { key: 'random', label: '随便看看', icon: '✦', prompt: '我现在没有明确想法，按我的 MBTI 和当前地点推荐一个现在能做的具体活动' },
-  { key: 'quiet', label: '人少安静', icon: '☁', prompt: '我想去人少安静的地方，推荐一个附近现在能做的具体活动' },
-  { key: 'movie', label: '看电影', icon: '◐', prompt: '我想看电影，推荐具体电影、影院候选、时长、评分和订票下一步' },
-  { key: 'home', label: '不想出门', icon: '⌂', prompt: '我今天不想出门，推荐一个居家也能完成的具体活动' },
-  { key: 'game', label: '打会儿游戏', icon: '◇', prompt: '我想一个人或和朋友打会儿游戏，推荐游戏名、平台、类型和预计时长' },
-  { key: 'walk', label: '出去走走', icon: '⌁', prompt: '我想轻松走走，推荐附近路线、时长、天气建议和结束点' },
+  { key: 'random', label: '直接推荐', icon: '✦', prompt: '我现在没有明确想法，按我的 MBTI 和当前地点推荐一个现在能做的具体活动' },
+  { key: 'quiet', label: '人少安静', icon: '☁️', prompt: '我想去人少安静的地方，推荐一个附近现在能做的具体活动' },
+  { key: 'movie', label: '看电影', icon: '🎬', prompt: '我想看电影，推荐具体电影、影院候选、时长、评分和订票下一步' },
+  { key: 'home', label: '不想出门', icon: '🏠', prompt: '我今天不想出门，推荐一个居家也能完成的具体活动' },
+  { key: 'game', label: '打会游戏', icon: '🎮', prompt: '我想一个人或和朋友打会儿游戏，推荐游戏名、平台、类型和预计时长' },
+  { key: 'walk', label: '出去走走', icon: '🚶', prompt: '我想轻松走走，推荐附近路线、时长、天气建议和结束点' },
 ];
 
 const LOCATION_PRESETS = ['上海 徐汇', '上海 静安', '上海 黄浦', '上海 浦东'];
@@ -55,13 +55,13 @@ export function DailyIntentView({
         <View style={styles.brandRow}>
           <View>
             <Text style={[styles.wordmark, { color: colors.accent }]}>OneDayReco</Text>
-            <Text style={[styles.subtitle, { color: colors.subtext }]}>告诉我现在的状态，推荐今天能做的事。</Text>
+            <Text style={[styles.subtitle, { color: colors.subtext }]}>选一个状态，马上给活动推荐。</Text>
           </View>
           <Pressable
             style={[styles.chatBtn, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.16) }]}
             onPress={onChat}
           >
-            <Text style={[styles.chatText, { color: colors.text }]}>说说想法</Text>
+            <Text style={[styles.chatText, { color: colors.text }]}>补充需求</Text>
           </Pressable>
         </View>
 
@@ -73,8 +73,8 @@ export function DailyIntentView({
             style={styles.heroOverlay}
           >
             <Text style={[styles.heroKicker, { color: colors.accent }]}>{mbti} · {profile.styleName}</Text>
-            <Text style={[styles.heroTitle, { color: colors.text }]}>现在想做点什么？</Text>
-            <Text style={[styles.heroSub, { color: colors.subtext }]}>选一个状态，我给你具体活动。</Text>
+            <Text style={[styles.heroTitle, { color: colors.text }]}>今天推荐什么？</Text>
+            <Text style={[styles.heroSub, { color: colors.subtext }]}>选一下偏向，也可以直接跳过。</Text>
           </LinearGradient>
         </ImageBackground>
 
@@ -138,7 +138,7 @@ export function DailyIntentView({
         </View>
 
         <Pressable style={[styles.skip, { backgroundColor: colors.accent }]} onPress={onSkip}>
-          <Text style={styles.skipText}>直接给我推荐</Text>
+          <Text style={styles.skipText}>不选了，直接推荐</Text>
         </Pressable>
       </View>
     </View>

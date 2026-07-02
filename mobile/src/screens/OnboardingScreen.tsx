@@ -94,7 +94,7 @@ export function OnboardingScreen() {
         <View style={styles.brandRow}>
           <View>
             <Text style={[styles.wordmark, { color: colors.accent }]}>OneDayReco</Text>
-            <Text style={[styles.subtitle, { color: colors.subtext }]}>按 MBTI 推荐今天能做的活动</Text>
+            <Text style={[styles.subtitle, { color: colors.subtext }]}>先定 MBTI，之后直接推荐活动</Text>
           </View>
           {isReturningUser ? (
             <Pressable style={[styles.pill, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.14) }]} onPress={startAppFromSaved}>
@@ -110,8 +110,8 @@ export function OnboardingScreen() {
             end={{ x: 0.86, y: 0.5 }}
             style={styles.heroOverlay}
           >
-            <Text style={[styles.heroTitle, { color: colors.text }]}>先选 MBTI，推荐更准</Text>
-            <Text style={[styles.heroSub, { color: colors.subtext }]}>之后每次打开，只要选状态和地点，就给你具体活动。</Text>
+            <Text style={[styles.heroTitle, { color: colors.text }]}>先选 MBTI</Text>
+            <Text style={[styles.heroSub, { color: colors.subtext }]}>以后打开 App，只需要选状态，就能拿到今天可做的活动。</Text>
             <View style={[styles.styleBadge, { backgroundColor: hexToRgba(colors.accent, 0.12) }]}>
               <Text style={[styles.styleText, { color: colors.accent }]}>{preview} · {profile.styleName}</Text>
             </View>
@@ -119,7 +119,7 @@ export function OnboardingScreen() {
         </ImageBackground>
 
         <View style={styles.featureRow}>
-          {['具体地点', '预计时长', '下一步'].map((item) => (
+          {['活动名称', '地点/平台', '下一步'].map((item) => (
             <View key={item} style={[styles.featureChip, { backgroundColor: hexToRgba(colors.accent, 0.08), borderColor: hexToRgba(colors.accent, 0.12) }]}>
               <Text style={[styles.featureText, { color: colors.accent }]}>{item}</Text>
             </View>
