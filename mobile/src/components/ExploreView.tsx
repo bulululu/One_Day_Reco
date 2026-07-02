@@ -42,15 +42,15 @@ export function ExploreView({
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View>
-          <Text style={[styles.title, { color: colors.text }]}>探索今天能做的事</Text>
-          <Text style={[styles.subtitle, { color: colors.subtext }]}>{sourceText} · 具体到下一步</Text>
+          <Text style={[styles.title, { color: colors.text }]}>活动方案</Text>
+          <Text style={[styles.subtitle, { color: colors.subtext }]}>{sourceText} · 名称、地点、时长、下一步</Text>
         </View>
         <Pressable
           style={[styles.refreshBtn, { backgroundColor: hexToRgba(colors.accent, 0.1) }]}
           onPress={onRefresh}
           disabled={isLoading}
         >
-          <Text style={[styles.refreshText, { color: colors.accent }]}>{isLoading ? '刷新中' : '换一批'}</Text>
+          <Text style={[styles.refreshText, { color: colors.accent }]}>{isLoading ? '推荐中' : '重新推荐'}</Text>
         </Pressable>
       </View>
 

@@ -90,14 +90,14 @@ export function RecommendView({
       <View style={styles.brandRow}>
         <View>
           <Text style={[styles.wordmark, { color: colors.accent }]}>OneDayReco</Text>
-          <Text style={[styles.brandSub, { color: colors.subtext }]}>每一天，都值得被好好安排。</Text>
+          <Text style={[styles.brandSub, { color: colors.subtext }]}>推荐今天能做的活动。</Text>
         </View>
         <Pressable
           style={[styles.profileButton, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.14) }]}
           onPress={onChat}
         >
           <Text style={[styles.profileIcon, { color: colors.accent }]}>{theme.avatar}</Text>
-          <Text style={[styles.profileText, { color: colors.text }]}>和{theme.name}聊聊</Text>
+          <Text style={[styles.profileText, { color: colors.text }]}>补充要求</Text>
         </Pressable>
       </View>
 
@@ -117,9 +117,9 @@ export function RecommendView({
             <Text style={[styles.styleBadgeText, { color: colors.accent }]}>{mbti} · {profile.styleName}</Text>
           </View>
           <Text style={[styles.greetingTitle, { color: colors.text }]}>{greeting}，{theme.name}</Text>
-          <Text style={[styles.greetingSub, { color: colors.text }]}>{profile.subtitle}</Text>
+          <Text style={[styles.greetingSub, { color: colors.text }]}>{profile.subtitle}，给你一个可执行方案。</Text>
           <Pressable style={[styles.greetingButton, { backgroundColor: colors.accent }]} onPress={onRefresh}>
-            <Text style={styles.greetingButtonText}>随便看看</Text>
+            <Text style={styles.greetingButtonText}>推荐活动</Text>
           </Pressable>
         </LinearGradient>
       </ImageBackground>
@@ -128,10 +128,10 @@ export function RecommendView({
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <Text style={[styles.sectionIcon, { color: colors.accent }]}>⌁</Text>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>轻松推荐</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>推荐结果</Text>
           </View>
           <Pressable style={styles.refreshInline} onPress={onRefresh} disabled={isLoading}>
-            <Text style={[styles.refreshText, { color: colors.subtext }]}>{isLoading ? '刷新中' : '换一批'}</Text>
+            <Text style={[styles.refreshText, { color: colors.subtext }]}>{isLoading ? '推荐中' : '重新推荐'}</Text>
             <Text style={[styles.refreshIcon, { color: colors.subtext }]}>↻</Text>
           </Pressable>
         </View>
@@ -164,11 +164,11 @@ export function RecommendView({
           <Text style={[styles.chatFace, { color: colors.accent }]}>•ᴗ•</Text>
         </View>
         <View style={styles.chatCopy}>
-          <Text style={[styles.chatTitle, { color: colors.text }]}>想找点灵感，还是想聊聊天？</Text>
-          <Text style={[styles.chatSub, { color: colors.subtext }]}>{theme.name}在这里陪你～</Text>
+          <Text style={[styles.chatTitle, { color: colors.text }]}>有额外要求？</Text>
+          <Text style={[styles.chatSub, { color: colors.subtext }]}>比如人少、预算、距离、电影类型。</Text>
         </View>
         <Pressable style={[styles.chatAction, { backgroundColor: colors.accent }]} onPress={onChat}>
-          <Text style={styles.chatActionText}>找{theme.name}聊聊</Text>
+          <Text style={styles.chatActionText}>补充要求</Text>
         </Pressable>
       </View>
 

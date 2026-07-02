@@ -1,5 +1,5 @@
 /**
- * 主 App：推荐 / 发现 / 收藏 / 我的 + 中央聊天入口。
+ * 主 App：推荐 / 方案 / 收藏 / 我的 + 中央推荐按钮。
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -45,9 +45,9 @@ const DEFAULT_RECOMMENDATION: Recommendation = {
 };
 
 const TABS = [
-  { key: 'recommend', label: '推荐', icon: '⌁' },
-  { key: 'explore', label: '发现', icon: '⌖' },
-  { key: 'create', label: '', icon: '+' },
+  { key: 'recommend', label: '首页', icon: '⌁' },
+  { key: 'explore', label: '方案', icon: '⌖' },
+  { key: 'create', label: '推荐', icon: '荐' },
   { key: 'favorites', label: '收藏', icon: '♡' },
   { key: 'profile', label: '我的', icon: '◌' },
 ] as const;
@@ -488,7 +488,6 @@ export function MainAppScreen() {
         <DailyIntentView
           theme={theme}
           mbti={activeMbti}
-          companionName={theme.name}
           location={location}
           isResolvingContext={isResolvingContext}
           onLocationChange={setLocation}
@@ -515,7 +514,8 @@ export function MainAppScreen() {
                     style={styles.navItem}
                     onPress={() => {
                       if (tab.key === 'create') {
-                        openChat();
+                        setActiveTab('explore');
+                        void refreshRecommendation(false);
                         return;
                       }
                       setActiveTab(tab.key);
@@ -527,7 +527,7 @@ export function MainAppScreen() {
                         { color: tab.key === 'create' ? '#fff' : active ? colors.accent : colors.subtext },
                       ]}>{tab.icon}</Text>
                     </View>
-                    {tab.label ? <Text style={[styles.navText, { color: active ? colors.accent : colors.subtext }]}>{tab.label}</Text> : null}
+                    <Text style={[styles.navText, { color: active ? colors.accent : colors.subtext }]}>{tab.label}</Text>
                   </Pressable>
                 );
               })}
@@ -616,9 +616,9 @@ const styles = StyleSheet.create({
     marginTop: -18,
   },
   createIcon: {
-    fontSize: 30,
-    lineHeight: 34,
-    fontWeight: '500',
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '900',
   },
   navIcon: {
     fontSize: 17,
