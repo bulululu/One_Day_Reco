@@ -21,6 +21,8 @@ const INTENTS: DailyIntent[] = [
   { key: 'walk', label: '出去走走', icon: '⌁', prompt: '我想轻松走走，推荐附近路线、时长、天气建议和结束点' },
 ];
 
+const LOCATION_PRESETS = ['上海 徐汇', '上海 静安', '上海 黄浦', '上海 浦东'];
+
 type Props = {
   theme: MBTITheme;
   companionName: string;
@@ -98,6 +100,28 @@ export function DailyIntentView({
           <Text style={[styles.locationHint, { color: colors.subtext }]}>
             {isResolvingContext ? '天气中' : '可改'}
           </Text>
+        </View>
+        <View style={styles.locationPresets}>
+          {LOCATION_PRESETS.map((preset) => {
+            const selected = location.trim() === preset;
+            return (
+              <Pressable
+                key={preset}
+                style={[
+                  styles.locationPreset,
+                  {
+                    backgroundColor: selected ? colors.accent : hexToRgba(colors.accent, 0.08),
+                    borderColor: hexToRgba(colors.accent, selected ? 0 : 0.14),
+                  },
+                ]}
+                onPress={() => onLocationChange(preset)}
+              >
+                <Text style={[styles.locationPresetText, { color: selected ? '#fff' : colors.accent }]}>
+                  {preset.replace('上海 ', '')}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         <Pressable style={[styles.skip, { backgroundColor: colors.accent }]} onPress={onSkip}>
@@ -205,6 +229,22 @@ const styles = StyleSheet.create({
   locationHint: {
     fontSize: 11,
     lineHeight: 16,
+  },
+  locationPresets: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  locationPreset: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  locationPresetText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
   intentCard: {
     width: '31.8%',

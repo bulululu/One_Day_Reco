@@ -55,6 +55,7 @@ const TABS = [
 type TabKey = typeof TABS[number]['key'];
 
 const FAVORITES_KEY_PREFIX = 'onedayreco_favorites';
+const LOCATION_KEY = 'onedayreco_last_location';
 
 function favoritesKey(userId: string) {
   return `${FAVORITES_KEY_PREFIX}:${userId || 'guest'}`;
@@ -120,6 +121,7 @@ export function MainAppScreen() {
   const [recommendationNotice, setRecommendationNotice] = useState('当前使用本地灵感，实时地点稍后刷新');
   const [feedbackNotice, setFeedbackNotice] = useState('');
   const favoritesHydrated = useRef(false);
+  const locationHydrated = useRef(false);
   const theme = currentTheme;
   const colors = theme.colors;
   const activeMbti = (mbti || 'INTP') as MBTIType;
@@ -137,6 +139,23 @@ export function MainAppScreen() {
     if (messages.length) return messages;
     return [];
   }, [messages]);
+
+  useEffect(() => {
+    let cancelled = false;
+    AsyncStorage.getItem(LOCATION_KEY).then((value) => {
+      if (!cancelled && value) setLocation(value);
+    }).finally(() => {
+      if (!cancelled) locationHydrated.current = true;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!locationHydrated.current) return;
+    void AsyncStorage.setItem(LOCATION_KEY, location).catch(() => undefined);
+  }, [location]);
 
   useEffect(() => {
     let cancelled = false;
