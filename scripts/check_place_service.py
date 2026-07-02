@@ -136,6 +136,27 @@ def main():
         assert rec["action_url"], rec
         assert "ditu.amap.com" in rec["action_url"], rec
         assert rec["action_label"] == "高德地图", rec
+
+        llm_result = {
+            "recommendations": [
+                {
+                    "activity_id": activity["id"],
+                    "activity_name": activity["name"],
+                    "recommend_text": "可以直接去真实感测试咖啡馆坐一会儿。",
+                    "tips": "出发前看一下营业状态。",
+                    "specific_info": {
+                        "name": "真实感测试咖啡馆",
+                        "location": "徐汇",
+                        "duration": "约 1 小时",
+                        "price": "50-100元",
+                        "rating": "以高德为准",
+                        "source": "高德地图实时地点",
+                    },
+                }
+            ]
+        }
+        enriched = agent._attach_route_hints(llm_result, hints)
+        assert enriched["recommendations"][0]["specific_info"]["route"] == "步行约 9 分钟", enriched
     finally:
         place_service._amap_get = original_amap_get
         if old_key is None:

@@ -562,6 +562,23 @@ class RecommendationAgent:
             print(f"[Agent] 推荐质量修复: {repaired} 条")
         return result
 
+    def _attach_route_hints(self, result: dict, place_hints: Optional[dict] = None) -> dict:
+        if not place_hints:
+            return result
+        for rec in result.get("recommendations", []):
+            info = rec.get("specific_info") or {}
+            if info.get("route"):
+                continue
+            result_for_activity = place_hints.get(rec.get("activity_id", ""))
+            place = (result_for_activity or {}).get("places", [{}])[0]
+            route = place.get("route_duration")
+            place_name = str(place.get("name") or "")
+            specific_name = str(info.get("name") or "")
+            if route and place_name and (place_name in specific_name or specific_name in place_name):
+                info["route"] = f"步行约 {route}"
+                rec["specific_info"] = info
+        return result
+
     def _dedupe_recommendations(self, result: dict) -> dict:
         unique = []
         seen: set[tuple[str, str]] = set()
@@ -599,6 +616,7 @@ class RecommendationAgent:
         result["theme"] = theme
         result["activity_source"] = activity_source
         result = self._enforce_recommendation_quality(result, activity_map, context, place_hints)
+        result = self._attach_route_hints(result, place_hints)
         return self._dedupe_recommendations(result)
 
     def _attach_activity_metadata(self, rec: dict, act: dict) -> dict:
