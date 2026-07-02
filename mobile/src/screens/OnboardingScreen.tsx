@@ -204,6 +204,14 @@ export function OnboardingScreen() {
                   }}
                 >
                   <View style={[styles.mbtiTone, { backgroundColor: optionTheme.colors.accent }]} />
+                  {active ? (
+                    <View style={[styles.mbtiCheck, { backgroundColor: optionTheme.colors.accent }]}>
+                      <Text style={styles.mbtiCheckText}>✓</Text>
+                    </View>
+                  ) : null}
+                  <View style={[styles.mbtiIconWrap, { backgroundColor: hexToRgba(optionTheme.colors.accent, 0.1) }]}>
+                    <Text style={[styles.mbtiIcon, { color: optionTheme.colors.accent }]}>{optionTheme.avatar}</Text>
+                  </View>
                   <Text style={[styles.mbtiCode, { color: active ? optionTheme.colors.accent : colors.text }]}>{type}</Text>
                   <Text style={[styles.mbtiName, { color: colors.subtext }]} numberOfLines={1}>{optionTheme.name}</Text>
                 </Pressable>
@@ -319,7 +327,7 @@ const styles = StyleSheet.create({
   },
   mbtiCard: {
     width: '23%',
-    minHeight: 62,
+    minHeight: 82,
     borderRadius: UI.radius.md,
     borderWidth: 1,
     alignItems: 'center',
@@ -333,6 +341,35 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     height: 4,
+  },
+  mbtiCheck: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mbtiCheckText: {
+    color: '#fff',
+    fontSize: 11,
+    lineHeight: 13,
+    fontWeight: '900',
+  },
+  mbtiIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  mbtiIcon: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '900',
   },
   mbtiCode: {
     fontSize: 12,

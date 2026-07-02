@@ -108,7 +108,7 @@ export function MainAppScreen() {
   const [chatVisible, setChatVisible] = useState(false);
   const [isChatSending, setChatSending] = useState(false);
   const [inputText, setInputText] = useState('');
-  const [location, setLocation] = useState('上海 徐汇');
+  const [location, setLocation] = useState('');
   const [weather, setWeather] = useState('天气获取中');
   const [isResolvingContext, setResolvingContext] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([DEFAULT_RECOMMENDATION]);
@@ -143,7 +143,7 @@ export function MainAppScreen() {
   useEffect(() => {
     let cancelled = false;
     AsyncStorage.getItem(LOCATION_KEY).then((value) => {
-      if (!cancelled && value) setLocation(value);
+      if (!cancelled && value && value !== '上海 徐汇') setLocation(value);
     }).finally(() => {
       if (!cancelled) locationHydrated.current = true;
     });
@@ -186,6 +186,19 @@ export function MainAppScreen() {
     const resolveContextAndRecommend = async () => {
       setResolvingContext(true);
       try {
+        const currentLocation = location.trim();
+        if (!currentLocation) {
+          const nextWeather = '未设置位置';
+          if (!ignore) {
+            setWeather(nextWeather);
+            void refreshRecommendation(false, {
+              ...context,
+              location: '',
+              weather: nextWeather,
+            });
+          }
+          return;
+        }
         const weatherResult = await getWeather(location);
         const nextWeather = weatherResult.display || weatherResult.weather || '天气未获取';
         if (!ignore) {

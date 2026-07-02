@@ -577,6 +577,9 @@ class RecommendationAgent:
             if route and place_name and (place_name in specific_name or specific_name in place_name):
                 info["route"] = f"步行约 {route}"
                 rec["specific_info"] = info
+                if place.get("amap_url") and (not rec.get("action_url") or self._is_generic_action_url(rec.get("action_url", ""))):
+                    rec["action_url"] = place["amap_url"]
+                    rec["action_label"] = "高德地图"
         return result
 
     def _dedupe_recommendations(self, result: dict) -> dict:
@@ -899,7 +902,7 @@ class RecommendationAgent:
             place_distance = place.get("distance", "")
             route_duration = place.get("route_duration", "")
             place_location = f"{place_area} · {place_address}".strip(" ·")
-            action_url = place.get("search_url") or f"https://ditu.amap.com/search?query={quote(place_name)}"
+            action_url = place.get("amap_url") or place.get("search_url") or f"https://ditu.amap.com/search?query={quote(place_name)}"
             return {
                 "recommend_text": (
                     f"可以直接去 {place_name}。它在{place_location}"

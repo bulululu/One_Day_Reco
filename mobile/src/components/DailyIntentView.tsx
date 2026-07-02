@@ -51,7 +51,7 @@ export function DailyIntentView({
         <View style={styles.brandRow}>
           <View>
             <Text style={[styles.wordmark, { color: colors.accent }]}>OneDayReco</Text>
-            <Text style={[styles.subtitle, { color: colors.subtext }]}>先告诉我一点点现在的状态。</Text>
+            <Text style={[styles.subtitle, { color: colors.subtext }]}>选一个入口，也可以直接跳过。</Text>
           </View>
           <Pressable
             style={[styles.chatBtn, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.16) }]}
@@ -91,14 +91,14 @@ export function DailyIntentView({
           <Text style={[styles.locationLabel, { color: colors.subtext }]}>位置</Text>
           <TextInput
             style={[styles.locationInput, { color: colors.text }]}
-            placeholder="城市 / 商圈"
+            placeholder="输入城市 / 商圈"
             placeholderTextColor={colors.subtext}
             value={location}
             onChangeText={onLocationChange}
             maxLength={40}
           />
           <Text style={[styles.locationHint, { color: colors.subtext }]}>
-            {isResolvingContext ? '天气中' : '可改'}
+            {isResolvingContext ? '天气中' : '可选'}
           </Text>
         </View>
         <View style={styles.locationPresets}>
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   intentCard: {
-    width: '31.8%',
+    width: '30.8%',
     minHeight: 58,
     borderRadius: UI.radius.lg,
     borderWidth: 1,

@@ -84,6 +84,7 @@ def main():
         assert result["is_realtime"] is True, result
         assert result["places"][0]["name"] == "真实感测试咖啡馆", result
         assert result["places"][0]["distance"] == "650 m", result
+        assert result["places"][0]["amap_url"].startswith("https://uri.amap.com/marker?"), result
 
         nearby = search_nearby_places("咖啡馆", longitude=121.0, latitude=31.0, limit=3)
         assert nearby["source"] == "AMap", nearby
@@ -134,7 +135,7 @@ def main():
             activity,
         )
         assert rec["action_url"], rec
-        assert "ditu.amap.com" in rec["action_url"], rec
+        assert "uri.amap.com/marker" in rec["action_url"], rec
         assert rec["action_label"] == "高德地图", rec
 
         llm_result = {
@@ -157,6 +158,7 @@ def main():
         }
         enriched = agent._attach_route_hints(llm_result, hints)
         assert enriched["recommendations"][0]["specific_info"]["route"] == "步行约 9 分钟", enriched
+        assert "uri.amap.com/marker" in enriched["recommendations"][0]["action_url"], enriched
     finally:
         place_service._amap_get = original_amap_get
         if old_key is None:

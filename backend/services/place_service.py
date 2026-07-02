@@ -77,14 +77,23 @@ def _format_duration_seconds(value: object) -> str:
 
 
 def _normalize_poi(poi: dict) -> dict:
+    name = str(poi.get("name") or "")
+    location = str(poi.get("location") or "")
+    amap_url = ""
+    if location and name:
+        amap_url = (
+            "https://uri.amap.com/marker?"
+            f"position={quote(location)}&name={quote(name)}&src=onedayreco&coordinate=gaode&callnative=1"
+        )
     return {
         "id": str(poi.get("id") or ""),
-        "name": str(poi.get("name") or ""),
+        "name": name,
         "address": str(poi.get("address") or ""),
         "type": str(poi.get("type") or ""),
         "typecode": str(poi.get("typecode") or ""),
-        "location": str(poi.get("location") or ""),
+        "location": location,
         "distance": _format_distance(poi.get("distance")),
+        "amap_url": amap_url,
         "tel": str(poi.get("tel") or ""),
         "business_area": str(poi.get("business_area") or ""),
         "pname": str(poi.get("pname") or ""),

@@ -100,6 +100,11 @@ export function ChatPanel({
                 <Text style={[styles.emptySub, { color: colors.subtext }]}>可以直接说“我不想去人多的地方，但想看电影”。</Text>
               </View>
             )}
+            {isLoading ? (
+              <View style={[styles.loadingBubble, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.12) }]}>
+                <Text style={[styles.loadingText, { color: colors.subtext }]}>正在想一个具体一点的安排…</Text>
+              </View>
+            ) : null}
           </ScrollView>
 
           <View style={styles.quickRow}>
@@ -222,6 +227,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
     marginTop: 2,
+  },
+  loadingBubble: {
+    alignSelf: 'flex-start',
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+  },
+  loadingText: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
   },
   empty: {
     borderRadius: UI.radius.xl,

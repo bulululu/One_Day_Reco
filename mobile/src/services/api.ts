@@ -21,53 +21,82 @@ import {
   RecommendationHistoryRecord,
 } from '@/types';
 
+function hostFromUri(uri?: string) {
+  if (!uri) return '';
+  return uri.replace(/^https?:\/\//, '').replace(/^exp:\/\//, '').split('/')[0].split(':')[0];
+}
+
 // 后端 API 地址
-function getDevApiBase() {
+function getDevApiBases() {
   const explicit = process.env.EXPO_PUBLIC_API_BASE;
-  if (explicit) return explicit.replace(/\/$/, '');
+  if (explicit) return [explicit.replace(/\/$/, '')];
 
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    return `http://${window.location.hostname}:8000`;
+    return [`http://${window.location.hostname}:8000`];
   }
 
   const manifest = Constants as typeof Constants & {
+    linkingUri?: string;
+    manifest?: { debuggerHost?: string; hostUri?: string };
     manifest2?: { extra?: { expoGo?: { debuggerHost?: string } } };
   };
-  const hostUri = Constants.expoConfig?.hostUri || manifest.manifest2?.extra?.expoGo?.debuggerHost;
-  const host = typeof hostUri === 'string' ? hostUri.split(':')[0] : '';
-  if (host) return `http://${host}:8000`;
+  const hosts = [
+    hostFromUri(Constants.expoConfig?.hostUri),
+    hostFromUri(manifest.manifest2?.extra?.expoGo?.debuggerHost),
+    hostFromUri(manifest.manifest?.debuggerHost),
+    hostFromUri(manifest.manifest?.hostUri),
+    hostFromUri(manifest.linkingUri),
+  ].filter(Boolean);
 
-  return 'http://localhost:8000';
+  return Array.from(new Set([...hosts.map((host) => `http://${host}:8000`), 'http://localhost:8000']));
 }
 
-const API_BASE = getDevApiBase();
+const API_BASES = getDevApiBases();
 const REQUEST_TIMEOUT_MS = 25000;
+let workingApiBase = API_BASES[0];
 
 export function getApiBase() {
-  return API_BASE;
+  return workingApiBase;
 }
 
 // ===== 请求封装 =====
 async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
-  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timeout = controller ? setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-    signal: options.signal || controller?.signal,
-  }).finally(() => {
-    if (timeout) clearTimeout(timeout);
-  });
+  let lastError: unknown;
+  const bases = Array.from(new Set([workingApiBase, ...API_BASES]));
 
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+  for (const base of bases) {
+    const controller = typeof AbortController !== 'undefined' && !options.signal ? new AbortController() : null;
+    const timeout = controller ? setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
+    try {
+      const response = await fetch(`${base}${path}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(options.headers || {}),
+        },
+        signal: options.signal || controller?.signal,
+      }).finally(() => {
+        if (timeout) clearTimeout(timeout);
+      });
+
+      if (!response.ok) {
+        const error = new Error(`API Error: ${response.status} ${response.statusText} (${base})`);
+        error.name = 'ApiResponseError';
+        throw error;
+      }
+
+      workingApiBase = base;
+      return await response.json();
+    } catch (error) {
+      if (timeout) clearTimeout(timeout);
+      if (error instanceof Error && error.name === 'ApiResponseError') throw error;
+      lastError = error;
+      if (options.signal) break;
+    }
   }
 
-  return await response.json();
+  throw lastError instanceof Error ? lastError : new Error('API request failed');
 }
 
 export function register(email: string, password: string): Promise<AuthResponse> {

@@ -117,6 +117,7 @@ export interface PlaceCandidate {
   typecode: string;
   location: string;
   distance: string;
+  amap_url?: string;
   route_distance?: string;
   route_duration?: string;
   route_mode?: string;

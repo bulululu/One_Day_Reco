@@ -38,6 +38,14 @@ function cleanFeatureTitle(text: string) {
     .trim() || '给自己一段舒服时光';
 }
 
+function timeGreeting() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return '早安';
+  if (hour >= 11 && hour < 14) return '午安';
+  if (hour >= 14 && hour < 18) return '下午好';
+  return '晚上好';
+}
+
 export function RecommendView({
   theme,
   recommendations,
@@ -48,6 +56,7 @@ export function RecommendView({
   onChat,
 }: RecommendViewProps) {
   const colors = theme.colors;
+  const greeting = timeGreeting();
   const cards = HOME_IDEAS.slice(0, 3).map((idea, index) => {
     const recommendation = recommendations[index];
     if (!recommendation) {
@@ -100,7 +109,7 @@ export function RecommendView({
           end={{ x: 0.72, y: 0.5 }}
           style={styles.greetingOverlay}
         >
-          <Text style={[styles.greetingTitle, { color: colors.text }]}>早安，{theme.name}</Text>
+          <Text style={[styles.greetingTitle, { color: colors.text }]}>{greeting}，{theme.name}</Text>
           <Text style={[styles.greetingSub, { color: colors.text }]}>今天想一起做点什么呢？</Text>
           <Pressable style={[styles.greetingButton, { backgroundColor: colors.accent }]} onPress={onRefresh}>
             <Text style={styles.greetingButtonText}>随便看看</Text>
