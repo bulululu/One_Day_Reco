@@ -415,6 +415,7 @@ export function MainAppScreen() {
 
   const handleIntentSelect = (intent: DailyIntent) => {
     setCurrentIntent(intent);
+    setActiveTab('explore');
     setIntentReady(true);
   };
 
@@ -494,6 +495,7 @@ export function MainAppScreen() {
           onSelect={handleIntentSelect}
           onSkip={() => {
             setCurrentIntent(null);
+            setActiveTab('explore');
             setIntentReady(true);
           }}
           onChat={openChat}

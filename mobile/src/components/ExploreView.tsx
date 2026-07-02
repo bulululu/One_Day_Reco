@@ -37,6 +37,7 @@ export function ExploreView({
 }: ExploreViewProps) {
   const colors = theme.colors;
   const sourceText = source?.is_realtime ? '实时地点与内容候选' : '本地精选灵感';
+  const statusText = isLoading ? '正在结合你的状态生成推荐...' : notice;
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -54,9 +55,9 @@ export function ExploreView({
         </Pressable>
       </View>
 
-      {notice ? (
+      {statusText ? (
         <View style={[styles.noticeBar, { backgroundColor: hexToRgba(colors.accent, 0.08), borderColor: hexToRgba(colors.accent, 0.14) }]}>
-          <Text style={[styles.noticeText, { color: colors.subtext }]} numberOfLines={2}>{notice}</Text>
+          <Text style={[styles.noticeText, { color: colors.subtext }]} numberOfLines={2}>{statusText}</Text>
           <Pressable onPress={onRefresh} disabled={isLoading}>
             <Text style={[styles.noticeAction, { color: colors.accent }]}>{isLoading ? '刷新中' : '重试'}</Text>
           </Pressable>
