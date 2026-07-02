@@ -53,13 +53,13 @@ export function DailyIntentView({
         <View style={styles.brandRow}>
           <View>
             <Text style={[styles.wordmark, { color: colors.accent }]}>OneDayReco</Text>
-            <Text style={[styles.subtitle, { color: colors.subtext }]}>输入地点，选择状态，推荐活动。</Text>
+            <Text style={[styles.subtitle, { color: colors.subtext }]}>告诉我现在的状态，推荐今天能做的事。</Text>
           </View>
           <Pressable
             style={[styles.chatBtn, { backgroundColor: colors.card, borderColor: hexToRgba(colors.accent, 0.16) }]}
             onPress={onChat}
           >
-            <Text style={[styles.chatText, { color: colors.text }]}>补充要求</Text>
+            <Text style={[styles.chatText, { color: colors.text }]}>说说想法</Text>
           </Pressable>
         </View>
 
@@ -71,8 +71,8 @@ export function DailyIntentView({
             style={styles.heroOverlay}
           >
             <Text style={[styles.heroKicker, { color: colors.accent }]}>{mbti} · {profile.styleName}</Text>
-            <Text style={[styles.heroTitle, { color: colors.text }]}>推荐活动</Text>
-            <Text style={[styles.heroSub, { color: colors.subtext }]}>选一个状态，马上给具体方案。</Text>
+            <Text style={[styles.heroTitle, { color: colors.text }]}>现在想做点什么？</Text>
+            <Text style={[styles.heroSub, { color: colors.subtext }]}>选一个状态，我给你具体活动。</Text>
           </LinearGradient>
         </ImageBackground>
 
@@ -127,7 +127,7 @@ export function DailyIntentView({
         </View>
 
         <Pressable style={[styles.skip, { backgroundColor: colors.accent }]} onPress={onSkip}>
-          <Text style={styles.skipText}>直接推荐活动</Text>
+          <Text style={styles.skipText}>直接给我推荐</Text>
         </Pressable>
       </View>
     </View>

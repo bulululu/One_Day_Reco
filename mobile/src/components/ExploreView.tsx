@@ -42,7 +42,7 @@ export function ExploreView({
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View>
-          <Text style={[styles.title, { color: colors.text }]}>活动方案</Text>
+          <Text style={[styles.title, { color: colors.text }]}>发现活动</Text>
           <Text style={[styles.subtitle, { color: colors.subtext }]}>{sourceText} · 名称、地点、时长、下一步</Text>
         </View>
         <Pressable

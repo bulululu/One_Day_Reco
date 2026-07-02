@@ -1,5 +1,5 @@
 /**
- * 主 App：推荐 / 方案 / 收藏 / 我的 + 中央推荐按钮。
+ * 主 App：推荐 / 发现 / 收藏 / 我的 + 中央推荐按钮。
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -45,9 +45,9 @@ const DEFAULT_RECOMMENDATION: Recommendation = {
 };
 
 const TABS = [
-  { key: 'recommend', label: '首页', icon: '⌁' },
-  { key: 'explore', label: '方案', icon: '⌖' },
-  { key: 'create', label: '推荐', icon: '荐' },
+  { key: 'recommend', label: '推荐', icon: '⌁' },
+  { key: 'explore', label: '发现', icon: '⌖' },
+  { key: 'create', label: '', icon: '+' },
   { key: 'favorites', label: '收藏', icon: '♡' },
   { key: 'profile', label: '我的', icon: '◌' },
 ] as const;
@@ -616,9 +616,9 @@ const styles = StyleSheet.create({
     marginTop: -18,
   },
   createIcon: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '900',
+    fontSize: 30,
+    lineHeight: 34,
+    fontWeight: '500',
   },
   navIcon: {
     fontSize: 17,
