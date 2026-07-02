@@ -85,7 +85,7 @@ export function ChatPanel({
                         {recommendation.specific_info?.name || recommendation.activity_name}
                       </Text>
                       <Text style={[styles.recoMeta, { color: colors.subtext }]} numberOfLines={1}>
-                        {[recommendation.specific_info?.location, recommendation.specific_info?.duration, recommendation.specific_info?.price]
+                        {[recommendation.specific_info?.location, recommendation.specific_info?.route, recommendation.specific_info?.duration, recommendation.specific_info?.price]
                           .filter(Boolean)
                           .join(' · ') || '查看具体安排'}
                       </Text>

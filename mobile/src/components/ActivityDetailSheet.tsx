@@ -79,6 +79,7 @@ export function ActivityDetailSheet({
               <MetaItem colors={colors} label="预计时长" value={info?.duration || '约 60-90 分钟'} />
               <MetaItem colors={colors} label="价格预算" value={info?.price || recommendation?.budget || '按需'} />
               <MetaItem colors={colors} label="评分/来源" value={info?.rating || info?.source || sourceLabel} />
+              {info?.route ? <MetaItem colors={colors} label="路线" value={info.route} /> : null}
             </View>
 
             {recommendation?.tips ? (

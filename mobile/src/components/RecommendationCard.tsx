@@ -23,7 +23,8 @@ function getPlanMeta(recommendation: Recommendation) {
     { label: '地点', value: info?.location || info?.platform || '现在可做' },
     { label: '时长', value: info?.duration || '约 90 分钟' },
     { label: '花费', value: info?.price || recommendation.budget || '按需' },
-  ];
+    info?.route ? { label: '路线', value: info.route } : null,
+  ].filter(Boolean) as { label: string; value: string }[];
 }
 
 function getSceneCopy(recommendation: Recommendation) {
